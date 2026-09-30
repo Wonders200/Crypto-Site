@@ -11,7 +11,8 @@ export async function captureError(err: unknown, context?: Record<string, any>):
     return;
   }
   try {
-    const Sentry = await import("@sentry/node").catch(() => null);
+    const sentryModule = "@sentry/node";
+    const Sentry: any = await import(/* webpackIgnore: true */ sentryModule).catch(() => null);
     if (!Sentry) { console.error("[error]", message); return; }
     Sentry.captureException(err, { extra: context });
   } catch {
