@@ -1,3 +1,5 @@
+import LegalPage from "@/components/LegalPage";
+
 export default function TermsPage() {
   return <LegalPage title="Terms of Service" updated="January 2025" sections={[
     ["1. Acceptance of Terms", "By accessing or using CryptoSite, you agree to be bound by these Terms. If you do not agree, you may not use the platform."],

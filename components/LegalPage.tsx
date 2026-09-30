@@ -1,12 +1,15 @@
-import BackButton from "@/components/BackButton";
-
-export function LegalPage({ title, updated, sections }: { title: string; updated: string; sections: [string, string][] }) {
+export default function LegalPage({
+  title,
+  updated,
+  sections,
+}: {
+  title: string;
+  updated: string;
+  sections: [string, string][];
+}) {
   return (
     <div className="max-w-3xl mx-auto px-6 py-16">
-      <div className="mb-3 -ml-2">
-        <BackButton fallback="/" label="Back to home" />
-      </div>
-      <div className="mb-10">
+      <div assName="mb-10">
         <h1 className="text-4xl font-bold">{title}</h1>
         <p className="mt-3 text-sm" style={{ color: "var(--muted)" }}>Last updated: {updated}</p>
       </div>

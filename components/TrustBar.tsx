@@ -1,4 +1,4 @@
-import {  } from "lucide-react";
+import { Shield } from "lucide-react";
 
 export default function TrustBar() {
   const items = [
