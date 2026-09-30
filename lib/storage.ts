@@ -18,7 +18,8 @@ export async function uploadDataUrl(dataUrl: string, key: string): Promise<strin
 
   try {
     // Dynamic import so it doesn't break if @aws-sdk/client-s3 isn't installed
-    const { S3Client, PutObjectCommand } = await import("@aws-sdk/client-s3");
+    const s3Module = "@aws-sdk/client-s3";
+    const { S3Client, PutObjectCommand } = (await import(/* webpackIgnore: true */ s3Module)) as any;
 
     const [header, b64] = dataUrl.split(",");
     const mime = header.match(/data:([^;]+)/)?.[1] ?? "image/jpeg";
