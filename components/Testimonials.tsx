@@ -23,7 +23,7 @@ export default function Testimonials() {
         <span className="pill pill-blue inline-flex mb-4">Trusted by institutions</span>
         <h2 className="text-4xl font-bold">What serious investors say</h2>
         <p className="mt-4 text-lg" style={{ color: "var(--muted)" }}>
-          Funds, family offices, and private investors managing real capital on CryptoSite.
+          Funds, family offices, and private investors managing real capital on ApexVault.
         </p>
       </div>
 

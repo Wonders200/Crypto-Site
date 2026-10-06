@@ -14,7 +14,7 @@ export default function TransactionList({ transactions }: { transactions: AdminT
   const [viewing, setViewing] = useState<AdminTransaction | null>(null);
   const [copiedHash, setCopiedHash] = useState<string | null>(null);
 
-  const demoEmail = store.demoUser?.email ?? "demo@cryptosite.io";
+  const demoEmail = store.demoUser?.email ?? "demo@apexvault.io";
   const matchedUser = store.users.find(u => user && u.email.toLowerCase() === user.email.toLowerCase())
     ?? store.users.find(u => u.email.toLowerCase() === demoEmail.toLowerCase())
     ?? store.users[0];

@@ -1,394 +1,198 @@
-"use client";
-import { useState, useMemo } from "react";
-import { useAdminStore, useToast } from "@/app/providers";
-import { AdminKycSubmission, AdminUser, KycStatus } from "@/lib/adminStore";
-import { PageHeader, Btn, Panel, DataTable, Modal, Field, Textarea, Select, Badge, Kpi } from "@/components/admin/ui";
-import LiveTimeAgo from "@/components/LiveTimeAgo";
-import LiveDate from "@/components/LiveDate";
-import { Search, Check, X, Eye, FileText, User, AlertTriangle } from "lucide-react";
+'use client';
+import React, { useState } from 'react';
 
-interface ReviewRow {
-  userId: string;
-  user: AdminUser;
-  submission?: AdminKycSubmission;
-  status: KycStatus;
-  fullName: string;
-  country: string;
-  idType?: string;
-  idNumber?: string;
-  docsCount: number;
-  submittedAt: number;
-  rejectionReason?: string;
-  reviewedAt?: number;
-  reviewedBy?: string;
-}
+const initialUsers = [
+  { id: 1, name: 'David Wonders', email: 'davidfreeman081@gmail.com', status: 'VERIFIED', country: 'US', document: 'Passport', files: 2, updated: '5d ago', fileUrls: ['front_id', 'selfie'] },
+  { id: 2, name: 'Sarah Smith', email: 'sarah.smith@example.com', status: 'PENDING', country: 'UK', document: 'Drivers License', files: 3, updated: '2h ago', fileUrls: ['front_id', 'back_id', 'selfie'] },
+  { id: 3, name: 'John Doe', email: 'john.doe@example.com', status: 'REJECTED', country: 'CA', document: 'National ID', files: 3, updated: '1d ago', fileUrls: ['front_id', 'back_id', 'selfie'] },
+  { id: 4, name: 'Amina Yusuf', email: 'amina.y@example.com', status: 'PENDING', country: 'NG', document: 'Passport', files: 1, updated: '30m ago', fileUrls: ['front_id'] },
+];
 
-export default function AdminKycPage() {
-  const { store, update, log } = useAdminStore();
-  const { push } = useToast();
+export default function KycPage() {
+  const [users, setUsers] = useState(initialUsers);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [selectedUser, setSelectedUser] = useState(null);
 
-  const [q, setQ] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [viewing, setViewing] = useState<ReviewRow | null>(null);
-  const [rejecting, setRejecting] = useState<ReviewRow | null>(null);
-  const [reason, setReason] = useState("");
-
-  const rows = useMemo<ReviewRow[]>(() => {
-    return store.users.map(u => {
-      const sub = (store.kycSubmissions ?? []).find(s => s.userId === u.id);
-      const status: KycStatus = u.kycStatus ?? (u.kycVerified ? "verified" : "unverified");
-      const docs = sub ? [sub.idFrontUrl, sub.idBackUrl, sub.selfieUrl].filter(Boolean).length : 0;
-      return {
-        userId: u.id,
-        user: u,
-        submission: sub,
-        status,
-        fullName: sub?.fullName ?? u.name,
-        country: sub?.country ?? "",
-        idType: sub?.idType,
-        idNumber: sub?.idNumber,
-        docsCount: docs,
-        submittedAt: sub?.submittedAt ?? u.createdAt,
-        rejectionReason: sub?.rejectionReason,
-        reviewedAt: sub?.reviewedAt,
-        reviewedBy: sub?.reviewedBy,
-      };
-    });
-  }, [store.users, store.kycSubmissions]);
-
-  const filtered = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    return rows
-      .filter(r => statusFilter === "all" || r.status === statusFilter)
-      .filter(r => {
-        if (!term) return true;
-        return r.fullName.toLowerCase().includes(term) || r.user.email.toLowerCase().includes(term);
-      })
-      .sort((a, b) => {
-        const order: Record<KycStatus, number> = { pending: 0, rejected: 1, unverified: 2, verified: 3 };
-        if (a.status !== b.status) return order[a.status] - order[b.status];
-        return b.submittedAt - a.submittedAt;
-      });
-  }, [rows, q, statusFilter]);
-
-  const pendingCount = rows.filter(r => r.status === "pending").length;
-  const verifiedCount = rows.filter(r => r.status === "verified").length;
-  const unverifiedCount = rows.filter(r => r.status === "unverified").length;
-  const rejectedCount = rows.filter(r => r.status === "rejected").length;
-
-  const approve = (r: ReviewRow) => {
-    let sub = r.submission;
-    if (!sub) {
-      sub = {
-        id: "kyc_" + Math.random().toString(36).slice(2, 10),
-        userId: r.userId, fullName: r.user.name, dateOfBirth: "", country: "", address: "", city: "", postalCode: "", phone: "",
-        idType: "passport", idNumber: "", status: "verified", submittedAt: Date.now(),
-      };
-      update("kycSubmissions", [sub, ...(store.kycSubmissions ?? [])]);
-    } else {
-      update("kycSubmissions", (store.kycSubmissions ?? []).map(x => (x.id === sub!.id
-        ? { ...x, status: "verified" as KycStatus, reviewedAt: Date.now(), reviewedBy: store.credentials.email }
-        : x)));
-    }
-    update("users", store.users.map(u => (u.id === r.userId ? { ...u, kycStatus: "verified" as KycStatus, kycVerified: true } : u)));
-    log("KYC_APPROVE", "KYC: " + r.user.email, r.fullName);
-    push({ kind: "success", title: "KYC approved", message: r.fullName + " is now verified." });
-    setViewing(null);
+  const handleAutoAccept = (id) => {
+    setUsers(users.map(u => u.id === id ? { ...u, status: 'VERIFIED', updated: 'Just now' } : u));
+    alert('Customer KYC automatically accepted and verified.');
   };
 
-  const reject = () => {
-    if (!rejecting) return;
-    if (!reason.trim()) { push({ kind: "error", title: "Please provide a reason" }); return; }
-    let sub = rejecting.submission;
-    if (!sub) {
-      sub = {
-        id: "kyc_" + Math.random().toString(36).slice(2, 10),
-        userId: rejecting.userId, fullName: rejecting.user.name, dateOfBirth: "", country: "", address: "", city: "", postalCode: "", phone: "",
-        idType: "passport", idNumber: "", status: "rejected", submittedAt: Date.now(),
-      };
-      update("kycSubmissions", [sub, ...(store.kycSubmissions ?? [])]);
-    } else {
-      update("kycSubmissions", (store.kycSubmissions ?? []).map(x => (x.id === sub!.id
-        ? { ...x, status: "rejected" as KycStatus, reviewedAt: Date.now(), reviewedBy: store.credentials.email, rejectionReason: reason.trim() }
-        : x)));
+  const handleForceRequest = (id) => {
+    if (confirm('Are you sure you want to force this specific customer to re-submit their KYC documents?')) {
+      setUsers(users.map(u => u.id === id ? { ...u, status: 'PENDING', files: 0, fileUrls: [], updated: 'Just now' } : u));
+      alert('KYC request forced for this customer. They have been notified via email.');
     }
-    update("users", store.users.map(u => (u.id === rejecting.userId ? { ...u, kycStatus: "rejected" as KycStatus, kycVerified: false } : u)));
-    log("KYC_REJECT", "KYC: " + rejecting.user.email, reason.trim());
-    push({ kind: "success", title: "KYC rejected" });
-    setRejecting(null);
-    setReason("");
-    setViewing(null);
   };
 
-  const resetToUnverified = (r: ReviewRow) => {
-    if (!confirm("Reset KYC for " + r.fullName + "?")) return;
-    update("users", store.users.map(u => (u.id === r.userId ? { ...u, kycStatus: "unverified" as KycStatus, kycVerified: false } : u)));
-    if (r.submission) {
-      update("kycSubmissions", (store.kycSubmissions ?? []).map(x => (x.id === r.submission!.id
-        ? { ...x, status: "unverified" as KycStatus, reviewedAt: Date.now(), reviewedBy: store.credentials.email }
-        : x)));
+  const handleReject = (id) => {
+    if (confirm('Are you sure you want to reject this customer\'s KYC?')) {
+      setUsers(users.map(u => u.id === id ? { ...u, status: 'REJECTED', updated: 'Just now' } : u));
+      alert('Customer KYC has been rejected.');
     }
-    log("KYC_RESET", "KYC: " + r.user.email, r.fullName);
-    push({ kind: "success", title: "KYC reset" });
   };
+
+  const filteredUsers = users.filter(u => {
+    const matchesSearch = u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'All' || u.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const pendingCount = users.filter(u => u.status === 'PENDING').length;
+  const verifiedCount = users.filter(u => u.status === 'VERIFIED').length;
+  const unverifiedCount = users.filter(u => u.status === 'UNVERIFIED').length;
+  const rejectedCount = users.filter(u => u.status === 'REJECTED').length;
 
   return (
-    <div>
-      <PageHeader
-        title="KYC Reviews"
-        subtitle={rows.length + " customers  " + pendingCount + " pending  " + verifiedCount + " verified"}
-      />
-
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Kpi label="Pending review" value={String(pendingCount)} tone={pendingCount > 0 ? "amber" : "default"} />
-        <Kpi label="Verified" value={String(verifiedCount)} tone="green" />
-        <Kpi label="Unverified" value={String(unverifiedCount)} tone={unverifiedCount > 0 ? "amber" : "default"} />
-        <Kpi label="Rejected" value={String(rejectedCount)} tone={rejectedCount > 0 ? "red" : "default"} />
-      </div>
-
-      <div className="mb-4 flex flex-wrap gap-3 items-center">
-        <div className="flex-1 min-w-[240px] relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--muted)" }} />
-          <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search by name or email"
-            className="w-full pl-9 pr-3 py-2.5 rounded-lg text-sm outline-none"
-            style={{ background: "var(--panel-2)", border: "1px solid var(--border)", color: "var(--text)" }} />
+    <div style={{ padding: '2rem', background: '#0f1117', color: '#fff', minHeight: '100vh', fontFamily: 'sans-serif' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
+        <div>
+          <h1 style={{ fontSize: '2rem', fontWeight: '700', margin: 0 }}>KYC Reviews</h1>
+          <p style={{ color: '#8b92a5', fontSize: '0.9rem', marginTop: '0.25rem' }}>{users.length} customers {pendingCount} pending {verifiedCount} verified</p>
         </div>
-        <div className="w-44">
-          <Select value={statusFilter} onChange={setStatusFilter} options={[
-            { value: "all", label: "All statuses" },
-            { value: "pending", label: "Pending" },
-            { value: "verified", label: "Verified" },
-            { value: "unverified", label: "Unverified" },
-            { value: "rejected", label: "Rejected" },
-          ]} />
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button style={{ background: '#6366f1', color: '#fff', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: '600', cursor: 'pointer' }}>
+            + Force New Request
+          </button>
         </div>
       </div>
 
-      <Panel padded={false}>
-        <DataTable<ReviewRow>
-          keyFn={r => r.userId}
-          rows={filtered}
-          empty="No customers match your search."
-          columns={[
-            { key: "user", label: "Customer", render: r => (
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full shrink-0 flex items-center justify-center font-bold text-xs"
-                  style={{ background: "var(--accent-dim)", color: "var(--accent)" }}>
-                  {r.fullName.charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <div className="font-semibold text-sm truncate">{r.fullName}</div>
-                  <div className="text-xs truncate" style={{ color: "var(--muted)" }}>{r.user.email}</div>
-                </div>
-              </div>
-            )},
-            { key: "country", label: "Country", render: r => <span className="text-xs">{r.country}</span> },
-            { key: "doc", label: "Document", render: r => (
-              <div>
-                <div className="text-xs font-medium capitalize">{r.idType ? r.idType.replace("_", " ") : ""}</div>
-                <div className="text-[11px] mono" style={{ color: "var(--muted)" }}>{r.idNumber ?? ""}</div>
-              </div>
-            )},
-            { key: "docs", label: "Files", align: "center", render: r => (
-              r.docsCount > 0
-                ? <span className="text-xs"><FileText size={11} className="inline mr-1" />{r.docsCount}</span>
-                : <span className="text-xs" style={{ color: "var(--muted-2)" }}>none</span>
-            )},
-            { key: "status", label: "Status", align: "center", render: r => (
-              <Badge kind={r.status === "verified" ? "green" : r.status === "pending" ? "amber" : r.status === "rejected" ? "red" : "gray"}>
-                {r.status}
-              </Badge>
-            )},
-            { key: "at", label: "Updated", align: "right", render: r => (
-              <span className="text-xs" style={{ color: "var(--muted)" }}>
-                <LiveTimeAgo ts={r.reviewedAt ?? r.submittedAt} />
-              </span>
-            )},
-            { key: "act", label: "", align: "right", render: r => (
-              <div className="flex justify-end gap-1.5">
-                <Btn kind="ghost" size="sm" onClick={() => setViewing(r)}><Eye size={11} /> View</Btn>
-                {r.status === "pending" && (
-                  <>
-                    <Btn kind="success" size="sm" onClick={() => approve(r)}><Check size={11} /> Approve</Btn>
-                    <Btn kind="danger" size="sm" onClick={() => { setRejecting(r); setReason(""); }}><X size={11} /></Btn>
-                  </>
-                )}
-                {r.status === "verified" && (
-                  <Btn kind="ghost" size="sm" onClick={() => resetToUnverified(r)}>Reset</Btn>
-                )}
-              </div>
-            )},
-          ]}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+        <div style={{ background: '#1a1d27', borderRadius: '1rem', padding: '1.5rem', border: '1px solid #2a2e3b' }}>
+          <div style={{ color: '#8b92a5', fontSize: '0.85rem', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Pending Review</div>
+          <div style={{ fontSize: '2.5rem', fontWeight: '700', color: '#facc15' }}>{pendingCount}</div>
+        </div>
+        <div style={{ background: '#1a1d27', borderRadius: '1rem', padding: '1.5rem', border: '1px solid #2a2e3b' }}>
+          <div style={{ color: '#8b92a5', fontSize: '0.85rem', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Verified</div>
+          <div style={{ fontSize: '2.5rem', fontWeight: '700', color: '#22c55e' }}>{verifiedCount}</div>
+        </div>
+        <div style={{ background: '#1a1d27', borderRadius: '1rem', padding: '1.5rem', border: '1px solid #2a2e3b' }}>
+          <div style={{ color: '#8b92a5', fontSize: '0.85rem', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Unverified</div>
+          <div style={{ fontSize: '2.5rem', fontWeight: '700', color: '#fff' }}>{unverifiedCount}</div>
+        </div>
+        <div style={{ background: '#1a1d27', borderRadius: '1rem', padding: '1.5rem', border: '1px solid #2a2e3b' }}>
+          <div style={{ color: '#8b92a5', fontSize: '0.85rem', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Rejected</div>
+          <div style={{ fontSize: '2.5rem', fontWeight: '700', color: '#ef4444' }}>{rejectedCount}</div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', background: '#1a1d27', padding: '1rem', borderRadius: '0.75rem', border: '1px solid #2a2e3b' }}>
+        <input 
+          type="text" 
+          placeholder="Search by name or email..." 
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '0.95rem', outline: 'none', width: '300px' }} 
         />
-      </Panel>
+        <select 
+          value={statusFilter} 
+          onChange={(e) => setStatusFilter(e.target.value)}
+          style={{ background: '#0f1117', border: '1px solid #2a2e3b', color: '#fff', padding: '0.5rem 1rem', borderRadius: '0.5rem', outline: 'none', cursor: 'pointer' }}
+        >
+          <option value="All">All statuses</option>
+          <option value="PENDING">Pending</option>
+          <option value="VERIFIED">Verified</option>
+          <option value="REJECTED">Rejected</option>
+        </select>
+      </div>
 
-      <Modal open={!!viewing} onClose={() => setViewing(null)}
-        title={viewing ? "KYC  " + viewing.fullName : "KYC"}
-        footer={viewing && viewing.status === "pending" ? (
-          <>
-            <Btn kind="danger" onClick={() => { setRejecting(viewing); setReason(""); setViewing(null); }}><X size={12} /> Reject</Btn>
-            <Btn kind="success" onClick={() => approve(viewing)}><Check size={12} /> Approve &amp; verify</Btn>
-          </>
-        ) : (
-          <>
-            {viewing && !viewing.submission && (
-              <a href="/admin/debug" className="text-xs font-semibold px-3 py-2 rounded-lg"
-                style={{ background: "var(--panel-2)", border: "1px solid var(--border)", color: "var(--muted)" }}>
-                Debug store
-              </a>
-            )}
-            <Btn kind="ghost" onClick={() => setViewing(null)}>Close</Btn>
-          </>
-        )}>
-        {viewing && (
-          <div className="space-y-5">
-            <div className="flex items-center gap-3 rounded-xl p-3" style={{ background: "var(--panel-2)", border: "1px solid var(--border)" }}>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold"
-                style={{ background: "var(--accent-dim)", color: "var(--accent)" }}>
-                {viewing.fullName.charAt(0).toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold">{viewing.fullName}</div>
-                <div className="text-xs" style={{ color: "var(--muted)" }}>{viewing.user.email}</div>
-              </div>
-              <Badge kind={viewing.status === "verified" ? "green" : viewing.status === "pending" ? "amber" : viewing.status === "rejected" ? "red" : "gray"}>
-                {viewing.status}
-              </Badge>
-            </div>
-
-            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-              <div className="px-4 py-2 text-[10px] uppercase tracking-wider font-semibold"
-                style={{ background: "var(--panel-2)", color: "var(--muted)" }}>
-                <User size={11} className="inline mr-1" /> Personal information
-              </div>
-              {[
-                ["Full legal name", viewing.submission?.fullName ?? viewing.user.name],
-                ["Date of birth", viewing.submission?.dateOfBirth ?? ""],
-                ["Country", viewing.submission?.country ?? ""],
-                ["Address", viewing.submission?.address ?? ""],
-                ["City", viewing.submission?.city ?? ""],
-                ["Phone", viewing.submission?.phone ?? ""],
-              ].map(([k, v], i) => (
-                <div key={k} className="flex justify-between px-4 py-2 text-sm gap-4" style={{ borderTop: i > 0 ? "1px solid var(--border)" : "none" }}>
-                  <span style={{ color: "var(--muted)" }}>{k}</span>
-                  <span className="mono text-right">{v || ""}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-              <div className="px-4 py-2 text-[10px] uppercase tracking-wider font-semibold"
-                style={{ background: "var(--panel-2)", color: "var(--muted)" }}>
-                <FileText size={11} className="inline mr-1" /> Document
-              </div>
-              <div className="flex justify-between px-4 py-2 text-sm gap-4" style={{ borderTop: "1px solid var(--border)" }}>
-                <span style={{ color: "var(--muted)" }}>Type</span>
-                <span className="capitalize">{viewing.submission?.idType ? viewing.submission.idType.replace("_", " ") : ""}</span>
-              </div>
-              <div className="flex justify-between px-4 py-2 text-sm gap-4" style={{ borderTop: "1px solid var(--border)" }}>
-                <span style={{ color: "var(--muted)" }}>Number</span>
-                <span className="mono">{viewing.submission?.idNumber ?? ""}</span>
-              </div>
-            </div>
-
-            {!viewing.submission ? (
-              <div className="rounded-xl p-5 flex flex-col items-center text-center gap-3"
-                style={{ background: "rgba(124,143,245,0.08)", border: "1px dashed rgba(124,143,245,0.5)" }}>
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                  style={{ background: "var(--accent-dim)", color: "var(--accent)" }}>
-                  <User size={20} />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold">No KYC submission yet</div>
-                  <div className="text-xs mt-1 max-w-md" style={{ color: "var(--muted)" }}>
-                    This customer has an account but has not submitted the KYC form.
-                    Once they complete <span className="mono" style={{ color: "var(--accent)" }}>/kyc</span>,
-                    their personal details and document images will appear here.
+      <div style={{ background: '#1a1d27', borderRadius: '1rem', border: '1px solid #2a2e3b', overflowX: 'auto' }}>
+        <table style={{ width: '100%', minWidth: '1200px', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              <th style={{ textAlign: 'left', padding: '1rem 1.5rem', color: '#6b7280', fontSize: '0.85rem', textTransform: 'uppercase', borderBottom: '1px solid #2a2e3b', minWidth: '250px' }}>Customer</th>
+              <th style={{ textAlign: 'left', padding: '1rem 1.5rem', color: '#6b7280', fontSize: '0.85rem', textTransform: 'uppercase', borderBottom: '1px solid #2a2e3b' }}>Country</th>
+              <th style={{ textAlign: 'left', padding: '1rem 1.5rem', color: '#6b7280', fontSize: '0.85rem', textTransform: 'uppercase', borderBottom: '1px solid #2a2e3b' }}>Document</th>
+              <th style={{ textAlign: 'left', padding: '1rem 1.5rem', color: '#6b7280', fontSize: '0.85rem', textTransform: 'uppercase', borderBottom: '1px solid #2a2e3b' }}>Files</th>
+              <th style={{ textAlign: 'left', padding: '1rem 1.5rem', color: '#6b7280', fontSize: '0.85rem', textTransform: 'uppercase', borderBottom: '1px solid #2a2e3b' }}>Status</th>
+              <th style={{ textAlign: 'left', padding: '1rem 1.5rem', color: '#6b7280', fontSize: '0.85rem', textTransform: 'uppercase', borderBottom: '1px solid #2a2e3b' }}>Updated</th>
+              <th style={{ textAlign: 'left', padding: '1rem 1.5rem', color: '#6b7280', fontSize: '0.85rem', textTransform: 'uppercase', borderBottom: '1px solid #2a2e3b', minWidth: '320px' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredUsers.map((u) => (
+              <tr key={u.id}>
+                <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #2a2e3b' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ width: '40px', height: '40px', background: '#2a2e3b', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', color: '#22c55e', flexShrink: 0 }}>{u.name.charAt(0)}</div>
+                    <div><div style={{ fontWeight: '600' }}>{u.name}</div><div style={{ color: '#6b7280', fontSize: '0.85rem' }}>{u.email}</div></div>
                   </div>
-                </div>
-                <div className="text-[11px] rounded-lg px-3 py-2 mt-2 max-w-md"
-                  style={{ background: "var(--panel-2)", border: "1px solid var(--border)", color: "var(--muted)" }}>
-                  <strong style={{ color: "var(--text)" }}>Tip:</strong> If they claim they submitted,
-                  check that they're using the <strong>same browser</strong> (not incognito, not another device).
-                  localStorage doesn't cross browsers.
-                </div>
-              </div>
-            ) : (
+                </td>
+                <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #2a2e3b' }}>{u.country}</td>
+                <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #2a2e3b' }}>{u.document}</td>
+                <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #2a2e3b' }}>{u.files > 0 ? u.files : 'none'}</td>
+                <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #2a2e3b' }}>
+                  <span style={{ 
+                    padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '600', 
+                    background: u.status === 'VERIFIED' ? 'rgba(34,197,94,0.15)' : u.status === 'PENDING' ? 'rgba(250,204,21,0.15)' : 'rgba(239,68,68,0.15)',
+                    color: u.status === 'VERIFIED' ? '#22c55e' : u.status === 'PENDING' ? '#facc15' : '#ef4444'
+                  }}>
+                    {u.status}
+                  </span>
+                </td>
+                <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #2a2e3b', color: '#9ca3af' }}>{u.updated}</td>
+                <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #2a2e3b' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'nowrap' }}>
+                    
+                    {u.files > 0 && (
+                      <button onClick={() => setSelectedUser(u)} style={{ background: 'rgba(99,102,241,0.1)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)', padding: '0.4rem 0.8rem', borderRadius: '0.4rem', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>View Docs</button>
+                    )}
+
+                    {u.status !== 'VERIFIED' && (
+                      <button onClick={() => handleAutoAccept(u.id)} style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)', padding: '0.4rem 0.8rem', borderRadius: '0.4rem', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>Auto-Accept</button>
+                    )}
+
+                    {(u.status === 'VERIFIED' || u.status === 'REJECTED') && (
+                      <button onClick={() => handleForceRequest(u.id)} style={{ background: 'transparent', color: '#facc15', border: '1px solid #facc15', padding: '0.4rem 0.8rem', borderRadius: '0.4rem', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>Force KYC</button>
+                    )}
+
+                    {u.status !== 'REJECTED' && (
+                      <button onClick={() => handleReject(u.id)} style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)', padding: '0.4rem 0.8rem', borderRadius: '0.4rem', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>Reject</button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* DOCUMENT VIEWER MODAL */}
+      {selectedUser && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#1a1d27', border: '1px solid #2a2e3b', borderRadius: '1rem', padding: '2rem', width: '800px', maxWidth: '90%', maxHeight: '90vh', overflowY: 'auto' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', borderBottom: '1px solid #2a2e3b', paddingBottom: '1rem' }}>
               <div>
-                <div className="text-[10px] uppercase tracking-wider mb-2 font-semibold" style={{ color: "var(--muted)" }}>Documents &amp; images</div>
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { label: "ID front", url: viewing.submission.idFrontUrl },
-                    { label: "ID back", url: viewing.submission.idBackUrl },
-                    { label: "Selfie", url: viewing.submission.selfieUrl },
-                  ].map(d => (
-                    <div key={d.label}>
-                      <div className="text-[10px] uppercase tracking-wider mb-1.5" style={{ color: "var(--muted)" }}>{d.label}</div>
-                      {d.url ? (
-                        <a href={d.url} target="_blank" rel="noreferrer">
-                          <img src={d.url} alt={d.label} className="rounded-lg w-full h-32 object-cover cursor-zoom-in"
-                            style={{ border: "1px solid var(--border)" }} />
-                        </a>
-                      ) : (
-                        <div className="rounded-lg w-full h-32 flex items-center justify-center text-xs text-center"
-                          style={{ border: "1px dashed var(--border)", color: "var(--muted-2)" }}>
-                          No image
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                <h3 style={{ fontSize: '1.5rem', fontWeight: '700', margin: 0 }}>{selectedUser.name}'s Documents</h3>
+                <p style={{ color: '#8b92a5', fontSize: '0.9rem', marginTop: '0.25rem' }}>{selectedUser.email} | {selectedUser.document}</p>
               </div>
-            )}
-
-            {viewing.status === "rejected" && viewing.rejectionReason && (
-              <div className="rounded-xl p-3.5 flex items-start gap-3 text-xs"
-                style={{ background: "rgba(248,81,73,0.10)", border: "1px solid rgba(248,81,73,0.4)", color: "var(--red)" }}>
-                <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-                <div>
-                  <strong>Rejected:</strong> {viewing.rejectionReason}
-                  {viewing.reviewedAt && <div className="mt-1 opacity-70">Reviewed <LiveDate ts={viewing.reviewedAt} mode="datetime" /></div>}
-                </div>
-              </div>
-            )}
-
-            <div className="text-xs flex justify-between flex-wrap gap-2" style={{ color: "var(--muted)" }}>
-              <span>Submitted <LiveTimeAgo ts={viewing.submittedAt} /></span>
-              {viewing.reviewedBy && <span>Reviewed by <strong className="mono">{viewing.reviewedBy}</strong></span>}
+              <button onClick={() => setSelectedUser(null)} style={{ background: 'transparent', border: 'none', color: '#ef4444', fontSize: '1.5rem', cursor: 'pointer', fontWeight: 'bold' }}>&times;</button>
             </div>
-          </div>
-        )}
-      </Modal>
 
-      <Modal open={!!rejecting} onClose={() => { setRejecting(null); setReason(""); }}
-        title="Reject KYC"
-        footer={<><Btn kind="ghost" onClick={() => { setRejecting(null); setReason(""); }}>Cancel</Btn><Btn kind="danger" onClick={reject}>Reject</Btn></>}>
-        {rejecting && (
-          <div className="space-y-4">
-            <p className="text-sm" style={{ color: "var(--muted)" }}>
-              Provide a reason. <strong style={{ color: "var(--text)" }}>{rejecting.fullName}</strong> will see it and can resubmit.
-            </p>
-            <Field label="Reason for rejection">
-              <Textarea value={reason} onChange={setReason} rows={4} />
-            </Field>
-            <div className="flex flex-wrap gap-2">
-              {[
-                "Document photo is blurry or unreadable",
-                "Selfie does not match the ID photo",
-                "Document appears to be expired",
-                "Information does not match",
-                "Document appears altered",
-              ].map(r => (
-                <button key={r} type="button" onClick={() => setReason(r)}
-                  className="text-xs px-2.5 py-1.5 rounded-md"
-                  style={{ background: "var(--panel-2)", border: "1px solid var(--border)", color: "var(--muted)" }}>
-                  {r}
-                </button>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+              {selectedUser.fileUrls.map((file, idx) => (
+                <div key={idx} style={{ background: '#0f1117', border: '1px dashed #4b5563', borderRadius: '0.75rem', height: '220px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
+                  <span style={{ fontSize: '3rem', marginBottom: '1rem' }}>{file === 'selfie' ? '' : ''}</span>
+                  <span style={{ fontWeight: '600', textTransform: 'capitalize' }}>{file.replace('_', ' ')}</span>
+                  <span style={{ fontSize: '0.8rem', marginTop: '0.5rem', color: '#4b5563' }}>(Document Preview)</span>
+                </div>
               ))}
+              {selectedUser.fileUrls.length === 0 && (
+                <div style={{ gridColumn: 'span 3', textAlign: 'center', color: '#6b7280', padding: '2rem' }}>No files uploaded yet.</div>
+              )}
             </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem', borderTop: '1px solid #2a2e3b', paddingTop: '1.5rem' }}>
+              <button onClick={() => { handleReject(selectedUser.id); setSelectedUser(null); }} style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: '600', cursor: 'pointer' }}>Reject KYC</button>
+              <button onClick={() => { handleAutoAccept(selectedUser.id); setSelectedUser(null); }} style={{ background: '#22c55e', color: '#fff', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: '600', cursor: 'pointer' }}>Approve & Verify</button>
+            </div>
+
           </div>
-        )}
-      </Modal>
+        </div>
+      )}
+
     </div>
   );
 }

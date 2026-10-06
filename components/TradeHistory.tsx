@@ -34,7 +34,7 @@ export default function TradeHistory({ symbol, limit = 10, showHeader = true, co
   const { store } = useAdminStore();
   const [viewing, setViewing] = useState<TradeRow | null>(null);
 
-  const demoEmail = store.demoUser?.email ?? "demo@cryptosite.io";
+  const demoEmail = store.demoUser?.email ?? "demo@apexvault.io";
   const matchedUser = store.users.find(u => user && u.email.toLowerCase() === user.email.toLowerCase())
     ?? store.users.find(u => u.email.toLowerCase() === demoEmail.toLowerCase())
     ?? store.users[0];

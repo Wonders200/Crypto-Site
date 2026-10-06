@@ -10,7 +10,7 @@ export default function KycBanner({ compact = false }: { compact?: boolean }) {
 
   if (!user) return null;
 
-  const demoEmail = store.demoUser?.email ?? "demo@cryptosite.io";
+  const demoEmail = store.demoUser?.email ?? "demo@apexvault.io";
   const matchedUser = store.users.find(u => u.email.toLowerCase() === user.email.toLowerCase())
     ?? store.users.find(u => u.email.toLowerCase() === demoEmail.toLowerCase());
 
@@ -84,7 +84,7 @@ export function KycGateInline({ action }: { action: string }) {
   const { store } = useAdminStore();
   if (!user) return null;
 
-  const demoEmail = store.demoUser?.email ?? "demo@cryptosite.io";
+  const demoEmail = store.demoUser?.email ?? "demo@apexvault.io";
   const matchedUser = store.users.find(u => u.email.toLowerCase() === user.email.toLowerCase())
     ?? store.users.find(u => u.email.toLowerCase() === demoEmail.toLowerCase());
 

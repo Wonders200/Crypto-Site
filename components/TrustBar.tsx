@@ -1,28 +1,23 @@
-import { Shield } from "lucide-react";
+'use client';
+import React from 'react';
 
-export default function TrustBar() {
-  const items = [
-    { icon: Shield,    label: "SOC 2 Type II", sub: "Audited annually" },
-    { icon: Lock,      label: "95% Cold Storage", sub: "Institutional custody" },
-    { icon: Award,     label: "Licensed MSB", sub: "FinCEN registered" },
-    { icon: Building2, label: "$2.1B AUM", sub: "Across 42 countries" },
-  ];
+const TrustBar = () => {
   return (
-    <section className="border-y" style={{ borderColor: "var(--border)", background: "var(--panel)" }}>
-      <div className="max-w-[1400px] mx-auto px-6 py-8 grid grid-cols-2 md:grid-cols-4 gap-6">
-        {items.map(({ icon: Icon, label, sub }) => (
-          <div key={label} className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-              style={{ background: "var(--accent-dim)", color: "var(--accent)" }}>
-              <Icon size={18} />
-            </div>
-            <div>
-              <div className="text-sm font-semibold">{label}</div>
-              <div className="text-xs" style={{ color: "var(--muted)" }}>{sub}</div>
-            </div>
-          </div>
-        ))}
+    <div style={{ display: 'flex', justifyContent: 'center', gap: '3rem', padding: '2rem', background: '#0f1117', borderTop: '1px solid #1f2937', borderBottom: '1px solid #1f2937', marginBottom: '2rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#22c55e', fontWeight: '600', fontSize: '0.95rem' }}>
+        <span style={{ fontSize: '1.25rem' }}></span> Bank-Grade Security
       </div>
-    </section>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#22c55e', fontWeight: '600', fontSize: '0.95rem' }}>
+        <span style={{ fontSize: '1.25rem' }}></span> Instant Execution
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#22c55e', fontWeight: '600', fontSize: '0.95rem' }}>
+        <span style={{ fontSize: '1.25rem' }}></span> Regulated & Compliant
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#22c55e', fontWeight: '600', fontSize: '0.95rem' }}>
+        <span style={{ fontSize: '1.25rem' }}></span> 24/7 Support
+      </div>
+    </div>
   );
-}
+};
+
+export default TrustBar;

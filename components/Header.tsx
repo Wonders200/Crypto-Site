@@ -53,8 +53,17 @@ export default function Header() {
         style={{ background: "rgba(10,11,15,0.85)", borderColor: "var(--border)" }}>
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 flex items-center gap-6 h-16">
           <Link href="/" className="flex items-center gap-2 shrink-0">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-black"
-              style={{ background: "linear-gradient(135deg, var(--green), var(--accent))" }}>C</div>
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="ApexVault">
+              <defs>
+                <linearGradient id="apexGrad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#22c55e" />
+                  <stop offset="100%" stopColor="#6366f1" />
+                </linearGradient>
+              </defs>
+              <rect width="32" height="32" rx="8" fill="url(#apexGrad)" />
+              <path d="M16 6.5 L23.5 25 L19.8 25 L16 15.2 L12.2 25 L8.5 25 Z" fill="#0a0b0f" />
+              <path d="M11.6 20 L20.4 20" stroke="#0a0b0f" strokeWidth="2.2" strokeLinecap="round" />
+            </svg>
             <span className="font-bold text-lg hidden sm:block">{store.settings.siteName}</span>
             <span className="pill pill-blue hidden md:inline-flex">Pro</span>
           </Link>

@@ -65,7 +65,7 @@ export async function downloadPDF(filename: string, rows: StatementRow[], meta: 
 
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
-  doc.text(meta.brand ?? "CryptoSite", 86, 42);
+  doc.text(meta.brand ?? "ApexVault", 86, 42);
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
@@ -145,7 +145,7 @@ export async function downloadPDF(filename: string, rows: StatementRow[], meta: 
     doc.setFontSize(8);
     doc.setTextColor(120, 130, 145);
     doc.text(
-      `${meta.brand ?? "CryptoSite"}  This statement is provided for informational purposes only and does not constitute tax or legal advice.`,
+      `${meta.brand ?? "ApexVault"}  This statement is provided for informational purposes only and does not constitute tax or legal advice.`,
       40, H - 22
     );
     doc.text(`Page ${i} of ${totalPages}`, W - 40, H - 22, { align: "right" });

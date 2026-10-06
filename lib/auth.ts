@@ -57,6 +57,6 @@ export function verify2FAToken(token: string, secret: string): boolean {
   }
 }
 
-export function build2FAURI(email: string, secret: string, issuer = "CryptoSite"): string {
+export function build2FAURI(email: string, secret: string, issuer = "ApexVault"): string {
   return authenticator.keyuri(email, issuer, secret);
 }

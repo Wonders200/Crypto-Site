@@ -5,7 +5,7 @@ interface SendArgs {
 }
 
 const RESEND_KEY = process.env.RESEND_API_KEY ?? "";
-const FROM = process.env.EMAIL_FROM ?? "CryptoSite <noreply@cryptosite.example>";
+const FROM = process.env.EMAIL_FROM ?? "ApexVault <noreply@apexvault.example>";
 
 export function hasEmail(): boolean {
   return Boolean(RESEND_KEY);
@@ -34,7 +34,7 @@ export async function sendEmail({ to, subject, html }: SendArgs): Promise<boolea
 
 export const Templates = {
   welcome: (name: string) => ({
-    subject: "Welcome to CryptoSite",
+    subject: "Welcome to ApexVault",
     html: `<h1>Hi ${name},</h1><p>Your account is ready. Sign in to start trading.</p>`,
   }),
   depositSubmitted: (ref: string, amount: string) => ({

@@ -53,7 +53,7 @@ export default function KycPage() {
   const { store, update, log } = useAdminStore();
   const { push } = useToast();
 
-  const demoEmail = store.demoUser?.email ?? "demo@cryptosite.io";
+  const demoEmail = store.demoUser?.email ?? "demo@apexvault.io";
   const matchedUser = store.users.find(u => user && u.email.toLowerCase() === user.email.toLowerCase())
     ?? store.users.find(u => u.email.toLowerCase() === demoEmail.toLowerCase())
     ?? store.users[0];

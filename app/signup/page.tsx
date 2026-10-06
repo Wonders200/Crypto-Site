@@ -39,7 +39,7 @@ export default function SignupPage() {
       }
       setTokens(data.accessToken, data.refreshToken);
       login({ email: data.user.email, name: data.user.name, tier: data.user.tier });
-      push({ kind: "success", title: "Account created", message: "Welcome to CryptoSite." });
+      push({ kind: "success", title: "Account created", message: "Welcome to ApexVault." });
       router.push("/dashboard");
     } catch (e) {
       push({ kind: "error", title: "Network error", message: (e as Error).message });

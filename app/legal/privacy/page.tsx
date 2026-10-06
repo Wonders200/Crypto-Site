@@ -13,7 +13,7 @@ export default function PrivacyPage() {
         ["5. Security", "We use AES-256 encryption at rest, TLS 1.3 in transit, hardware security modules for key management, and SOC 2 Type II certified controls."],
         ["6. Your Rights", "Depending on your jurisdiction, you may have rights to access, correct, delete, port, or restrict processing of your personal data."],
         ["7. Cookies", "We use strictly necessary, functional, and analytical cookies. You may manage preferences in the cookie banner."],
-        ["8. Contact", "Data Protection Officer: privacy@cryptosite.example"],
+        ["8. Contact", "Data Protection Officer: privacy@apexvault.example"],
       ]}
     />
   );

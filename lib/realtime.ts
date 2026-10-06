@@ -25,7 +25,7 @@ export interface RealtimeEvent {
   payload?: any;
 }
 
-const CHANNEL_NAME = "cryptosite-realtime";
+const CHANNEL_NAME = "apexvault-realtime";
 
 let channel: BroadcastChannel | null = null;
 

@@ -13,7 +13,7 @@ export default function DisclosuresPage() {
         ["Counterparty Risk", "Custody and trading involve reliance on third parties. While we hold 95% of assets in cold storage with insured custodians, no custody solution eliminates all risk."],
         ["Staking Risk", "Staked assets are subject to slashing, unbonding delays, and variable rewards. Yields are not guaranteed."],
         ["No Investment Advice", "Nothing on this platform constitutes investment, legal, or tax advice. We do not recommend any particular asset. Consult a licensed advisor before investing."],
-        ["FDIC / SIPC", "Digital assets held on CryptoSite are not FDIC-insured, not SIPC-protected, and not covered by any government deposit insurance scheme."],
+        ["FDIC / SIPC", "Digital assets held on ApexVault are not FDIC-insured, not SIPC-protected, and not covered by any government deposit insurance scheme."],
       ]}
     />
   );

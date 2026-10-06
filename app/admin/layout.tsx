@@ -54,7 +54,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-black"
               style={{ background: "linear-gradient(135deg, var(--green), var(--accent))" }}>C</div>
             <div className="flex-1">
-              <div className="text-sm font-bold">CryptoSite</div>
+              <div className="text-sm font-bold">ApexVault</div>
               <div className="text-[10px] uppercase tracking-wider" style={{ color: "var(--muted)" }}>Admin Console</div>
             </div>
             {pending.total > 0 && (

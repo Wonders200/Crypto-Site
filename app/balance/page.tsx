@@ -122,7 +122,7 @@ export default function BalancePage() {
   const wAmountNum = parseFloat(wAmount) || 0;
   const wCryptoAmount = wPrice > 0 ? wAmountNum / wPrice : 0;
 
-  const demoEmail = store.demoUser?.email ?? "demo@cryptosite.io";
+  const demoEmail = store.demoUser?.email ?? "demo@apexvault.io";
   const matchedUser = store.users.find(u => user && u.email.toLowerCase() === user.email.toLowerCase())
     ?? store.users.find(u => u.email.toLowerCase() === demoEmail.toLowerCase())
     ?? store.users[0];

@@ -6,7 +6,7 @@ import { useAdminAuth } from "@/app/providers";
 export default function AdminLoginPage() {
   const router = useRouter();
   const { admin, loginAdmin } = useAdminAuth();
-  const [email, setEmail] = useState("admin@cryptosite.io");
+  const [email, setEmail] = useState("admin@apexvault.io");
   const [password, setPassword] = useState("admin123");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
@@ -60,7 +60,7 @@ export default function AdminLoginPage() {
 
         <div className="mt-6 p-3 rounded-lg text-xs" style={{ background: "var(--panel-2)", border: "1px solid var(--border)" }}>
           <div style={{ color: "var(--muted)" }}>Default credentials</div>
-          <div className="mono mt-1">admin@cryptosite.io / admin123</div>
+          <div className="mono mt-1">admin@apexvault.io / admin123</div>
           <div className="text-[10px] mt-1" style={{ color: "var(--muted-2)" }}>Change in Settings after first login.</div>
         </div>
       </div>

@@ -129,12 +129,12 @@ export interface Store {
 }
 
 export const DEFAULT_CREDENTIALS: AdminCredentials = {
-  email: "admin@cryptosite.io",
+  email: "admin@apexvault.io",
   password: "admin123",
 };
 
 export const DEFAULT_DEMO_USER: DemoUser = {
-  email: "demo@cryptosite.io",
+  email: "demo@apexvault.io",
   password: "demo123",
   name: "Demo User",
   tier: "Pro",
@@ -247,10 +247,10 @@ export const DEFAULT_STORE: Store = {
     { id: "da_paypal",     label: "PayPal USD",  asset: "PYUSD", network: "ERC20",   address: "0x60713bac68c77833d8d3dcceb225559b35b2f3d0", notes: "PYUSD is an ERC20 stablecoin on Ethereum mainnet.", category: "crypto", enabled: true, order: 4 },
   ],
   testimonials: [
-    { id: "tm_001", name: "Sarah Chen",       role: "Chief Investment Officer", company: "Meridian Capital",          quote: "CryptoSite's execution quality and risk analytics are the closest thing to an institutional prime broker I've found in digital assets.", rating: 5, avatarColor: "#5b7cfa", featured: true,  enabled: true, order: 1 },
+    { id: "tm_001", name: "Sarah Chen",       role: "Chief Investment Officer", company: "Meridian Capital",          quote: "ApexVault's execution quality and risk analytics are the closest thing to an institutional prime broker I've found in digital assets.", rating: 5, avatarColor: "#5b7cfa", featured: true,  enabled: true, order: 1 },
     { id: "tm_002", name: "Marcus Reinhardt", role: "Portfolio Manager",        company: "Aldgate Family Office",     quote: "We moved seven figures from a legacy custodian and the transition took under a week.", rating: 5, avatarColor: "#00d18c", featured: true,  enabled: true, order: 2 },
     { id: "tm_003", name: "Priya Raman",      role: "Head of Digital Assets",   company: "Northshore Advisors",       quote: "The API is clean, rate limits are generous, and support responds within minutes.", rating: 5, avatarColor: "#f5a623", featured: false, enabled: true, order: 3 },
-    { id: "tm_004", name: "David Okonkwo",    role: "Founder",                  company: "Vantage Crypto Fund",       quote: "We run a $40M book through CryptoSite. Order fills are fast and the depth is real.", rating: 5, avatarColor: "#b6509e", featured: false, enabled: true, order: 4 },
+    { id: "tm_004", name: "David Okonkwo",    role: "Founder",                  company: "Vantage Crypto Fund",       quote: "We run a $40M book through ApexVault. Order fills are fast and the depth is real.", rating: 5, avatarColor: "#b6509e", featured: false, enabled: true, order: 4 },
     { id: "tm_005", name: "Elena Vasquez",    role: "Private Investor",         company: "",                           quote: "I've tried six platforms. This is the only one where I never had to read a help article.", rating: 5, avatarColor: "#14f195", featured: false, enabled: true, order: 5 },
     { id: "tm_006", name: "James Whitfield",  role: "Director of Trading",      company: "Kingsway Securities",       quote: "Latency is competitive with top-tier venues. The risk engine lets us stress-test before we execute.", rating: 5, avatarColor: "#e84142", featured: false, enabled: true, order: 6 },
     { id: "tm_007", name: "Rachel Kim",       role: "Chief Compliance Officer", company: "Ironbridge Asset Management", quote: "Our auditors signed off in a single session.", rating: 5, avatarColor: "#2775ca", featured: false, enabled: true, order: 7 },
@@ -259,8 +259,8 @@ export const DEFAULT_STORE: Store = {
     { id: "tm_010", name: "Henrik Lindqvist", role: "Senior Trader",            company: "Kestrel Capital Markets",   quote: "Order book depth is honest and the OTC desk prices tighter than two of our traditional prime brokers.", rating: 5, avatarColor: "#00d18c", featured: false, enabled: true, order: 10 },
   ],
   settings: {
-    siteName: "CryptoSite",
-    tagline: "Institutional Crypto Investing",
+    siteName: "ApexVault",
+    tagline: "Institutional crypto, simplified.",
     announcement: " New: USDC Flexible Earn is now live at 5.2% APY.",
     showAnnouncement: true,
     maintenanceMode: false,

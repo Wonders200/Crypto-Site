@@ -14,7 +14,7 @@ export default function Footer() {
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-black"
               style={{ background: "linear-gradient(135deg, var(--green), var(--accent))" }}>C</div>
-            <span className="font-bold text-lg">CryptoSite</span>
+            <span className="font-bold text-lg">ApexVault</span>
           </div>
           <p className="text-sm mt-4 leading-relaxed" style={{ color: "var(--muted)" }}>
             Institutional-grade crypto investing. Trade 200+ assets, earn yield, and monitor risk  all with a single account.
@@ -37,7 +37,7 @@ export default function Footer() {
       </div>
       <div className="border-t" style={{ borderColor: "var(--border)" }}>
         <div className="max-w-[1400px] mx-auto px-6 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs" style={{ color: "var(--muted)" }}>
-          <p> {new Date().getFullYear()} CryptoSite Inc. All rights reserved.</p>
+          <p> {new Date().getFullYear()} ApexVault Inc. All rights reserved.</p>
           <p className="max-w-3xl">Not a registered broker-dealer or investment advisor. Cryptocurrency investments carry risk of loss.</p>
         </div>
       </div>

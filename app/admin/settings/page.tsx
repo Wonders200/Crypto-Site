@@ -50,7 +50,7 @@ export default function AdminSettingsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `cryptosite-store-${Date.now()}.json`;
+    a.download = `apexvault-store-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
     push({ kind: "success", title: "Store exported" });
