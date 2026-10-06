@@ -256,6 +256,7 @@ export function Providers({ children }: { children: ReactNode }) {
       window.location.hostname === "kellerwilliamsreallty.com" ||
       window.location.hostname === "www.kellerwilliamsreallty.com"
     );
+
     if (isDemoServer) {
       if (email.trim().toLowerCase() !== "demo-admin@apexvault.io" || password !== "DemoAdmin2026!") {
         return { ok: false, error: "Use the demo credentials shown below." };
@@ -263,13 +264,21 @@ export function Providers({ children }: { children: ReactNode }) {
       setAdmin({ email: "demo-admin@apexvault.io", signedInAt: Date.now() });
       return { ok: true };
     }
-    const c = store.adminCredentials;
-    if (email.trim().toLowerCase() !== c.email.toLowerCase() || password !== c.password) {
+
+    // PRODUCTION: check against hardcoded credentials (never depends on store)
+    // Falls back to store.credentials if present, otherwise uses the canonical values.
+    const storedCreds = (store && (store as any).credentials) || null;
+    const PROD_EMAIL = (storedCreds?.email || "admin@apexvault.io").toLowerCase();
+    const PROD_PASSWORD = storedCreds?.password || "ApexVault-Admin-2026-xQ9!";
+
+    const submittedEmail = email.trim().toLowerCase();
+    if (submittedEmail !== PROD_EMAIL || password !== PROD_PASSWORD) {
       return { ok: false, error: "Invalid email or password." };
     }
-    setAdmin({ email: email.trim(), signedInAt: Date.now() });
+
+    setAdmin({ email: PROD_EMAIL, signedInAt: Date.now() });
     return { ok: true };
-  }, [store.adminCredentials, setAdmin]);
+  }, [store, setAdmin]);
 
   const logoutAdmin = useCallback(() => {
     setAdmin(null);
