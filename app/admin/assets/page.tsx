@@ -115,7 +115,7 @@ export default function AdminAssetsPage() {
             { key: "act", label: "", align: "right", render: c => (
               <div className="flex justify-end gap-1.5">
                 <Btn kind="ghost" size="sm" onClick={() => startEdit(c)}>Edit</Btn>
-                <Btn kind="danger" size="sm" onClick={() => remove(c)} title="Delete"><Trash2 size={11} /> Delete</Btn>
+                <Btn kind="danger" size="sm" onClick={() => remove(c)}><Trash2 size={11} /> Delete</Btn>
               </div>
             )},
           ]}
