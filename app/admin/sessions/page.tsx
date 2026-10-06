@@ -213,7 +213,7 @@ export default function AdminSessionsPage() {
             }},
             // ACTION
             { key: "act", label: "", align: "right", render: s => s.active ? (
-              <Btn kind="danger" size="sm" onClick={() => forceLogout(s)} title="Force logout">Force logout</Btn>
+              <Btn kind="danger" size="sm" onClick={() => forceLogout(s)}>Force logout</Btn>
             ) : <span className="text-xs" style={{ color: "var(--muted-2)" }}></span> },
           ]}
         />

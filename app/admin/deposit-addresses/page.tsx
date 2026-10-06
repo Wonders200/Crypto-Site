@@ -111,7 +111,7 @@ export default function AdminDepositAddressesPage() {
             { key: "act", label: "", align: "right", render: a => (
               <div className="flex justify-end gap-1.5">
                 <Btn kind="ghost" size="sm" onClick={() => startEdit(a)}>Edit</Btn>
-                <Btn kind="danger" size="sm" onClick={() => remove(a)} title="Delete"><Trash2 size={11} /> Delete</Btn>
+                <Btn kind="danger" size="sm" onClick={() => remove(a)}><Trash2 size={11} /> Delete</Btn>
               </div>
             )},
           ]}

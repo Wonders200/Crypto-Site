@@ -97,7 +97,7 @@ export default function AdminEarnPositionsPage() {
               <div className="flex justify-end gap-1.5">
                 {p.status === "active" && <Btn kind="ghost" size="sm" onClick={() => setStatus(p, "matured")}>Mature</Btn>}
                 <Btn kind="ghost" size="sm" onClick={() => setEditing({ ...p })}>Edit</Btn>
-                <Btn kind="danger" size="sm" onClick={() => remove(p)} title="Delete"><Trash2 size={11} /> Delete</Btn>
+                <Btn kind="danger" size="sm" onClick={() => remove(p)}><Trash2 size={11} /> Delete</Btn>
               </div>
             )},
           ]}

@@ -146,7 +146,7 @@ export default function AdminNewsPage() {
               { key: "act", label: "", align: "right", render: n => (
                 <div className="flex justify-end gap-1.5">
                   <Btn kind="ghost" size="sm" onClick={() => startEdit(n)}>Edit</Btn>
-                  <Btn kind="danger" size="sm" onClick={() => remove(n)} title="Delete"><Trash2 size={11} /> Delete</Btn>
+                  <Btn kind="danger" size="sm" onClick={() => remove(n)}><Trash2 size={11} /> Delete</Btn>
                 </div>
               )},
             ]}

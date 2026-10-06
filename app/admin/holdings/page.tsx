@@ -255,7 +255,7 @@ export default function AdminHoldingsPage() {
                           </div>
                           <div className="flex justify-end gap-1.5 shrink-0 w-40">
                             <Btn kind="ghost" size="sm" onClick={() => startEdit(r.h)}>Edit</Btn>
-                            <Btn kind="danger" size="sm" onClick={() => remove(r.h)} title="Delete">
+                            <Btn kind="danger" size="sm" onClick={() => remove(r.h)}>
                               <Trash2 size={11} /> Delete
                             </Btn>
                           </div>

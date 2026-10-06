@@ -149,7 +149,7 @@ export default function AdminEarnPage() {
               render: p => (
                 <div className="flex justify-end gap-1.5">
                   <Btn kind="ghost" size="sm" onClick={() => startEdit(p)}>Edit</Btn>
-                  <Btn kind="danger" size="sm" onClick={() => remove(p)} title="Delete">
+                  <Btn kind="danger" size="sm" onClick={() => remove(p)}>
                     <Trash2 size={11} /> Delete
                   </Btn>
                 </div>

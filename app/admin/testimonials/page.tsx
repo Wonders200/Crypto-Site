@@ -190,7 +190,7 @@ export default function AdminTestimonialsPage() {
               render: t => (
                 <div className="flex justify-end gap-1.5">
                   <Btn kind="ghost" size="sm" onClick={() => startEdit(t)}>Edit</Btn>
-                  <Btn kind="danger" size="sm" onClick={() => remove(t)} title="Delete">
+                  <Btn kind="danger" size="sm" onClick={() => remove(t)}>
                     <Trash2 size={11} /> Delete
                   </Btn>
                 </div>
