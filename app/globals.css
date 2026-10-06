@@ -259,3 +259,11 @@ nextjs-portal,
   opacity: 0 !important;
   pointer-events: none !important;
 }
+
+/* Demo mode  push content down to make room for banner */
+body.demo-mode-active {
+  padding-top: 42px !important;
+}
+body.demo-mode-active > *:first-child {
+  padding-top: 0;
+}

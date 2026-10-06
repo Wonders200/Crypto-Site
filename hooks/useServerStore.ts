@@ -20,6 +20,12 @@ export function useServerStore() {
   const [store, setStore] = useState<Store>(() => {
     if (typeof window === "undefined") return DEFAULT_STORE;
     try {
+      // Demo mode: use isolated demo store, never touch production cache
+      if (localStorage.getItem("cs.demoMode")) {
+        const demoRaw = localStorage.getItem("demo.cs.store");
+        if (demoRaw) return JSON.parse(demoRaw);
+        return DEFAULT_STORE;
+      }
       const cached = localStorage.getItem(STORE_CACHE_KEY);
       if (cached) return sanitizeStore(JSON.parse(cached));
     } catch {}
@@ -52,6 +58,13 @@ export function useServerStore() {
 
   /* -------- Fetch the full store -------- */
   const fetchFull = useCallback(async () => {
+    // Demo mode: never hit the server
+    if (typeof window !== "undefined" && localStorage.getItem("cs.demoMode")) {
+      setLoaded(true);
+      setOnline(true);
+      setLastSyncAt(Date.now());
+      return;
+    }
     try {
       const headers: HeadersInit = {};
       if (lastKnownVersion.current) headers["If-None-Match"] = `"${lastKnownVersion.current}"`;
@@ -91,6 +104,7 @@ export function useServerStore() {
   /* -------- Poll version (5s, ETag-optimized) -------- */
   useEffect(() => {
     const tick = async () => {
+      if (isDemoNow()) return;
       if (pendingWrites.current > 0) return;
       try {
         const headers: HeadersInit = {};
@@ -120,6 +134,16 @@ export function useServerStore() {
 
   /* -------- Writer (auth-aware, optimistic) -------- */
   const update = useCallback(<K extends keyof Store>(key: K, value: Store[K]) => {
+    // Demo mode is READ-ONLY: ignore all writes, log a warning
+    if (isDemoNow()) {
+      if (typeof window !== "undefined") {
+        try {
+          // Dispatch a global event so the banner can show a "read-only" toast
+          window.dispatchEvent(new CustomEvent("demo:readonly-attempt", { detail: { key } }));
+        } catch {}
+      }
+      return;
+    }
     setStore(prev => {
       const next = { ...prev, [key]: value };
       // Optimistic local update first
@@ -164,6 +188,12 @@ export function useServerStore() {
   }, [saveCache]);
 
   const replace = useCallback((s: Store) => {
+    if (isDemoNow()) {
+      if (typeof window !== "undefined") {
+        try { window.dispatchEvent(new CustomEvent("demo:readonly-attempt", { detail: { key: "replace" } })); } catch {}
+      }
+      return;
+    }
     setStore(s);
     saveCache(s, lastKnownVersion.current);
     pendingWrites.current += 1;

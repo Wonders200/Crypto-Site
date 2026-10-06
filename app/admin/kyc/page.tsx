@@ -2,8 +2,7 @@
 import React, { useState } from 'react';
 
 const initialUsers = [
-  { id: 1, name: 'David Wonders', email: 'davidfreeman081@gmail.com', status: 'VERIFIED', country: 'US', document: 'Passport', files: 2, updated: '5d ago', fileUrls: ['front_id', 'selfie'] },
-  { id: 2, name: 'Sarah Smith', email: 'sarah.smith@example.com', status: 'PENDING', country: 'UK', document: 'Drivers License', files: 3, updated: '2h ago', fileUrls: ['front_id', 'back_id', 'selfie'] },
+{ id: 2, name: 'Sarah Smith', email: 'sarah.smith@example.com', status: 'PENDING', country: 'UK', document: 'Drivers License', files: 3, updated: '2h ago', fileUrls: ['front_id', 'back_id', 'selfie'] },
   { id: 3, name: 'John Doe', email: 'john.doe@example.com', status: 'REJECTED', country: 'CA', document: 'National ID', files: 3, updated: '1d ago', fileUrls: ['front_id', 'back_id', 'selfie'] },
   { id: 4, name: 'Amina Yusuf', email: 'amina.y@example.com', status: 'PENDING', country: 'NG', document: 'Passport', files: 1, updated: '30m ago', fileUrls: ['front_id'] },
 ];

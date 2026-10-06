@@ -2,9 +2,21 @@
 import { useEffect, useState } from "react";
 
 /**
+ * Returns the actual storage key to use, prefixing with "demo." when
+ * the user is in demo mode. This keeps demo data isolated from production.
+ */
+function resolveKey(key: string): string {
+  if (typeof window === "undefined") return key;
+  try {
+    if (localStorage.getItem("cs.demoMode")) return "demo." + key;
+  } catch {}
+  return key;
+}
+
+/**
  * Persistent state with migration from any older version.
- * Reads from `key`. If missing, tries each key in `migrateFrom` in order,
- * takes the first that exists, writes it to `key`, and removes the old keys.
+ * Demo-aware: uses "demo." prefix when in demo mode so demo data
+ * never touches production localStorage keys.
  */
 export function usePersistentState<T>(
   key: string,
@@ -17,19 +29,18 @@ export function usePersistentState<T>(
   // Hydrate on mount
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(key);
+      const actualKey = resolveKey(key);
+      const raw = localStorage.getItem(actualKey);
       if (raw) {
         setV(JSON.parse(raw));
-      } else if (migrateFrom.length > 0) {
-        // Try each older key
+      } else if (!actualKey.startsWith("demo.") && migrateFrom.length > 0) {
         for (const oldKey of migrateFrom) {
           const old = localStorage.getItem(oldKey);
           if (old) {
             try {
               const parsed = JSON.parse(old) as T;
               setV(parsed);
-              localStorage.setItem(key, JSON.stringify(parsed));
-              // Clean up old keys so this doesn't happen again
+              localStorage.setItem(actualKey, JSON.stringify(parsed));
               for (const k of migrateFrom) localStorage.removeItem(k);
               break;
             } catch {}
@@ -38,13 +49,13 @@ export function usePersistentState<T>(
       }
     } catch {}
     setHydrated(true);
-  }, [key]); // eslint-disable-line
+  }, [key]);
 
-  // Persist on change (only after hydration, to avoid overwriting stored data with initial)
+  // Persist on change
   useEffect(() => {
     if (!hydrated) return;
     try {
-      localStorage.setItem(key, JSON.stringify(v));
+      localStorage.setItem(resolveKey(key), JSON.stringify(v));
     } catch {}
   }, [key, v, hydrated]);
 

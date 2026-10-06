@@ -133,12 +133,9 @@ export const DEFAULT_CREDENTIALS: AdminCredentials = {
   password: "admin123",
 };
 
-export const DEFAULT_DEMO_USER: DemoUser = {
-  email: "demo@apexvault.io",
-  password: "demo123",
-  name: "Demo User",
-  tier: "Pro",
-};
+export const DEFAULT_DEMO_USER = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+  ? { email: "demo@apexvault.io", password: "DemoCustomer2026!", name: "Alexa S Adamz", tier: "Pro" as const }
+  : { email: "demo@apexvault.io", password: "DemoCustomer2026!", name: "Alexa S Adamz", tier: "Pro" as const };
 
 const now = Date.now();
 const day = 86400000;
