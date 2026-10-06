@@ -2,8 +2,8 @@
 import React from 'react';
 import { usePageContent } from '@/lib/usePageContent';
 
-export default function ContactPage() {
-  const { content } = usePageContent('contact');
+export default function BlogPage() {
+  const { content } = usePageContent('blog');
 
   return (
     <div style={{ padding: '4rem 2rem', maxWidth: '1000px', margin: '0 auto', background: '#0f1117', color: '#fff', minHeight: '100vh', fontFamily: 'sans-serif' }}>

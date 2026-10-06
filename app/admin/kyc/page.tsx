@@ -46,16 +46,9 @@ export default function KycPage() {
 
   return (
     <div style={{ padding: '2rem', background: '#0f1117', color: '#fff', minHeight: '100vh', fontFamily: 'sans-serif' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
-        <div>
-          <h1 style={{ fontSize: '2rem', fontWeight: '700', margin: 0 }}>KYC Reviews</h1>
-          <p style={{ color: '#8b92a5', fontSize: '0.9rem', marginTop: '0.25rem' }}>{users.length} customers {pendingCount} pending {verifiedCount} verified</p>
-        </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <button style={{ background: '#6366f1', color: '#fff', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: '600', cursor: 'pointer' }}>
-            + Force New Request
-          </button>
-        </div>
+      <div style={{ marginBottom: '2rem' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: '700', margin: 0 }}>KYC Reviews</h1>
+        <p style={{ color: '#8b92a5', fontSize: '0.9rem', marginTop: '0.25rem' }}>{users.length} customers {pendingCount} pending {verifiedCount} verified</p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
@@ -107,7 +100,7 @@ export default function KycPage() {
               <th style={{ textAlign: 'left', padding: '1rem 1.5rem', color: '#6b7280', fontSize: '0.85rem', textTransform: 'uppercase', borderBottom: '1px solid #2a2e3b' }}>Files</th>
               <th style={{ textAlign: 'left', padding: '1rem 1.5rem', color: '#6b7280', fontSize: '0.85rem', textTransform: 'uppercase', borderBottom: '1px solid #2a2e3b' }}>Status</th>
               <th style={{ textAlign: 'left', padding: '1rem 1.5rem', color: '#6b7280', fontSize: '0.85rem', textTransform: 'uppercase', borderBottom: '1px solid #2a2e3b' }}>Updated</th>
-              <th style={{ textAlign: 'left', padding: '1rem 1.5rem', color: '#6b7280', fontSize: '0.85rem', textTransform: 'uppercase', borderBottom: '1px solid #2a2e3b', minWidth: '320px' }}>Actions</th>
+              <th style={{ textAlign: 'left', padding: '1rem 1.5rem', color: '#6b7280', fontSize: '0.85rem', textTransform: 'uppercase', borderBottom: '1px solid #2a2e3b', minWidth: '360px' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -143,9 +136,8 @@ export default function KycPage() {
                       <button onClick={() => handleAutoAccept(u.id)} style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)', padding: '0.4rem 0.8rem', borderRadius: '0.4rem', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>Auto-Accept</button>
                     )}
 
-                    {(u.status === 'VERIFIED' || u.status === 'REJECTED') && (
-                      <button onClick={() => handleForceRequest(u.id)} style={{ background: 'transparent', color: '#facc15', border: '1px solid #facc15', padding: '0.4rem 0.8rem', borderRadius: '0.4rem', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>Force KYC</button>
-                    )}
+                    {/* Force KYC button now appears for EVERY customer */}
+                    <button onClick={() => handleForceRequest(u.id)} style={{ background: 'transparent', color: '#facc15', border: '1px solid #facc15', padding: '0.4rem 0.8rem', borderRadius: '0.4rem', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>Force KYC</button>
 
                     {u.status !== 'REJECTED' && (
                       <button onClick={() => handleReject(u.id)} style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)', padding: '0.4rem 0.8rem', borderRadius: '0.4rem', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>Reject</button>
