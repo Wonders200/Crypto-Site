@@ -140,10 +140,9 @@ export default function BalancePage() {
   const kycStatus = kycStatusFromStore(store, matchedUser);
   const kycOk = kycStatus === "verified";
 
-  const hashOk = !!txHash.trim() && hint.pattern.test(txHash.trim());
   const proofOk = !!proofUrl;
   const amountOk = (parseFloat(amount) || 0) > 0;
-  const depositReady = hashOk && proofOk && amountOk && !uploading && !!selectedMethod;
+  const depositReady = proofOk && amountOk && !uploading && !!selectedMethod;
 
   const wAddressOk = !!wAddress.trim() && wValidator.pattern.test(wAddress.trim());
   const wAmountOk = wAmountNum >= MIN_WITHDRAWAL && wAmountNum <= (balance?.usd ?? 0);
@@ -200,7 +199,7 @@ export default function BalancePage() {
 
   const submitDeposit = () => {
     setFormError("");
-    if (!depositReady) { setFormError("Please provide both the transaction hash and payment screenshot."); return; }
+    if (!depositReady) { setFormError("Please upload a payment screenshot to continue."); return; }
     const amt = parseFloat(amount) || 0;
     if (!matchedUser || !balance || !selectedMethod) return;
 
@@ -420,12 +419,12 @@ export default function BalancePage() {
               <div className="mt-6 pt-6" style={{ borderTop: "1px solid " + T.border }}>
                 <div className="mb-3">
                   <div className="text-[13px] font-semibold" style={{ color: T.textPrimary }}>Almost done  just tell us how you paid</div>
-                  <div className="text-[11.5px] mt-0.5" style={{ color: T.textSecondary }}>This helps us credit your account faster. Both items are required.</div>
+                  <div className="text-[11.5px] mt-0.5" style={{ color: T.textSecondary }}>This helps us credit your account faster. Payment screenshot is required. Transaction hash is optional but speeds up verification.</div>
                 </div>
 
                 <label className="block mb-4">
                   <div className="text-[12px] mb-1.5 flex items-center gap-1.5" style={{ color: T.textSecondary }}>
-                    <Hash size={12} /> Transaction hash <span style={{ color: "#B91C1C" }}>*</span>
+                    <Hash size={12} /> Transaction hash
                   </div>
                   <input type="text" value={txHash}
                     onChange={e => { setTxHash(e.target.value); setFormError(""); }}
@@ -499,7 +498,7 @@ export default function BalancePage() {
                     color: "#FFFFFF",
                     opacity: depositReady ? 1 : 0.85,
                   }}>
-                  {depositReady ? "I've sent " + selectedMethod.asset + "  submit for review" : "Add hash + screenshot to submit"}
+                  {depositReady ? "I've sent " + selectedMethod.asset + "  submit for review" : "Upload screenshot to submit"}
                 </button>
                 <button type="button" onClick={() => { setShowDeposit(false); setFormError(""); }}
                   className="rounded-xl px-5 text-[14px] font-semibold"

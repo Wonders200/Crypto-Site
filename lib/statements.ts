@@ -55,13 +55,18 @@ export async function downloadPDF(filename: string, rows: StatementRow[], meta: 
   doc.setFillColor(15, 23, 42);
   doc.rect(0, 0, W, 82, "F");
 
-  /* Brand mark */
+  /* Brand mark  ApexVault "A" SVG mark (drawn as vector) */
   doc.setFillColor(accent[0], accent[1], accent[2]);
   doc.roundedRect(40, 26, 32, 32, 6, 6, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(20);
-  doc.text("C", 52, 48);
+  // Outer A triangle (silhouette)
+  doc.setFillColor(10, 11, 15);
+  doc.triangle(56, 32.5, 63.5, 51, 48.5, 51, "F");
+  // Inner notch (cuts out center)
+  doc.setFillColor(accent[0], accent[1], accent[2]);
+  doc.triangle(56, 41.2, 59.8, 51, 52.2, 51, "F");
+  // Horizontal vault slot bar
+  doc.setFillColor(10, 11, 15);
+  doc.roundedRect(51.6, 44.9, 8.8, 2.2, 1.1, 1.1, "F");
 
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");

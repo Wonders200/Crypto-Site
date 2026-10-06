@@ -8,7 +8,7 @@ import LiveTimeAgo from "@/components/LiveTimeAgo";
 import {
   Hash, Image as ImageIcon, Copy, Check, ChevronDown, ChevronRight,
   ArrowDownToLine, ArrowUpFromLine, TrendingUp, Wallet, Search,
-  Layers, X as XIcon, Trash2, Plus, Clock, AlertTriangle, ExternalLink,
+  Layers, X as XIcon, Trash2, Plus, Minus, Clock, AlertTriangle, ExternalLink,
 } from "lucide-react";
 
 const empty = (): AdminTransaction => ({
@@ -41,6 +41,10 @@ export default function AdminTransactionsPage() {
   const [copiedHash, setCopiedHash] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<AdminTransaction | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [deducting, setDeducting] = useState<{ userId: string; name: string; balance: number } | null>(null);
+  const [deductAmount, setDeductAmount] = useState("");
+  const [deductReason, setDeductReason] = useState("");
+  const [deductError, setDeductError] = useState("");
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [q, setQ] = useState("");
@@ -100,6 +104,51 @@ export default function AdminTransactionsPage() {
   };
   const startEdit = (t: AdminTransaction) => { setEditing({ ...t }); setIsNew(false); };
   const close = () => { setEditing(null); setIsNew(false); };
+
+  const startDeduct = (forUserId?: string) => {
+    const target = forUserId ? store.users.find(u => u.id === forUserId) : store.users[0];
+    if (!target) { push({ kind: "error", title: "No customer available" }); return; }
+    const bal = store.balances.find(b => b.userId === target.id);
+    setDeducting({ userId: target.id, name: target.name, balance: bal?.usd ?? 0 });
+    setDeductAmount("");
+    setDeductReason("");
+    setDeductError("");
+  };
+
+  const closeDeduct = () => {
+    setDeducting(null);
+    setDeductAmount("");
+    setDeductReason("");
+    setDeductError("");
+  };
+
+  const submitDeduct = () => {
+    if (!deducting) return;
+    const amt = parseFloat(deductAmount) || 0;
+    if (amt <= 0) { setDeductError("Enter a positive amount."); return; }
+    if (amt > deducting.balance) { setDeductError("Amount exceeds customer balance of " + formatCurrency(deducting.balance) + "."); return; }
+    if (!deductReason.trim()) { setDeductError("Please provide a reason for the deduction."); return; }
+    update("balances", store.balances.map(b => b.userId === deducting.userId
+      ? { ...b, usd: Math.max(0, b.usd - amt), updatedAt: Date.now() }
+      : b));
+    const ref = "ADJ-" + Math.random().toString(36).slice(2, 10).toUpperCase();
+    const t: AdminTransaction = {
+      id: uid("t"),
+      userId: deducting.userId,
+      type: "fee",
+      amount: -amt,
+      currency: "USD",
+      status: "completed",
+      description: "Admin deduction - " + deductReason.trim(),
+      createdAt: Date.now(),
+      reference: ref,
+    };
+    update("transactions", [t, ...store.transactions]);
+    log("DEDUCT", "Deduction " + formatCurrency(amt), deducting.name + " - " + deductReason.trim());
+    push({ kind: "success", title: "Deducted", message: formatCurrency(amt) + " deducted from " + deducting.name + "." });
+    setExpanded(prev => ({ ...prev, [deducting.userId]: true }));
+    closeDeduct();
+  };
 
   const save = () => {
     if (!editing || !editing.userId || !editing.description) {
@@ -187,7 +236,14 @@ export default function AdminTransactionsPage() {
       <PageHeader
         title="Customer Activity"
         subtitle={`${store.transactions.length} records  ${pendingAll} pending approval`}
-        actions={<Btn onClick={() => startNew()}>+ Add Transaction</Btn>}
+        actions={
+          <div className="flex gap-2">
+            <button onClick={() => startDeduct()} className="px-4 py-2 rounded-lg text-sm font-semibold inline-flex items-center gap-1.5" style={{ background: "var(--red-dim)", color: "var(--red)", border: "1px solid var(--red)" }}>
+              <Minus size={13} /> Deduct Transaction
+            </button>
+            <Btn onClick={() => startNew()}>+ Add Transaction</Btn>
+          </div>
+        }
       />
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -424,9 +480,14 @@ export default function AdminTransactionsPage() {
                           <div className="text-[11px]" style={{ color: "var(--muted)" }}>
                             {filtered.length} of {all.length} shown
                           </div>
-                          <Btn kind="ghost" size="sm" onClick={() => startNew(user.id)}>
-                            <Plus size={12} /> Add for {user.name.split(" ")[0]}
-                          </Btn>
+                          <div className="flex gap-2">
+                            <button onClick={() => startDeduct(user.id)} className="px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1" style={{ background: "var(--red-dim)", color: "var(--red)", border: "1px solid var(--red)" }}>
+                              <Minus size={11} /> Deduct
+                            </button>
+                            <Btn kind="ghost" size="sm" onClick={() => startNew(user.id)}>
+                              <Plus size={12} /> Add for {user.name.split(" ")[0]}
+                            </Btn>
+                          </div>
                         </div>
                       </>
                     )}
@@ -529,6 +590,52 @@ export default function AdminTransactionsPage() {
                 className="w-full px-3 py-2 rounded-lg text-sm outline-none"
                 style={{ background: "var(--panel-2)", border: "1px solid var(--border)", color: "var(--text)" }} />
             </Field>
+          </div>
+        )}
+      </Modal>
+
+      {/* Deduct modal */}
+      <Modal open={!!deducting} onClose={closeDeduct} title="Deduct from customer"
+        footer={<>
+          <Btn kind="ghost" onClick={closeDeduct}>Cancel</Btn>
+          <Btn kind="danger" onClick={submitDeduct}>Deduct</Btn>
+        </>}>
+        {deducting && (
+          <div className="space-y-4">
+            <Field label="Customer">
+              <Select value={deducting.userId} onChange={v => {
+                const u = store.users.find(x => x.id === v);
+                if (u) {
+                  const bal = store.balances.find(b => b.userId === u.id);
+                  setDeducting({ userId: u.id, name: u.name, balance: bal?.usd ?? 0 });
+                }
+              }} options={store.users.map(u => ({ value: u.id, label: u.name + " (" + u.email + ")" }))} />
+            </Field>
+
+            <div className="rounded-xl p-3 text-xs" style={{ background: "var(--panel-2)", border: "1px solid var(--border)", color: "var(--muted)" }}>
+              Current balance: <span className="mono font-semibold" style={{ color: "var(--text)" }}>{formatCurrency(deducting.balance)}</span>
+            </div>
+
+            <Field label="Amount to deduct (USD)">
+              <Input value={deductAmount} onChange={(v) => { setDeductAmount(v); setDeductError(""); }} type="number" />
+            </Field>
+
+            <Field label="Reason for deduction (required)">
+              <textarea value={deductReason} onChange={e => { setDeductReason(e.target.value); setDeductError(""); }} rows={3}
+                placeholder="e.g. Chargeback, incorrect credit, account adjustment..."
+                className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+                style={{ background: "var(--panel-2)", border: "1px solid var(--border)", color: "var(--text)" }} />
+            </Field>
+
+            {deductError && (
+              <div className="rounded-lg p-3 text-xs flex items-start gap-2" style={{ background: "var(--red-dim)", border: "1px solid var(--red)", color: "var(--red)" }}>
+                <AlertTriangle size={13} className="shrink-0 mt-0.5" /> {deductError}
+              </div>
+            )}
+
+            <div className="text-[11px] leading-relaxed" style={{ color: "var(--muted)" }}>
+              This immediately reduces the customer balance and creates an audit record.
+            </div>
           </div>
         )}
       </Modal>

@@ -52,7 +52,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <div className="px-5 py-5 border-b" style={{ borderColor: "var(--border)" }}>
           <Link href="/admin" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-black"
-              style={{ background: "linear-gradient(135deg, var(--green), var(--accent))" }}>C</div>
+              style={{ background: "linear-gradient(135deg, var(--green), var(--accent))" }}>A</div>
             <div className="flex-1">
               <div className="text-sm font-bold">ApexVault</div>
               <div className="text-[10px] uppercase tracking-wider" style={{ color: "var(--muted)" }}>Admin Console</div>

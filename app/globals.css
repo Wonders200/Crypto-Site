@@ -244,3 +244,18 @@ input, select, textarea {
 button, a {
   -webkit-tap-highlight-color: transparent;
 }
+/* ============================================
+   Hide Next.js dev error overlay permanently
+   ============================================ */
+nextjs-portal,
+[data-nextjs-toast],
+[data-nextjs-dialog],
+[data-nextjs-dialog-overlay],
+[data-nextjs-error-indicator],
+#nextjs__container_errors_label,
+#nextjs__container_errors_desc {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

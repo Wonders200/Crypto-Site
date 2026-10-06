@@ -13,7 +13,12 @@ export default function Footer() {
         <div className="md:col-span-2">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-black"
-              style={{ background: "linear-gradient(135deg, var(--green), var(--accent))" }}>C</div>
+              style={{ background: "linear-gradient(135deg, var(--green), var(--accent))" }}>
+              <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="ApexVault">
+                <path d="M16 6.5 L23.5 25 L19.8 25 L16 15.2 L12.2 25 L8.5 25 Z" fill="#0a0b0f" />
+                <path d="M11.6 20 L20.4 20" stroke="#0a0b0f" strokeWidth="2.2" strokeLinecap="round" />
+              </svg>
+            </div>
             <span className="font-bold text-lg">ApexVault</span>
           </div>
           <p className="text-sm mt-4 leading-relaxed" style={{ color: "var(--muted)" }}>

@@ -30,7 +30,7 @@ export default function AdminLoginPage() {
       <div className="panel p-8 w-full max-w-md">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-black"
-            style={{ background: "linear-gradient(135deg, var(--green), var(--accent))" }}>C</div>
+            style={{ background: "linear-gradient(135deg, var(--green), var(--accent))" }}>A</div>
           <div>
             <h1 className="text-lg font-bold">Admin Console</h1>
             <p className="text-xs" style={{ color: "var(--muted)" }}>Restricted access</p>
