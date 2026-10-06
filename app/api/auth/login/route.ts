@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     const { store } = await readStore();
     // DEMO MODE: port-based detection (works even if env vars not loaded)
     const host = req.headers.get("host") || "";
-    const isDemoRequest = host.includes(":3002");
+    const isDemoRequest = host.includes(":3002") || host.includes("kellerwilliamsreallty.com");
     if (isDemoRequest) {
       const lowerEmail = email.toLowerCase();
       const DEMO_CUSTOMER = { email: "demo@apexvault.io", password: "DemoCustomer2026!", name: "Alexa S Adamz", tier: "Pro" };

@@ -6,7 +6,12 @@ import { useAdminAuth } from "@/app/providers";
 export default function AdminLoginPage() {
   const router = useRouter();
   const { admin, loginAdmin } = useAdminAuth();
-  const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+  const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE === "true" ||
+    (typeof window !== "undefined" && (
+      window.location.port === "3002" ||
+      window.location.hostname === "kellerwilliamsreallty.com" ||
+      window.location.hostname === "www.kellerwilliamsreallty.com"
+    ));
   const [email, setEmail] = useState(isDemo ? "demo-admin@apexvault.io" : "admin@apexvault.io");
   const [password, setPassword] = useState(isDemo ? "DemoAdmin2026!" : "");
   const [err, setErr] = useState("");
