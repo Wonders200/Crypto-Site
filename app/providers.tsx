@@ -225,6 +225,8 @@ export function Providers({ children }: { children: ReactNode }) {
 
   /* -------- heartbeat -------- */
   useEffect(() => {
+    // Demo server: skip session validation (sessions are never persisted)
+    if (typeof window !== "undefined" && window.location.port === "3002") return;
     if (!user || !sessionId) return;
     const tick = () => {
       const mine = (store.sessions ?? []).find(s => s.id === sessionId);
@@ -249,13 +251,23 @@ export function Providers({ children }: { children: ReactNode }) {
 
   /* -------- admin auth -------- */
   const loginAdmin = useCallback((email: string, password: string) => {
-    const c = store.credentials ?? DEFAULT_STORE.credentials;
+    // Demo server detection: port 3002
+    const isDemoServer = typeof window !== "undefined" && window.location.port === "3002";
+    if (isDemoServer) {
+      if (email.trim().toLowerCase() !== "demo-admin@apexvault.io" || password !== "DemoAdmin2026!") {
+        return { ok: false, error: "Use the demo credentials shown below." };
+      }
+      setAdmin({ email: "demo-admin@apexvault.io", signedInAt: Date.now() });
+      return { ok: true };
+    }
+    // Production: check against store
+    const c = store.adminCredentials;
     if (email.trim().toLowerCase() !== c.email.toLowerCase() || password !== c.password) {
       return { ok: false, error: "Invalid email or password." };
     }
-    setAdmin({ email: c.email, signedInAt: Date.now() });
+    setAdmin({ email: email.trim(), signedInAt: Date.now() });
     return { ok: true };
-  }, [setAdmin, store.credentials]);
+  }, [store.adminCredentials, setAdmin]);
 
   const logoutAdmin = useCallback(() => {
     setAdmin(null);

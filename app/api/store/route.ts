@@ -58,6 +58,13 @@ export async function GET(req: Request) {
 
 /** POST  replace the store, self-heal KYC */
 export async function POST(req: Request) {
+  // READ-ONLY DEMO: reject all writes when on the demo server
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === "true" || process.env.CRYPTO_DATA_DIR === "data-demo") {
+    return NextResponse.json(
+      { error: "Demo mode is read-only. Purchase to unlock full editing." },
+      { status: 403 }
+    );
+  }
   try {
     const body = await req.json();
     const incoming = body?.store ?? body;

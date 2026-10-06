@@ -12,7 +12,8 @@ export default function AdminSettingsPage() {
   const [isDemo, setIsDemo] = useState(false);
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setIsDemo(!!localStorage.getItem("cs.demoMode"));
+      const onDemo = window.location.port === "3002" || !!localStorage.getItem("cs.demoMode");
+      setIsDemo(onDemo);
     }
   }, []);
 

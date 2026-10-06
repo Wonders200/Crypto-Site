@@ -9,6 +9,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  // READ-ONLY DEMO: no new accounts on demo server
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === "true" || process.env.CRYPTO_DATA_DIR === "data-demo") {
+    return NextResponse.json({ error: "Signups disabled in demo. Use the demo account to log in." }, { status: 403 });
+  }
   try {
     const body = await req.json();
     const parsed = parseBody(RegisterSchema, body);

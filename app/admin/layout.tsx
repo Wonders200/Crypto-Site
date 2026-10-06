@@ -6,6 +6,7 @@ import { useAdminAuth, useAdminStore } from "@/app/providers";
 import { usePendingCounts } from "@/hooks/usePendingCounts";
 import AdminRealtimeBell from "@/components/AdminRealtimeBell";
 import { LayoutDashboard, Coins, Users, ShieldCheck, Activity, Wallet, DollarSign, CreditCard, ArrowLeftRight, ListOrdered, Newspaper, MessageSquare, GraduationCap, Percent, TrendingUp, Tag, Settings, ScrollText, LogOut, ExternalLink, Bell, Wrench } from "lucide-react";
+import DemoSidebarNotice from "@/components/DemoSidebarNotice";
 
 const NAV = [
   { href: "/admin",                 label: "Dashboard",       icon: LayoutDashboard, key: null },
@@ -65,6 +66,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             )}
           </Link>
         </div>
+
+
+        <DemoSidebarNotice />
 
         <nav className="flex-1 overflow-y-auto py-3 scrollbar-thin">
           {NAV.map(({ href, label, icon: Icon, key }) => {

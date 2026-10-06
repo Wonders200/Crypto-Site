@@ -6,8 +6,9 @@ import { useAdminAuth } from "@/app/providers";
 export default function AdminLoginPage() {
   const router = useRouter();
   const { admin, loginAdmin } = useAdminAuth();
-  const [email, setEmail] = useState("admin@apexvault.io");
-  const [password, setPassword] = useState("admin123");
+  const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+  const [email, setEmail] = useState(isDemo ? "demo-admin@apexvault.io" : "admin@apexvault.io");
+  const [password, setPassword] = useState(isDemo ? "DemoAdmin2026!" : "");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -59,9 +60,9 @@ export default function AdminLoginPage() {
         </form>
 
         <div className="mt-6 p-3 rounded-lg text-xs" style={{ background: "var(--panel-2)", border: "1px solid var(--border)" }}>
-          <div style={{ color: "var(--muted)" }}>Default credentials</div>
-          <div className="mono mt-1">admin@apexvault.io / admin123</div>
-          <div className="text-[10px] mt-1" style={{ color: "var(--muted-2)" }}>Change in Settings after first login.</div>
+          <div style={{ color: "var(--muted)" }}>{isDemo ? "Demo credentials" : "Admin credentials"}</div>
+            <div className="mono mt-1">{isDemo ? "demo-admin@apexvault.io / DemoAdmin2026!" : "Use your configured admin password"}</div>
+            <div className="text-[10px] mt-1" style={{ color: "var(--muted-2)" }}>{isDemo ? "Read-only demo  data resets on exit" : "Change in Settings after first login."}</div>
         </div>
       </div>
     </div>
