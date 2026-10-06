@@ -108,7 +108,7 @@ export default function AdminAssetsPage() {
                 R{c.risk}
               </Badge>
             )},
-            { key: "feat", label: "Feat", align: "center", render: c => c.featured ? <Badge kind="amber"></Badge> : <span style={{ color: "var(--muted-2)" }}></span> },
+            { key: "feat", label: "Feat", align: "center", render: c => c.featured ? <Badge kind="amber">FEAT</Badge> : <span style={{ color: "var(--muted-2)" }}></span> },
             { key: "en", label: "Status", align: "center", render: c => (
               <Badge kind={c.enabled ? "green" : "red"}>{c.enabled ? "LIVE" : "OFF"}</Badge>
             )},
