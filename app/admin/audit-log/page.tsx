@@ -12,7 +12,7 @@ const initialLogs = [
   { id: 9, time: '2026-10-24 10:15:38', actor: 'admin@apexvault.io', action: 'CONFIG', resource: 'Fee Schedule', detail: 'Adjusted maker fee to 0.10%', ip: '10.0.0.1' },
   { id: 10, time: '2026-10-24 09:42:11', actor: 'admin@apexvault.io', action: 'UPDATE', resource: 'Page Content', detail: 'Updated About page mission statement', ip: '10.0.0.1' },
 ];
-const actionColors = { UPDATE: '#6366f1', APPROVE: '#22c55e', AUTO: '#8b5cf6', DELETE: '#ef4444', CREATE: '#10b981', LOGIN: '#3b82f6', SUSPEND: '#f59e0b', ALERT: '#ef4444', CONFIG: '#f59e0b' };
+const actionColors: Record<string, string> = { UPDATE: '#6366f1', APPROVE: '#22c55e', AUTO: '#8b5cf6', DELETE: '#ef4444', CREATE: '#10b981', LOGIN: '#3b82f6', SUSPEND: '#f59e0b', ALERT: '#ef4444', CONFIG: '#f59e0b' };
 export default function AuditLogPage() {
   const [logs, setLogs] = useState(initialLogs);
   const [search, setSearch] = useState('');
