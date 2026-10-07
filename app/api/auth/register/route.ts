@@ -18,6 +18,7 @@ export async function POST(req: Request) {
     const parsed = parseBody(RegisterSchema, body);
     if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
     const { name, email, password } = parsed.data;
+    const referralCode = (body as any)?.referralCode || "";
 
     const { store } = await readStore();
     const exists = store.users.find(u => u.email.toLowerCase() === email);
@@ -26,6 +27,8 @@ export async function POST(req: Request) {
     const userId = uid("u");
     const pwHash = await hashPassword(password);
 
+    const { makeReferralCode, findByReferralCode } = require("@/lib/referrals");
+    const referrer = referralCode ? findByReferralCode(store, referralCode) : null;
     const user: AdminUser = {
       id: userId,
       name,
@@ -35,6 +38,9 @@ export async function POST(req: Request) {
       kycVerified: false,
       kycStatus: "unverified",
       createdAt: Date.now(),
+      referralCode: makeReferralCode(name),
+      referredBy: referrer?.id ?? undefined,
+      referralBonusUsd: 0,
       password: pwHash,
     };
 

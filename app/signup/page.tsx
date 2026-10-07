@@ -6,6 +6,12 @@ import { useAuth, useToast } from "@/app/providers";
 import { setTokens } from "@/lib/apiClient";
 
 export default function SignupPage() {
+  const searchParams = useSearchParams();
+  const [refCode, setRefCode] = useState("");
+  useEffect(() => {
+    const r = searchParams?.get("ref");
+    if (r) setRefCode(r);
+  }, [searchParams]);
   const router = useRouter();
   const { login, user } = useAuth();
   const { push } = useToast();
@@ -29,7 +35,7 @@ export default function SignupPage() {
           name: form.name.trim(),
           email: form.email.trim().toLowerCase(),
           password: form.password,
-        }),
+        referralCode: refCode })
       });
       const data = await res.json();
       if (!res.ok) {
