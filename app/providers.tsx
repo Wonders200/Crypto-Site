@@ -271,14 +271,33 @@ export function Providers({ children }: { children: ReactNode }) {
       return { ok: true };
     }
 
-    // PRODUCTION: check against hardcoded credentials (never depends on store)
-    // Falls back to store.credentials if present, otherwise uses the canonical values.
-    const storedCreds = (store && (store as any).credentials) || null;
-    const PROD_EMAIL = (storedCreds?.email || "admin@apexvault.io").toLowerCase();
-    const PROD_PASSWORD = storedCreds?.password || "ApexVault-Admin-2026-xQ9!";
+    // PRODUCTION: check dedicated localStorage keys FIRST (instant, no race)
+    let PROD_EMAIL = "admin@apexvault.io";
+    let PROD_PASSWORD = "ApexVault-Admin-2026-xQ9!";
+    if (typeof window !== "undefined") {
+      try {
+        const lsEmail = localStorage.getItem("cs.adminEmail");
+        const lsPassword = localStorage.getItem("cs.adminPassword");
+        if (lsEmail && lsPassword) {
+          PROD_EMAIL = lsEmail;
+          PROD_PASSWORD = lsPassword;
+        }
+      } catch {}
+    }
+    // Fall back to store if localStorage keys are missing
+    if (typeof window !== "undefined" && !localStorage.getItem("cs.adminEmail")) {
+      const storedCreds = (store && (store as any).credentials) || null;
+      if (storedCreds?.email) PROD_EMAIL = storedCreds.email;
+      if (storedCreds?.password) PROD_PASSWORD = storedCreds.password;
+      // Bootstrap: if fresh install, write defaults to localStorage so future changes stick
+      try {
+        localStorage.setItem("cs.adminEmail", PROD_EMAIL);
+        localStorage.setItem("cs.adminPassword", PROD_PASSWORD);
+      } catch {}
+    }
 
     const submittedEmail = email.trim().toLowerCase();
-    if (submittedEmail !== PROD_EMAIL || password !== PROD_PASSWORD) {
+    if (submittedEmail !== PROD_EMAIL.toLowerCase() || password !== PROD_PASSWORD) {
       return { ok: false, error: "Invalid email or password." };
     }
 

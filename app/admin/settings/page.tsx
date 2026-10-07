@@ -49,9 +49,15 @@ export default function AdminSettingsPage() {
       push({ kind: "error", title: "Passwords don't match" });
       return;
     }
+    // Write to localStorage FIRST  this is what loginAdmin reads
+    try {
+      localStorage.setItem("cs.adminEmail", creds.email.trim().toLowerCase());
+      localStorage.setItem("cs.adminPassword", creds.password);
+    } catch {}
+    // Then sync to server store (for backup/audit)
     update("credentials", creds);
     log("UPDATE", "Admin credentials", creds.email);
-    push({ kind: "success", title: "Credentials updated" });
+    push({ kind: "success", title: "Credentials updated", message: "New credentials are active immediately." });
   };
 
   const saveDemo = () => {
