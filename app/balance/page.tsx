@@ -354,7 +354,9 @@ export default function BalancePage() {
       </div>
 
       {showDeposit && (
-        <div className="rounded-3xl" style={{ background: T.pageBg, border: "1px solid " + T.border, padding: "32px 32px 28px" }}>
+        <div className="fixed inset-0 z-[100] overflow-y-auto" style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }} onClick={(e) => { if (e.target === e.currentTarget) { setShowDeposit(false); setFormError(""); } }}>
+          <div className="min-h-full flex items-start justify-center p-4 md:p-8">
+        <div className="rounded-3xl w-full max-w-3xl" style={{ background: T.pageBg, border: "1px solid " + T.border, padding: "32px 32px 28px" }}>
           <NetworkPicker networks={depositMethods} selectedId={methodId} onSelect={(id) => { setMethodId(id); setTxHash(""); setFormError(""); }} />
 
           {selectedMethod && (
@@ -509,10 +511,15 @@ export default function BalancePage() {
             </>
           )}
         </div>
+      
+          </div>
+        </div>
       )}
 
       {showWithdraw && (
-        <div className="rounded-3xl" style={{ background: T.pageBg, border: "1px solid " + T.border, padding: "32px 32px 28px" }}>
+        <div className="fixed inset-0 z-[100] overflow-y-auto" style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }} onClick={(e) => { if (e.target === e.currentTarget) { setShowWithdraw(false); setFormError(""); } }}>
+          <div className="min-h-full flex items-start justify-center p-4 md:p-8">
+        <div className="rounded-3xl w-full max-w-3xl" style={{ background: T.pageBg, border: "1px solid " + T.border, padding: "32px 32px 28px" }}>
           {!kycOk ? (
             <div className="flex flex-col items-center text-center py-8 gap-4">
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
@@ -749,6 +756,9 @@ export default function BalancePage() {
               </div>
             </>
           )}
+        </div>
+      
+          </div>
         </div>
       )}
 
