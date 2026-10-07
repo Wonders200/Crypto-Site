@@ -279,7 +279,7 @@ export default function BalancePage() {
   };
 
   return (
-    <div className="max-w-[1200px] mx-auto px-6 py-10 space-y-6">
+    <div className="max-w-[1200px] mx-auto px-4 md:px-6 py-6 md:py-10 space-y-6">
       <div className="-ml-2 -mb-3">
         <BackButton fallback="/dashboard" label="Back to dashboard" />
       </div>

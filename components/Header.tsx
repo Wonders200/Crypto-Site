@@ -51,7 +51,7 @@ export default function Header() {
       )}
       <header className="sticky top-0 z-50 backdrop-blur border-b"
         style={{ background: "rgba(10,11,15,0.85)", borderColor: "var(--border)" }}>
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 flex items-center gap-6 h-16">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 flex items-center gap-3 md:gap-6 h-14 md:h-16">
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="ApexVault">
               <defs>

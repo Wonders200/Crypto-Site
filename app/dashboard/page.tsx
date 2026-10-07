@@ -46,14 +46,14 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto px-6 py-10 space-y-6">
+    <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-6 md:py-10 space-y-6">
       <div className="-ml-2 -mb-2">
         <BackButton fallback="/" label="Back to home" />
       </div>
 
       <div className="flex items-end justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Portfolio</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">Portfolio</h1>
           <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
             Live valuation, risk analytics, and everything you've traded.
           </p>
@@ -197,7 +197,7 @@ function SummaryCard({
       <div className="flex items-center gap-2 text-xs uppercase tracking-wider" style={{ color: "var(--muted)" }}>
         {icon} {label}
       </div>
-      <div className="text-2xl font-bold mono mt-2" style={{ color }}>{value}</div>
+      <div className="text-xl md:text-2xl font-bold mono mt-2" style={{ color }}>{value}</div>
       <div className="text-xs mt-1" style={{ color: "var(--muted-2)" }}>{sub}</div>
     </div>
   );
