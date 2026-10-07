@@ -138,10 +138,18 @@ export default function Header() {
                 <button onClick={() => { setUserMenu(!userMenu); setAdminMenu(false); }}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
                   style={{ background: "var(--panel-2)", border: "1px solid var(--border)" }}>
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                    style={{ background: "var(--accent-dim)", color: "var(--accent)" }}>
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
+                  {(() => {
+                    const rec = (store.users ?? []).find((u: any) => u.email?.toLowerCase() === user.email.toLowerCase()) as any;
+                    const av = rec?.avatar;
+                    return (
+                      <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold"
+                        style={{ background: av ? "transparent" : "var(--accent-dim)", color: "var(--accent)" }}>
+                        {av
+                          ? <img src={av} alt={user.name} className="w-full h-full object-cover" />
+                          : user.name.charAt(0).toUpperCase()}
+                      </div>
+                    );
+                  })()}
                   <span className="hidden sm:block">{user.name}</span>
                   <ChevronDown size={14} />
                 </button>

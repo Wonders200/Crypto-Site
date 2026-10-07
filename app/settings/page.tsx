@@ -5,6 +5,7 @@ import { useAuth, useToast } from "@/app/providers";
 import { apiFetch } from "@/lib/apiClient";
 import BackButton from "@/components/BackButton";
 import { Shield, ShieldCheck, Mail, User as UserIcon, KeyRound } from "lucide-react";
+import AvatarUploader from "@/components/AvatarUploader";
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -98,6 +99,8 @@ export default function SettingsPage() {
       <div className="-ml-2 -mb-3"><BackButton fallback="/dashboard" label="Back to dashboard" /></div>
 
       <h1 className="text-3xl font-bold">Account settings</h1>
+
+      <AvatarUploader />
 
       <div className="panel p-6">
         <h2 className="font-semibold flex items-center gap-2"><Mail size={16} /> Profile</h2>
