@@ -26,6 +26,7 @@ export function computePortfolio(holdings: Holding[], coins: Coin[]) {
 
 /** Allocation with weights */
 export function computeAllocation(holdings: Holding[], coins: Coin[]) {
+  if (holdings.length === 0) return [];
   const total = holdings.reduce((s, h) => {
     const c = coins.find(x => x.id === h.coinId);
     return s + (c ? c.price * h.amount : 0);
@@ -39,6 +40,19 @@ export function computeAllocation(holdings: Holding[], coins: Coin[]) {
 
 /** Portfolio risk metrics  annualized, from 30 days of synthetic returns */
 export function computeRiskMetrics(holdings: Holding[], coins: Coin[]) {
+  // NO HOLDINGS  return all zeros, no fake data
+  if (holdings.length === 0) {
+    return {
+      annualVol: 0,
+      annualReturn: 0,
+      sharpe: 0,
+      maxDrawdown: 0,
+      riskScore: 0,
+      dailyReturns: [],
+      hasData: false,
+    };
+  }
+
   const rng = (s: number) => { const x = Math.sin(s) * 10000; return x - Math.floor(x); };
   const dailyReturns: number[] = [];
   for (let i = 0; i < 30; i++) {
@@ -53,7 +67,6 @@ export function computeRiskMetrics(holdings: Holding[], coins: Coin[]) {
   const rfRate = 4.5;
   const sharpe = annualVol > 0 ? (annualReturn - rfRate) / annualVol : 0;
 
-  // max drawdown
   let peak = 1, nav = 1, maxDD = 0;
   for (const r of dailyReturns) {
     nav *= 1 + r;
@@ -61,14 +74,15 @@ export function computeRiskMetrics(holdings: Holding[], coins: Coin[]) {
     const dd = (nav - peak) / peak;
     maxDD = Math.min(maxDD, dd);
   }
-  const weightedRisk = holdings.length > 0
+  const totalValue = holdings.reduce((s, h) => {
+    const c = coins.find(x => x.id === h.coinId);
+    return s + (c ? h.amount * c.price : 0);
+  }, 0);
+  const weightedRisk = totalValue > 0
     ? holdings.reduce((s, h) => {
         const c = coins.find(x => x.id === h.coinId);
         return s + (c ? c.risk * h.amount * c.price : 0);
-      }, 0) / holdings.reduce((s, h) => {
-        const c = coins.find(x => x.id === h.coinId);
-        return s + (c ? h.amount * c.price : 0);
-      }, 1)
+      }, 0) / totalValue
     : 0;
 
   return {
@@ -78,6 +92,7 @@ export function computeRiskMetrics(holdings: Holding[], coins: Coin[]) {
     maxDrawdown: Math.abs(maxDD * 100),
     riskScore: weightedRisk,
     dailyReturns,
+    hasData: true,
   };
 }
 
