@@ -522,6 +522,12 @@ export default function AdminTransactionsPage() {
             <Field label="Reference"><Input value={editing.reference ?? ""} onChange={v => setField("reference", v)} /></Field>
             <div className="col-span-2"><Field label="Description"><Input value={editing.description} onChange={v => setField("description", v)} /></Field></div>
             <div className="col-span-2"><Field label="Transaction hash"><Input value={editing.txHash ?? ""} onChange={v => setField("txHash", v)} /></Field></div>
+            <div className="col-span-2"><Field label="Transaction date (backdate)">
+              <input type="date" value={new Date(editing.createdAt || Date.now()).toISOString().slice(0, 10)}
+                onChange={e => setField("createdAt", new Date(e.target.value + "T12:00:00").getTime())}
+                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
+                style={{ background: "var(--panel-2)", border: "1px solid var(--border)", color: "var(--text)" }} />
+            </Field></div>
           </div>
         )}
       </Modal>
