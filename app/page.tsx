@@ -1,4 +1,7 @@
 "use client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/providers";
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, BarChart3, Zap, PieChart, Globe, Lock, Sparkles, UserPlus, Wallet, TrendingUp } from "lucide-react";
 import { useLivePrices } from "@/hooks/useLivePrices";
@@ -9,6 +12,12 @@ import Testimonials from "@/components/Testimonials";
 import WelcomeBanner from "@/components/WelcomeBanner";
 
 export default function HomePage() {
+  const router = useRouter();
+  const { user } = useAuth();
+  useEffect(() => {
+    if (user) router.replace("/dashboard");
+  }, [user, router]);
+
   const coins = useLivePrices();
   const { store } = useAdminStore();
   const top = coins.slice(0, 10);
