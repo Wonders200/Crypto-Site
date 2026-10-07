@@ -98,7 +98,12 @@ export default function AdminTransactionsPage() {
 
   const startNew = (forUserId?: string) => {
     const t = empty();
-    if (forUserId) t.userId = forUserId;
+    if (forUserId) {
+      t.userId = forUserId;
+    } else if (store.users && store.users.length > 0) {
+      // Default to first user so the form is always submittable
+      t.userId = store.users[0].id;
+    }
     setEditing(t);
     setIsNew(true);
   };
@@ -151,19 +156,23 @@ export default function AdminTransactionsPage() {
   };
 
   const save = () => {
-    if (!editing || !editing.userId || !editing.description) {
-      push({ kind: "error", title: "User and description required" });
+    if (!editing) return;
+    const resolvedUserId = editing.userId || (store.users && store.users[0] && store.users[0].id) || "";
+    const desc = (editing.description || "").trim();
+    if (!resolvedUserId || !desc) {
+      push({ kind: "error", title: "Please select a user and enter a description." });
       return;
     }
+    const finalEditing = { ...editing, userId: resolvedUserId, description: desc };
     if (isNew) {
-      const t = { ...editing, id: editing.id || uid("t"), createdAt: Date.now() };
+      const t = { ...finalEditing, id: finalEditing.id || uid("t"), createdAt: finalEditing.createdAt || Date.now() };
       update("transactions", [t, ...store.transactions]);
-      log("CREATE", `Transaction: ${t.type}`, `${t.userId}  $${t.amount}`);
+      log("CREATE", "Transaction: " + t.type, t.userId + "  $" + t.amount);
       push({ kind: "success", title: "Transaction created" });
       setExpanded(prev => ({ ...prev, [t.userId]: true }));
     } else {
-      update("transactions", store.transactions.map(x => x.id === editing.id ? editing : x));
-      log("UPDATE", `Transaction: ${editing.id}`, editing.description);
+      update("transactions", store.transactions.map(x => x.id === finalEditing.id ? finalEditing : x));
+      log("UPDATE", "Transaction: " + finalEditing.id, finalEditing.description);
       push({ kind: "success", title: "Transaction updated" });
     }
     close();
