@@ -1,17 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-const initialLogs = [
-  { id: 1, time: '2026-10-24 14:32:18', actor: 'admin@apexvault.io', action: 'UPDATE', resource: 'Site Settings', detail: 'Changed siteName to ApexVault', ip: '10.0.0.1' },
-  { id: 2, time: '2026-10-24 14:15:02', actor: 'admin@apexvault.io', action: 'APPROVE', resource: 'KYC Request', detail: 'Approved KYC for sarah.m@example.com', ip: '10.0.0.1' },
-  { id: 3, time: '2026-10-24 13:48:55', actor: 'system', action: 'AUTO', resource: 'Earn Position', detail: 'Auto-matured position POS-1004', ip: 'internal' },
-  { id: 4, time: '2026-10-24 13:12:34', actor: 'admin@apexvault.io', action: 'DELETE', resource: 'News Article', detail: 'Deleted "Old announcement"', ip: '10.0.0.1' },
-  { id: 5, time: '2026-10-24 12:45:09', actor: 'admin@apexvault.io', action: 'CREATE', resource: 'Earn Product', detail: 'Created USDC Flexible pool', ip: '10.0.0.1' },
-  { id: 6, time: '2026-10-24 12:20:41', actor: 'sarah.m@example.com', action: 'LOGIN', resource: 'Session', detail: 'Successful login from Chrome/macOS', ip: '82.14.201.55' },
-  { id: 7, time: '2026-10-24 11:55:17', actor: 'admin@apexvault.io', action: 'SUSPEND', resource: 'User Account', detail: 'Suspended james.k@example.com', ip: '10.0.0.1' },
-  { id: 8, time: '2026-10-24 11:30:22', actor: 'system', action: 'ALERT', resource: 'Security', detail: 'Multiple failed login attempts for michael.t@example.com', ip: '45.12.8.221' },
-  { id: 9, time: '2026-10-24 10:15:38', actor: 'admin@apexvault.io', action: 'CONFIG', resource: 'Fee Schedule', detail: 'Adjusted maker fee to 0.10%', ip: '10.0.0.1' },
-  { id: 10, time: '2026-10-24 09:42:11', actor: 'admin@apexvault.io', action: 'UPDATE', resource: 'Page Content', detail: 'Updated About page mission statement', ip: '10.0.0.1' },
-];
+const initialLogs: any[] = [];
 const actionColors: Record<string, string> = { UPDATE: '#6366f1', APPROVE: '#22c55e', AUTO: '#8b5cf6', DELETE: '#ef4444', CREATE: '#10b981', LOGIN: '#3b82f6', SUSPEND: '#f59e0b', ALERT: '#ef4444', CONFIG: '#f59e0b' };
 export default function AuditLogPage() {
   const [logs, setLogs] = useState(initialLogs);

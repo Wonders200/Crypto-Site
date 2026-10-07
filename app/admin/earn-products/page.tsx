@@ -1,13 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-const initialProducts = [
-  { id: 1, name: 'USDC Flexible', symbol: 'USDC', apy: '5.2%', minDeposit: '$2,500', lock: 'None', risk: 'Low', status: 'Live', subscribed: '$45.2M' },
-  { id: 2, name: 'USDT Flexible', symbol: 'USDT', apy: '4.8%', minDeposit: '$2,500', lock: 'None', risk: 'Low', status: 'Live', subscribed: '$82.1M' },
-  { id: 3, name: 'ETH Staking', symbol: 'ETH', apy: '5.4%', minDeposit: '0.1 ETH', lock: '30 Days', risk: 'Medium', status: 'Live', subscribed: '$128.4M' },
-  { id: 4, name: 'SOL Staking', symbol: 'SOL', apy: '8.7%', minDeposit: '1 SOL', lock: '60 Days', risk: 'Medium', status: 'Live', subscribed: '$24.8M' },
-  { id: 5, name: 'DOT Staking', symbol: 'DOT', apy: '12.3%', minDeposit: '5 DOT', lock: '90 Days', risk: 'High', status: 'Live', subscribed: '$8.2M' },
-  { id: 6, name: 'ATOM Staking', symbol: 'ATOM', apy: '15.1%', minDeposit: '10 ATOM', lock: '90 Days', risk: 'High', status: 'Paused', subscribed: '$3.1M' },
-];
+const initialProducts: any[] = [];
 export default function AdminEarnProductsPage() {
   const [products, setProducts] = useState(initialProducts);
   const handleToggle = (id) => { setProducts(products.map(p => p.id === id ? { ...p, status: p.status === 'Live' ? 'Paused' : 'Live' } : p)); };
