@@ -231,17 +231,42 @@ export function Providers({ children }: { children: ReactNode }) {
 
   /* -------- heartbeat -------- */
   useEffect(() => {
-    // Demo server: skip session validation (sessions are never persisted)
     if (typeof window !== "undefined" && window.location.port === "3002") return;
     if (!user || !sessionId) return;
+    if (!loaded) return;
+
     const tick = () => {
-      const mine = (store.sessions ?? []).find(s => s.id === sessionId);
-      if (!mine || !mine.active) { setUser(null); setSessionId(null); return; }
-      serverUpdate("sessions", (store.sessions ?? []).map(s => s.id === sessionId ? { ...s, lastSeenAt: Date.now() } : s));
+      const sessions = store.sessions ?? [];
+      const mine = sessions.find((s: any) => s.id === sessionId);
+      // Restore missing session instead of logging out
+      if (!mine) {
+        const matchedUser = (store.users ?? []).find((u: any) => u.email?.toLowerCase() === user.email.toLowerCase());
+        const restored = {
+          id: sessionId,
+          userId: matchedUser?.id ?? "unknown",
+          email: user.email,
+          name: user.name,
+          startedAt: Date.now(),
+          lastSeenAt: Date.now(),
+          active: true,
+          userAgent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 200) : "unknown",
+          ip: undefined, browser: "Unknown", browserVersion: "",
+          os: "Unknown", osVersion: "", deviceType: "Unknown",
+        };
+        serverUpdate("sessions", [restored, ...sessions].slice(0, 200));
+        return;
+      }
+      if (mine.active === false) {
+        setUser(null);
+        setSessionId(null);
+        return;
+      }
+      serverUpdate("sessions", sessions.map((s: any) => s.id === sessionId ? { ...s, lastSeenAt: Date.now() } : s));
     };
-    const t = setInterval(tick, 30000);
+
+    const t = setInterval(tick, 60000);
     return () => clearInterval(t);
-  }, [user, sessionId, store.sessions, serverUpdate, setUser, setSessionId]);
+  }, [user, sessionId, store.sessions, store.users, loaded, serverUpdate, setUser, setSessionId]);
 
   /* -------- news auto-refresh -------- */
   useEffect(() => {
