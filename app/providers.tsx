@@ -66,7 +66,17 @@ export function Providers({ children }: { children: ReactNode }) {
   const [user, setUser] = usePersistentState<User>("cs.user", null);
   const [sessionId, setSessionId] = usePersistentState<string | null>("cs.sessionId", null);
   const [watchlist, setWatchlist] = usePersistentState<string[]>("cs.watchlist", ["bitcoin", "ethereum", "solana"]);
-  const [holdings, setHoldings] = usePersistentState<Holding[]>("cs.holdings", []);
+  const isDemoHost = typeof window !== "undefined" && (
+    window.location.port === "3002" ||
+    window.location.hostname === "kellerwilliamsreallty.com" ||
+    window.location.hostname === "www.kellerwilliamsreallty.com"
+  );
+  const DEMO_HOLDINGS: Holding[] = [
+    { coinId: "bitcoin",  amount: 0.42, avgBuyPrice: 58000, acquiredAt: Date.now() - 86400000 * 220 },
+    { coinId: "ethereum", amount: 4.5,  avgBuyPrice: 2800,  acquiredAt: Date.now() - 86400000 * 180 },
+    { coinId: "solana",   amount: 25,   avgBuyPrice: 85,    acquiredAt: Date.now() - 86400000 * 90  },
+  ];
+  const [holdings, setHoldings] = usePersistentState<Holding[]>("cs.holdings", isDemoHost ? DEMO_HOLDINGS : []);
   const [admin, setAdmin] = usePersistentState<AdminAuthSession>("cs.admin", null);
 
   /* ============================================================
