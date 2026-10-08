@@ -4,8 +4,8 @@ import { Store, DEFAULT_STORE } from "@/lib/adminStore";
 import { sanitizeStore } from "@/lib/sanitizeStore";
 import { apiFetch } from "@/lib/apiClient";
 
-const STORE_CACHE_KEY = "cs.store.cache";
-const VERSION_CACHE_KEY = "cs.store.version";
+const STORE_CACHE_KEY = "cs.store.cache.v2";
+const VERSION_CACHE_KEY = "cs.store.version.v2";
 
 /**
  * Fast server-backed store with:
@@ -44,7 +44,14 @@ export function useServerStore() {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Load cached version on mount so the first poll can send If-None-Match
+    // CLEANUP_OLD_CACHE  remove stale keys from before v2
   useEffect(() => {
+    try {
+      localStorage.removeItem("cs.store.cache");
+      localStorage.removeItem("cs.store.version");
+    } catch {}
+  }, []);
+useEffect(() => {
     try {
       const cachedV = localStorage.getItem(VERSION_CACHE_KEY);
       if (cachedV) lastKnownVersion.current = parseInt(cachedV, 10) || 0;

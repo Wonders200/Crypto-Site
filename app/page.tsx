@@ -14,6 +14,7 @@ import WelcomeBanner from "@/components/WelcomeBanner";
 export default function HomePage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { loaded: storeLoaded } = useAdminStore();
   useEffect(() => {
     if (user) router.replace("/dashboard");
   }, [user, router]);
