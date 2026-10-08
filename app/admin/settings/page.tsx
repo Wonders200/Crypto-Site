@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useAdminStore, useToast } from "@/app/providers";
 import { SiteSettings, AdminCredentials, DemoUser, DEFAULT_STORE, DEFAULT_DEMO_USER } from "@/lib/adminStore";
+import { DEFAULT_BONUS_CONFIG } from "@/lib/bonuses";
 import { PageHeader, Btn, Panel, Field, Input, Textarea, Toggle, Select } from "@/components/admin/ui";
 import { Lock } from "lucide-react";
 
@@ -185,7 +186,33 @@ export default function AdminSettingsPage() {
               </Field>
             </div>
             <div className="mt-4"><Btn onClick={saveDemo}>Update Demo Credentials</Btn></div>
-          </Panel>
+          </Panel>      <Panel title="Bonuses & Rewards">
+        <p className="text-sm mb-4" style={{ color: "var(--muted)" }}>
+          Configure deposit bonuses and referral rewards. Set deposit bonus % to 0 to disable.
+        </p>
+        <div className="grid md:grid-cols-3 gap-4">
+          <Field label="Deposit bonus (%)">
+            <Input value={String((settings as any).bonuses?.depositBonusPercent ?? DEFAULT_BONUS_CONFIG.depositBonusPercent)} onChange={v => setS("bonuses", { ...((settings as any).bonuses ?? DEFAULT_BONUS_CONFIG), depositBonusPercent: parseFloat(v) || 0 })} type="number" />
+          </Field>
+          <Field label="Min deposit for bonus ($)">
+            <Input value={String((settings as any).bonuses?.depositBonusMinUsd ?? DEFAULT_BONUS_CONFIG.depositBonusMinUsd)} onChange={v => setS("bonuses", { ...((settings as any).bonuses ?? DEFAULT_BONUS_CONFIG), depositBonusMinUsd: parseFloat(v) || 0 })} type="number" />
+          </Field>
+          <Field label="Max bonus ($)">
+            <Input value={String((settings as any).bonuses?.depositBonusMaxUsd ?? DEFAULT_BONUS_CONFIG.depositBonusMaxUsd)} onChange={v => setS("bonuses", { ...((settings as any).bonuses ?? DEFAULT_BONUS_CONFIG), depositBonusMaxUsd: parseFloat(v) || 0 })} type="number" />
+          </Field>
+          <Field label="Referral bonus type">
+            <Select value={(settings as any).bonuses?.referralBonusType ?? DEFAULT_BONUS_CONFIG.referralBonusType} onChange={v => setS("bonuses", { ...((settings as any).bonuses ?? DEFAULT_BONUS_CONFIG), referralBonusType: v })} options={[{ value: "fixed", label: "Fixed $" }, { value: "percent", label: "Percent of first deposit" }]} />
+          </Field>
+          <Field label="Referral bonus ($ fixed)">
+            <Input value={String((settings as any).bonuses?.referralBonusUsd ?? DEFAULT_BONUS_CONFIG.referralBonusUsd)} onChange={v => setS("bonuses", { ...((settings as any).bonuses ?? DEFAULT_BONUS_CONFIG), referralBonusUsd: parseFloat(v) || 0 })} type="number" />
+          </Field>
+          <Field label="Referral bonus (%)">
+            <Input value={String((settings as any).bonuses?.referralBonusPercent ?? DEFAULT_BONUS_CONFIG.referralBonusPercent)} onChange={v => setS("bonuses", { ...((settings as any).bonuses ?? DEFAULT_BONUS_CONFIG), referralBonusPercent: parseFloat(v) || 0 })} type="number" />
+          </Field>
+        </div>
+        <div className="mt-4"><Btn onClick={saveSettings}>Save Bonus Settings</Btn></div>
+      </Panel>
+
 
           <Panel title="Store Backup">
             <p className="text-sm mb-4" style={{ color: "var(--muted)" }}>
