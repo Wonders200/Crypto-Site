@@ -62,8 +62,22 @@ export default function HomePage() {
               $2.1B invested by 42,000+ customers
             </span>
             <h1 className="text-5xl md:text-6xl font-extrabold leading-[1.05] tracking-tight" suppressHydrationWarning>
-              {s.heroTitle}<br />
-              <span className="gradient-text">made simple.</span>
+              {(() => {
+                const raw = (s.heroTitle || "").trim();
+                if (!raw) return "Institutional crypto, made simple.";
+                const idx = raw.indexOf(",");
+                if (idx === -1) return raw;
+                const line1 = raw.slice(0, idx + 1);
+                const line2 = raw.slice(idx + 1).trim();
+                if (!line2) return line1;
+                return (
+                  <>
+                    {line1}
+                    <br />
+                    <span className="gradient-text">{line2}</span>
+                  </>
+                );
+              })()}
             </h1>
             <p className="mt-6 text-lg max-w-xl leading-relaxed" style={{ color: "var(--muted)" }}>
               Buy, sell, and grow your crypto with a platform that feels easy from the very first click  and powerful enough to keep you for years.
