@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 
 /* ---------- constants ---------- */
-const MIN_WITHDRAWAL = 5000;
+const MIN_WITHDRAWAL = 2500;
 
 /* ---------- helpers ---------- */
 function fileToResizedDataUrl(file: File, maxW = 900, quality = 0.72): Promise<string> {
@@ -99,7 +99,7 @@ export default function BalancePage() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [wAmount, setWAmount] = useState("5000");
+  const [wAmount, setWAmount] = useState("2500");
   const [wMethodId, setWMethodId] = useState<string>(depositMethods[0]?.id ?? "");
   const [wAddress, setWAddress] = useState("");
   const [wMemo, setWMemo] = useState("");
