@@ -11,7 +11,7 @@ import KycBanner from "@/components/KycBanner";
 import LiveTimeAgo from "@/components/LiveTimeAgo";
 import { X, AlertTriangle, Calculator, Wallet, TrendingUp, Clock, Calendar } from "lucide-react";
 
-const MIN_DEPOSIT = 2500;
+const MIN_DEPOSIT = 200;
 
 export default function EarnPage() {
   const { user } = useAuth();
@@ -20,7 +20,7 @@ export default function EarnPage() {
 
   const [selected, setSelected] = useState<AdminEarnProduct | null>(null);
   const [detail, setDetail] = useState<AdminEarnPosition | null>(null);
-  const [amount, setAmount] = useState(String(MIN_DEPOSIT));
+  const [amount, setAmount] = useState("200");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [, setTick] = useState(0);
@@ -273,7 +273,7 @@ export default function EarnPage() {
                     style={{ paddingLeft: 30, paddingTop: 14, paddingBottom: 14 }} />
                 </div>
                 <div className="grid grid-cols-4 gap-2 mt-2">
-                  {[2500, 5000, 10000, 25000].map(v => (
+                  {[200, 500, 1000, 2500].map(v => (
                     <button key={v} type="button" onClick={() => { setAmount(String(v)); setError(""); }}
                       className="py-1.5 rounded-lg text-xs font-semibold"
                       style={{ background: "var(--panel-2)", border: "1px solid var(--border)", color: "var(--muted)" }}>
