@@ -61,7 +61,7 @@ export default function HomePage() {
               <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--green)" }} />
               $2.1B invested by 42,000+ customers
             </span>
-            <h1 className="text-5xl md:text-6xl font-extrabold leading-[1.05] tracking-tight">
+            <h1 className="text-5xl md:text-6xl font-extrabold leading-[1.05] tracking-tight" suppressHydrationWarning>
               {s.heroTitle}<br />
               <span className="gradient-text">made simple.</span>
             </h1>

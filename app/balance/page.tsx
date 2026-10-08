@@ -333,7 +333,7 @@ export default function BalancePage() {
             <Wallet size={14} style={{ color: "var(--muted)" }} />
             <span className="text-xs uppercase tracking-wider" style={{ color: "var(--muted)" }}>Available to spend</span>
           </div>
-          <div className="text-5xl font-bold mono">{formatCurrency(balance?.usd ?? 0)}</div>
+          <div className="text-5xl font-bold mono" suppressHydrationWarning>{formatCurrency(balance?.usd ?? 0)}</div>
           {balance?.locked ? (
             <div className="mt-2 text-sm" style={{ color: "var(--amber)" }}>
               <Clock size={12} className="inline mr-1" /> {formatCurrency(balance.locked)} on hold

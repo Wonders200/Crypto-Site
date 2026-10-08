@@ -45,7 +45,24 @@ export function useServerStore() {
 
   // Load cached version on mount so the first poll can send If-None-Match
     // CLEANUP_OLD_CACHE  remove stale keys from before v2
+    // HYDRATE_FROM_CACHE  load from localStorage after mount (client-only)
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const cached = localStorage.getItem(STORE_CACHE_KEY);
+      if (cached) {
+        const parsed = sanitizeStore(JSON.parse(cached));
+        setStore(parsed);
+      }
+      const cachedV = localStorage.getItem(VERSION_CACHE_KEY);
+      if (cachedV) {
+        (lastKnownVersion as any).current = parseInt(cachedV, 10) || 0;
+      }
+    } catch (e) {
+      console.warn("[store] cache hydration failed", e);
+    }
+  }, []);
+useEffect(() => {
     try {
       localStorage.removeItem("cs.store.cache");
       localStorage.removeItem("cs.store.version");
