@@ -261,7 +261,7 @@ export const DEFAULT_STORE: Store = {
     announcement: " New: USDC Flexible Earn is now live at 5.2% APY.",
     showAnnouncement: true,
     maintenanceMode: false,
-    heroTitle: "Institutional crypto,",
+    heroTitle: "Institutional crypto, made simple.",
     heroSubtitle: "Trade 200+ digital assets with deep liquidity, real-time risk analytics, and yield products  inside a platform designed for serious capital.",
     heroCtaText: "Open an Account",
     heroCtaLink: "/signup",
