@@ -2,6 +2,7 @@
 import { useState, useMemo } from "react";
 import { useAdminStore, useToast } from "@/app/providers";
 import { AdminTransaction, uid } from "@/lib/adminStore";
+import { getBonusConfig, computeDepositBonus, computeReferralBonus, hasDepositBonusBeenPaid, hasReferralBonusBeenPaid } from "@/lib/bonuses";
 import { PageHeader, Btn, Panel, Modal, Field, Input, Select, Badge, Kpi } from "@/components/admin/ui";
 import { formatCurrency } from "@/lib/format";
 import LiveTimeAgo from "@/components/LiveTimeAgo";
@@ -191,9 +192,52 @@ export default function AdminTransactionsPage() {
     update("transactions", store.transactions.map(x => x.id === t.id ? { ...x, status: "completed" as const } : x));
 
     if (t.type === "deposit") {
-      update("balances", store.balances.map(b => b.userId === t.userId
-        ? { ...b, usd: b.usd + t.amount, updatedAt: Date.now() }
-        : b));
+      const cfg = getBonusConfig(store);
+      const creditedUser = store.users.find(u => u.id === t.userId);
+      const depositBonus = computeDepositBonus(t.amount, cfg);
+      const applyDepositBonus = depositBonus > 0 && !hasDepositBonusBeenPaid(store, t.id);
+      const referrerId: string | undefined = (creditedUser as any)?.referredBy;
+      const applyReferralBonus = !!referrerId && !hasReferralBonusBeenPaid(store, t.userId);
+      const referralBonus = applyReferralBonus && referrerId ? computeReferralBonus(t.amount, cfg) : 0;
+
+      const updatedBalances = store.balances.map(b => {
+        let usd = b.usd;
+        if (b.userId === t.userId) {
+          usd += t.amount;
+          if (applyDepositBonus) usd += depositBonus;
+        }
+        if (referrerId && b.userId === referrerId && referralBonus > 0) {
+          usd += referralBonus;
+        }
+        return usd === b.usd ? b : { ...b, usd, updatedAt: Date.now() };
+      });
+      update("balances", updatedBalances);
+
+      const newBonuses: AdminTransaction[] = [];
+      if (applyDepositBonus) {
+        newBonuses.push({
+          id: uid("t"), userId: t.userId, type: "reward" as any,
+          amount: depositBonus, currency: "USD", status: "completed" as any,
+          description: `Deposit bonus (${cfg.depositBonusPercent}% on $${t.amount.toLocaleString()})`,
+          createdAt: Date.now(),
+          bonusKind: "deposit", sourceTxId: t.id,
+        } as any);
+      }
+      if (referralBonus > 0 && referrerId) {
+        newBonuses.push({
+          id: uid("t"), userId: referrerId, type: "reward" as any,
+          amount: referralBonus, currency: "USD", status: "completed" as any,
+          description: `Referral bonus from ${creditedUser?.email ?? t.userId}'s first deposit`,
+          createdAt: Date.now(),
+          bonusKind: "referral", referredUserId: t.userId,
+        } as any);
+      }
+      if (newBonuses.length > 0) {
+        update("transactions", [
+          ...newBonuses,
+          ...store.transactions.map(x => x.id === t.id ? { ...x, status: "completed" as const } : x),
+        ]);
+      }
     }
 
     log("TX_APPROVED", `Transaction ${t.id}`, `${t.type}  $${Math.abs(t.amount)}`);
