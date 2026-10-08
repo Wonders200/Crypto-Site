@@ -144,7 +144,7 @@ export function useServerStore() {
             const res = await apiFetch("/api/store", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ store: next }),
+              body: JSON.stringify({ key: String(key), value }),
             });
             if (res.ok) {
               const data = await res.json();

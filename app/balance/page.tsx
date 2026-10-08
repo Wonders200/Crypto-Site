@@ -361,7 +361,7 @@ export default function BalancePage() {
 
           {selectedMethod && (
             <>
-              <div className="mt-6 grid sm:grid-cols-2 gap-4">
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <label className="block">
                   <div className="text-[12px] mb-1.5 uppercase tracking-wider" style={{ color: T.textSecondary }}>How much are you sending? (USD estimate)</div>
                   <input type="number" value={amount} onChange={e => setAmount(e.target.value)}
@@ -663,7 +663,7 @@ export default function BalancePage() {
                     How much?
                   </span>
                 </div>
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block">
                       <div className="text-[12px] mb-1.5 flex items-center justify-between" style={{ color: T.textSecondary }}>
@@ -788,11 +788,11 @@ export default function BalancePage() {
 
           {showAllAddresses && (
             <div className="border-t p-5" style={{ borderColor: "var(--border)" }}>
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {depositMethods.map(m => (
-                  <div key={m.id} className="rounded-2xl p-4 flex gap-4 items-start"
+                  <div key={m.id} className="rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center sm:items-start"
                     style={{ background: "var(--panel-2)", border: "1px solid var(--border)" }}>
-                    <div className="rounded-xl bg-white p-2 shrink-0" style={{ border: "1px solid var(--border-2)" }}>
+                    <div className="rounded-xl bg-white p-2 shrink-0 mx-auto sm:mx-0" style={{ border: "1px solid var(--border-2)" }}>
                       <AddressQR value={m.address} size={88} />
                     </div>
                     <div className="flex-1 min-w-0">

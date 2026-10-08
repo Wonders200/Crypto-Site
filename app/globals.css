@@ -267,3 +267,31 @@ body.demo-mode-active {
 body.demo-mode-active > *:first-child {
   padding-top: 0;
 }
+
+/* ============================================================
+   MOBILE  targeted, safe
+   ============================================================ */
+@media (max-width: 640px) {
+  /* Kill horizontal scroll */
+  body { overflow-x: hidden; }
+
+  /* Long strings (addresses, hashes, codes) wrap */
+  .panel code,
+  .panel .mono {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  /* Tables scroll horizontally instead of squashing */
+  table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Big headings scale down */
+  h1 { font-size: 1.65rem !important; line-height: 1.2 !important; }
+  h2 { font-size: 1.35rem !important; line-height: 1.25 !important; }
+
+  /* Pills wrap instead of clipping */
+  .pill { white-space: normal; max-width: 100%; }
+
+  /* Prevent iOS zoom on input focus */
+  input, select, textarea { font-size: 16px !important; }
+}
