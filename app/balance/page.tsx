@@ -668,7 +668,7 @@ export default function BalancePage() {
                     <label className="block">
                       <div className="text-[12px] mb-1.5 flex items-center justify-between" style={{ color: T.textSecondary }}>
                         <span>USD amount</span>
-                        <span className="text-[11px]">Min: <strong style={{ color: T.textPrimary }}>{formatCurrency(MIN_WITHDRAWAL)}</strong></span>
+                        
                       </div>
                       <input type="number" value={wAmount} onChange={e => { setWAmount(e.target.value); setFormError(""); }}
                         className="w-full rounded-xl px-3.5 py-3 text-[14px] mono outline-none"
