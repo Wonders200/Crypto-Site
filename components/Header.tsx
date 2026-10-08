@@ -183,7 +183,7 @@ export default function Header() {
             ) : (
               /* Nobody signed in  show Sign in / Get Started Free */
               <>
-                <Link href="/login" className="hidden sm:block px-3 py-2 text-sm" style={{ color: "var(--muted)" }}>
+                <Link href="/login" className="px-2 sm:px-3 py-2 text-xs sm:text-sm" style={{ color: "var(--muted)" }}>
                   Sign in
                 </Link>
                 <Link href="/signup"
