@@ -82,6 +82,13 @@ export default function AdminUsersPage() {
     push({ kind: "success", title: "KYC re-requested" });
   };
 
+  const reset2FA = (u: any) => {
+    if (!confirm("Reset 2FA for " + u.name + "? They'll be able to sign in with just their password until they re-enable it.")) return;
+    update("users", store.users.map(x => x.id === u.id ? { ...x, twoFA: undefined } : x));
+    log("RESET_2FA", "2FA reset for " + u.email);
+    push({ kind: "success", title: "2FA reset" });
+  };
+
   const balance = (id: string) => (store.balances ?? []).find((b: any) => b.userId === id)?.usd ?? 0;
 
   return (
@@ -139,6 +146,12 @@ export default function AdminUsersPage() {
                     <button onClick={() => forceKYC(u)} className="px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1"
                       style={{ background: "rgba(250,204,21,0.10)", color: "#facc15", border: "1px solid rgba(250,204,21,0.3)" }}>
                       <Shield size={11} /> Force KYC</button>
+                    {u.twoFA?.enabled && (
+                      <button onClick={() => reset2FA(u)} className="px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1"
+                        style={{ background: "rgba(99,102,241,0.1)", color: "#818cf8", border: "1px solid rgba(99,102,241,0.3)" }}>
+                        Reset 2FA
+                      </button>
+                    )}
                     <button onClick={() => toggleSuspend(u)} className="px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1"
                       style={{ background: u.status === "active" ? "var(--amber-dim)" : "var(--green-dim)",
                         color: u.status === "active" ? "var(--amber)" : "var(--green)",
