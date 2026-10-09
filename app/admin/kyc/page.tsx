@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { useAdminStore, useToast } from '@/app/providers';
 import { uid, AdminUser, KycStatus } from '@/lib/adminStore';
 import { formatCurrency } from '@/lib/format';
+import { sendEmail, Templates } from "@/lib/email";
 
 const toDate = (ts: number) => { const d = new Date(ts || Date.now()); const p = (n: number) => String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; };
 const fromDate = (s: string) => s ? new Date(s + "T12:00:00").getTime() : Date.now();
