@@ -33,3 +33,6 @@ coverage/
 .turbo/
 .vercel/
 tsconfig.tsbuildinfo
+
+# runtime image uploads
+uploads/
