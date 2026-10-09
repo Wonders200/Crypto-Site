@@ -23,15 +23,30 @@ export default function KycPage() {
     return store.users.map(u => {
       const submissions = (store.kycSubmissions ?? []).filter((k: any) => k.userId === u.id);
       const latest = submissions.sort((a: any, b: any) => (b.submittedAt ?? 0) - (a.submittedAt ?? 0))[0];
+
+      // Customer page writes idFrontUrl / idBackUrl / selfieUrl (not fileUrls)
+      const fileUrls: string[] = [];
+      const fileLabels: string[] = [];
+      if (latest?.idFrontUrl)  { fileUrls.push(latest.idFrontUrl);  fileLabels.push("ID front"); }
+      if (latest?.idBackUrl)   { fileUrls.push(latest.idBackUrl);   fileLabels.push("ID back"); }
+      if (latest?.selfieUrl)   { fileUrls.push(latest.selfieUrl);   fileLabels.push("Selfie with ID"); }
+
+      const documentLabel = latest?.idType === "passport" ? "Passport"
+        : latest?.idType === "drivers_license" ? "Driver's license"
+        : latest?.idType === "national_id" ? "National ID"
+        : (latest?.idType ?? "");
+
       const status = (u.kycStatus ?? "unverified").toUpperCase();
       return {
         id: u.id,
         name: u.name,
         email: u.email,
         country: latest?.country ?? "",
-        document: latest?.documentType ?? "",
-        files: latest?.fileUrls?.length ?? 0,
-        fileUrls: latest?.fileUrls ?? [],
+        document: documentLabel,
+        files: fileUrls.length,
+        fileUrls,
+        fileLabels,
+        submission: latest ?? null,
         status,
         updated: latest?.submittedAt ? new Date(latest.submittedAt).toLocaleDateString() : "",
         updatedAt: latest?.submittedAt ?? u.createdAt,
