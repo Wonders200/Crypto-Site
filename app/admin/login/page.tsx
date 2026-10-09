@@ -47,13 +47,13 @@ export default function AdminLoginPage() {
           {err && <div className="p-3 rounded-lg text-xs" style={{ background: "var(--red-dim)", color: "var(--red)", border: "1px solid var(--red)" }}>{err}</div>}
           <label className="block">
             <div className="text-xs uppercase tracking-wider mb-1.5" style={{ color: "var(--muted)" }}>Email</div>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+            <input type="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)}
               className="w-full px-3 py-2.5 rounded-lg text-sm outline-none mono"
               style={{ background: "var(--panel-2)", border: "1px solid var(--border)", color: "var(--text)" }} />
           </label>
           <label className="block">
             <div className="text-xs uppercase tracking-wider mb-1.5" style={{ color: "var(--muted)" }}>Password</div>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+            <input type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)}
               className="w-full px-3 py-2.5 rounded-lg text-sm outline-none mono"
               style={{ background: "var(--panel-2)", border: "1px solid var(--border)", color: "var(--text)" }} />
           </label>

@@ -70,13 +70,13 @@ export default function SignupPage() {
           </label>
           <label className="block">
             <div className="text-xs mb-1.5" style={{ color: "var(--muted)" }}>Email</div>
-            <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="jane@example.com" required
+            <input type="email" autoComplete="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="jane@example.com" required
               className="w-full px-3 py-2.5 rounded-lg text-sm outline-none mono"
               style={{ background: "var(--panel-2)", border: "1px solid var(--border)", color: "var(--text)" }} />
           </label>
           <label className="block">
             <div className="text-xs mb-1.5" style={{ color: "var(--muted)" }}>Password</div>
-            <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="At least 6 characters" required
+            <input type="password" autoComplete="new-password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="At least 6 characters" required
               className="w-full px-3 py-2.5 rounded-lg text-sm outline-none mono"
               style={{ background: "var(--panel-2)", border: "1px solid var(--border)", color: "var(--text)" }} />
           </label>

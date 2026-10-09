@@ -57,13 +57,13 @@ export default function LoginPage() {
         <form onSubmit={submit} className="mt-7 space-y-4">
           <label className="block">
             <div className="text-xs mb-1.5" style={{ color: "var(--muted)" }}>Email</div>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required
+            <input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required
               className="w-full px-3 py-2.5 rounded-lg text-sm outline-none mono"
               style={{ background: "var(--panel-2)", border: "1px solid var(--border)", color: "var(--text)" }} />
           </label>
           <label className="block">
             <div className="text-xs mb-1.5" style={{ color: "var(--muted)" }}>Password</div>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 6 characters" required
+            <input type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 6 characters" required
               className="w-full px-3 py-2.5 rounded-lg text-sm outline-none mono"
               style={{ background: "var(--panel-2)", border: "1px solid var(--border)", color: "var(--text)" }} />
           </label>
