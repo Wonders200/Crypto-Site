@@ -216,7 +216,7 @@ export default function BalancePage() {
     const reference = makeReference("DEP");
     const methodLabel = selectedMethod.asset + " " + selectedMethod.network;
 
-    update("transactions", [{
+    mergeUpdate("transactions", [{ 
       id: "t_" + Math.random().toString(36).slice(2, 10),
       userId: matchedUser.id,
       type: "deposit",
@@ -231,7 +231,7 @@ export default function BalancePage() {
       reference,
       network: selectedMethod.network,
       asset: selectedMethod.asset,
-    }, ...store.transactions]);
+     }], "id");
 
     log("DEPOSIT", "$" + amt.toLocaleString() + " - " + reference, matchedUser.email + " - " + methodLabel);
     push({ kind: "success", title: "Deposit submitted", message: "Reference " + reference + ". Funds will appear once confirmed." });
@@ -262,7 +262,7 @@ export default function BalancePage() {
       ? { ...b, usd: b.usd - wAmountNum, updatedAt: Date.now() }
       : b));
 
-    update("transactions", [{
+    mergeUpdate("transactions", [{ 
       id: "t_" + Math.random().toString(36).slice(2, 10),
       userId: matchedUser.id,
       type: "withdrawal",
@@ -275,7 +275,7 @@ export default function BalancePage() {
       network: wMethod.network,
       asset: wMethod.asset,
       proofName: wLabel || undefined,
-    }, ...store.transactions]);
+     }], "id");
 
     log("WITHDRAWAL", "$" + wAmountNum.toLocaleString() + " - " + reference, matchedUser.email + " - " + methodLabel);
     push({ kind: "success", title: "Withdrawal submitted", message: "Reference " + reference + ". Processing  you'll be notified once complete." });

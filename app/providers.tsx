@@ -99,9 +99,9 @@ export function Providers({ children }: { children: ReactNode }) {
   /* -------- log() writes to audit via the server store -------- */
   const log = useCallback((action: string, target: string, details?: string) => {
     const entry: AuditEntry = { id: uid("a"), at: Date.now(), actor: admin?.email ?? "system", action, target, details };
-    // read latest from server state via the update callback
-    serverUpdate("audit", [entry, ...(store.audit ?? [])].slice(0, 500));
-  }, [serverUpdate, admin, store.audit]);
+    // mergeBy id so concurrent writers can never wipe each other's entries
+    serverMergeUpdate("audit", [entry], "id");
+  }, [serverMergeUpdate, admin]);
 
   /* -------- update passthrough -------- */
   const update = useCallback(<K extends keyof Store>(key: K, value: Store[K]) => {
