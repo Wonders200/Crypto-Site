@@ -127,7 +127,7 @@ export default function BalancePage() {
     ?? store.users.find(u => u.email.toLowerCase() === demoEmail.toLowerCase())
     ?? store.users[0];
 
-  const balance = store.balances.find(b => b.userId === matchedUser?.id);
+  const balance = store.balances.find(b => b.userId === matchedUser?.id) ?? { userId: matchedUser?.id ?? "", usd: 0, locked: 0, updatedAt: 0 };
   const transactions = store.transactions
     .filter(t => t.userId === matchedUser?.id || (t.userId === "demo-user" && matchedUser))
     .sort((a, b) => b.createdAt - a.createdAt);
@@ -201,7 +201,17 @@ export default function BalancePage() {
     setFormError("");
     if (!depositReady) { setFormError("Please upload a payment screenshot to continue."); return; }
     const amt = parseFloat(amount) || 0;
-    if (!matchedUser || !balance || !selectedMethod) return;
+    if (!matchedUser) { setFormError("Please sign in again."); return; }
+    if (!selectedMethod) { setFormError("Please choose a network first."); return; }
+    if (!amt || amt <= 0) { setFormError("Please enter an amount."); return; }
+
+    // Auto-create balance record if the user doesn't have one yet
+    if (!(store.balances ?? []).some(b => b.userId === matchedUser.id)) {
+      update("balances", [
+        { userId: matchedUser.id, usd: 0, locked: 0, updatedAt: Date.now() },
+        ...(store.balances ?? []),
+      ]);
+    }
 
     const reference = makeReference("DEP");
     const methodLabel = selectedMethod.asset + " " + selectedMethod.network;
