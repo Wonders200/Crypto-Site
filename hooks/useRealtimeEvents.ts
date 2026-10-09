@@ -22,7 +22,7 @@ function classifyAudit(action: string): RealtimeEventType {
   if (a.includes("DEPOSIT") || a.includes("WITHDRAW") || a.includes("EARN")
       || a.includes("KYC") || a.includes("TRADE") || a.includes("SUBMIT")) return "CUSTOMER_ACTION";
   if (a.includes("APPROVE") || a.includes("REJECT") || a.includes("EDIT")
-      || a.includes("UPDATE") || a.includes("FUND")) return "ADMIN_ACTION";
+      || a.includes("UPDATE") || a.includes("FUND") || a.includes("DELETE")) return "ADMIN_ACTION";
   return "STORE_CHANGED";
 }
 
@@ -44,7 +44,7 @@ export function useRealtimeEvents() {
   const lastAuditIdRef = useRef<string | null>(null);
   const seededRef = useRef(false);
 
-  // Same-browser events via BroadcastChannel
+  // Same-browser events via BroadcastChannel (instant)
   useEffect(() => {
     const off = onRealtime(ev => {
       setFeed(prev => [ev, ...prev].slice(0, MAX_FEED));
@@ -67,7 +67,7 @@ export function useRealtimeEvents() {
 
         const headId = audit[0]?.id ?? null;
 
-        // First poll / unseeded: just remember the head, do not flood the feed
+        // First poll: seed the anchor, do not flood the feed
         if (!seededRef.current || !lastAuditIdRef.current) {
           lastAuditIdRef.current = headId;
           seededRef.current = true;
@@ -76,33 +76,28 @@ export function useRealtimeEvents() {
 
         if (!headId || headId === lastAuditIdRef.current) return;
 
-        // Collect new entries (audit is newest-first)
+        // Collect entries newer than the last seen (audit is newest-first)
         const fresh: AuditEntry[] = [];
+        let foundAnchor = false;
         for (const entry of audit) {
-          if (entry.id === lastAuditIdRef.current) break;
+          if (entry.id === lastAuditIdRef.current) { foundAnchor = true; break; }
           fresh.push(entry);
         }
 
-        // If we can't find the last-seen id, the log was truncated  take only the newest
-        if (!audit.some(e => e.id === lastAuditIdRef.current)) {
-          fresh.length = Math.min(fresh.length, 1);
-        }
-
-        if (fresh.length === 0) {
-          lastAuditIdRef.current = headId;
-          return;
-        }
+        // If our anchor disappeared (log truncated), take only the newest entry
+        if (!foundAnchor) fresh.length = Math.min(fresh.length, 1);
+        if (fresh.length === 0) { lastAuditIdRef.current = headId; return; }
 
         const events = fresh.map(auditToEvent);
 
         setFeed(prev => {
           const seen = new Set<string>();
           for (const e of prev) {
-            const id = (e.payload as any)?.id;
+            const id = e.payload?.id;
             if (typeof id === "string") seen.add(id);
           }
           const unique = events.filter(e => {
-            const id = (e.payload as any)?.id;
+            const id = e.payload?.id;
             return !(typeof id === "string" && seen.has(id));
           });
           if (unique.length === 0) return prev;
@@ -111,7 +106,7 @@ export function useRealtimeEvents() {
         setUnread(u => u + fresh.length);
         lastAuditIdRef.current = headId;
       } catch {
-        // silent  offline or transient
+        // silent - offline or transient
       }
     }
 
