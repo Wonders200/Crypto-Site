@@ -338,7 +338,7 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <ToastCtx.Provider value={{ toasts, push, dismiss }}>
-      <AdminStoreContext.Provider value={{ store, loaded, syncing, online, lastSyncAt, update, log, replace: serverReplace, resetStore: serverReset, refreshNews }}>
+      <AdminStoreContext.Provider value={{ store, loaded, syncing, online, lastSyncAt, update, mergeUpdate: serverMergeUpdate, log, replace: serverReplace, resetStore: serverReset, refreshNews }}>
         <AdminAuthCtx.Provider value={{ admin, loginAdmin, logoutAdmin }}>
           <AuthContext.Provider value={{ user, sessionId, login, logout }}>
             <WatchCtx.Provider value={{ watchlist, toggle, has: (id) => watchlist.includes(id) }}>
