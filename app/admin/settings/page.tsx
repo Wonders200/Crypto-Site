@@ -50,15 +50,19 @@ export default function AdminSettingsPage() {
       push({ kind: "error", title: "Passwords don't match" });
       return;
     }
-    // Write to localStorage FIRST  this is what loginAdmin reads
-    try {
-      localStorage.setItem("cs.adminEmail", creds.email.trim().toLowerCase());
-      localStorage.setItem("cs.adminPassword", creds.password);
-    } catch {}
-    // Then sync to server store (for backup/audit)
-    update("credentials", creds);
-    log("UPDATE", "Admin credentials", creds.email);
-    push({ kind: "success", title: "Credentials updated", message: "New credentials are active immediately." });
+    // Server-only. The store is the single source of truth. loginAdmin reads
+    // store.credentials directly, so this change takes effect on every device
+    // the moment the store syncs (which happens within a couple of seconds).
+    update("credentials", {
+      email: creds.email.trim().toLowerCase(),
+      password: creds.password,
+    });
+    log("UPDATE", "Admin credentials", creds.email.trim().toLowerCase());
+    push({
+      kind: "success",
+      title: "Credentials updated",
+      message: "Saved to server. Active on all devices within seconds.",
+    });
   };
 
   const saveDemo = () => {
