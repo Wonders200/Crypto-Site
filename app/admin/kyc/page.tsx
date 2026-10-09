@@ -72,6 +72,12 @@ export default function KycPage() {
     updateUserKyc(userId, "verified");
     log("KYC_APPROVE", "User " + userId);
     push({ kind: "success", title: "KYC approved" });
+    // Email the customer
+    const u: any = (store.users ?? []).find((x: any) => x.id === userId);
+    if (u?.email) {
+      const t = Templates.kycApproved(u.name || "there");
+      sendEmail({ to: u.email, subject: t.subject, html: t.html }).catch(() => {});
+    }
   };
 
   const handleForceRequest = (userId: string) => {
@@ -87,6 +93,12 @@ export default function KycPage() {
     updateUserKyc(userId, "rejected");
     log("KYC_REJECT", "User " + userId);
     push({ kind: "success", title: "KYC rejected" });
+    // Email the customer
+    const u: any = (store.users ?? []).find((x: any) => x.id === userId);
+    if (u?.email) {
+      const t = Templates.kycRejected(u.name || "there", "Your documents could not be verified. Please check the requirements and resubmit from your account.");
+      sendEmail({ to: u.email, subject: t.subject, html: t.html }).catch(() => {});
+    }
   };
 
   const openBackdate = (user: AdminUser, defaultStatus: KycStatus = "verified") => {

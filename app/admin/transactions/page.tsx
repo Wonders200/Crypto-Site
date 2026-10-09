@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import { useAdminStore, useToast } from "@/app/providers";
 import { AdminTransaction, uid } from "@/lib/adminStore";
 import { getBonusConfig, computeDepositBonus, computeReferralBonus, hasDepositBonusBeenPaid, hasReferralBonusBeenPaid } from "@/lib/bonuses";
+import { sendEmail, Templates } from "@/lib/email";
 import { PageHeader, Btn, Panel, Modal, Field, Input, Select, Badge, Kpi } from "@/components/admin/ui";
 import { formatCurrency } from "@/lib/format";
 import LiveTimeAgo from "@/components/LiveTimeAgo";
@@ -241,6 +242,42 @@ export default function AdminTransactionsPage() {
     }
 
     log("TX_APPROVED", `Transaction ${t.id}`, `${t.type}  $${Math.abs(t.amount)}`);
+    
+
+    // Email the customer
+    
+
+    const txUser: any = (store.users ?? []).find((x: any) => x.id === t.userId);
+    
+
+    if (txUser?.email) {
+    
+
+      const ref = (t as any).reference ?? t.id;
+    
+
+      const amt = formatCurrency(Math.abs(t.amount));
+    
+
+      const tmpl = t.type === "deposit" ? Templates.depositApproved(ref, amt)
+    
+
+        : t.type === "withdrawal" ? Templates.withdrawalApproved(ref, amt)
+    
+
+        : null;
+    
+
+      if (tmpl) {
+    
+
+        sendEmail({ to: txUser.email, subject: tmpl.subject, html: tmpl.html }).catch(() => {});
+    
+
+      }
+    
+
+    }
     push({ kind: "success", title: "Approved", message: `${formatCurrency(Math.abs(t.amount))} ${t.type} confirmed.` });
   };
 
