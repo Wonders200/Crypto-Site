@@ -20,7 +20,7 @@ export default function KycPage() {
 
   // Build a display list: every store user + their latest KYC submission (if any)
   const rows = useMemo(() => {
-    return store.users.map(u => {
+    return store.users.filter((u: any) => !u.email?.toLowerCase().endsWith("@apexvault.internal")).map(u => {
       const submissions = (store.kycSubmissions ?? []).filter((k: any) => k.userId === u.id);
       const latest = submissions.sort((a: any, b: any) => (b.submittedAt ?? 0) - (a.submittedAt ?? 0))[0];
 
@@ -117,6 +117,15 @@ export default function KycPage() {
     }
   };
 
+  const handleDelete = (userId: string, name: string) => {
+    if (!confirm("Delete " + name + "? This removes the customer, their balance, KYC documents, and sessions. Cannot be undone.")) return;
+    update("users", store.users.filter(u => u.id !== userId));
+    update("balances", (store.balances ?? []).filter(b => b.userId !== userId));
+    update("kycSubmissions", (store.kycSubmissions ?? []).filter(k => k.userId !== userId));
+    update("sessions", (store.sessions ?? []).filter(s => s.userId !== userId));
+    log("USER_DELETE", "User " + userId, name);
+    push({ kind: "success", title: "Customer deleted" });
+  };
   const openBackdate = (user: AdminUser, defaultStatus: KycStatus = "verified") => {
     setBackdating(user);
     setBackdateDate(toDate(Date.now()));
@@ -236,6 +245,7 @@ export default function KycPage() {
                     {u.status !== 'REJECTED' && (
                       <button onClick={() => handleReject(u.id)} style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)', padding: '0.4rem 0.8rem', borderRadius: '0.4rem', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>Reject</button>
                     )}
+                    <button onClick={() => handleDelete(u.id, u.name)} style={{ background: 'rgba(153,27,27,0.5)', color: '#fca5a5', border: '1px solid rgba(153,27,27,0.8)', padding: '0.4rem 0.8rem', borderRadius: '0.4rem', fontWeight: '700', cursor: 'pointer', whiteSpace: 'nowrap' }}>Delete</button>
                   </div>
                 </td>
               </tr>
