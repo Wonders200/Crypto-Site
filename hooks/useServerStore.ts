@@ -227,5 +227,53 @@ useEffect(() => {
 
   const resetStore = useCallback(() => replace(DEFAULT_STORE), [replace]);
 
-  return { store, loaded, syncing, online, lastSyncAt, lastError, update, replace, resetStore };
+  const mergeUpdate = useCallback(async <K extends keyof Store>(key: K, value: any[], mergeBy: string) => {
+    if (!loadedRef.current) {
+      console.warn("[store] Blocked mergeUpdate before initial load:", String(key));
+      return;
+    }
+    setStore(prev => {
+      const currentArr: any[] = (prev as any)[key] ?? [];
+      const map = new Map();
+      currentArr.forEach(item => map.set(item[mergeBy], item));
+      value.forEach(item => { if (item && item[mergeBy] !== undefined) map.set(item[mergeBy], item); });
+      const merged = Array.from(map.values());
+      const next = { ...prev, [key]: merged };
+      saveCache(next, lastKnownVersion.current);
+
+      pendingWrites.current += 1;
+      setSyncing(true);
+      setLastError(null);
+
+      Promise.resolve().then(async () => {
+        try {
+          const res = await apiFetch("/api/store", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ key: String(key), value, mergeBy }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data?.version) {
+              lastKnownVersion.current = data.version;
+              saveCache(next, data.version);
+            }
+            setLastSyncAt(Date.now());
+            setOnline(true);
+          } else {
+            setOnline(false);
+          }
+        } catch (e) {
+          setOnline(false);
+        } finally {
+          pendingWrites.current = Math.max(0, pendingWrites.current - 1);
+          if (pendingWrites.current === 0) setSyncing(false);
+        }
+      });
+
+      return next;
+    });
+  }, [saveCache, apiFetch]);
+
+  return { store, loaded, syncing, online, lastSyncAt, lastError, update, mergeUpdate, replace, resetStore };
 }

@@ -36,6 +36,7 @@ type AdminStoreCtx = {
   lastSyncAt: number | null;
   resetStore: () => void;
   update: <K extends keyof Store>(key: K, value: Store[K]) => void;
+  mergeUpdate: <K extends keyof Store>(key: K, value: any[], mergeBy: string) => void;
   log: (action: string, target: string, details?: string) => void;
   replace: (s: Store) => void;
   refreshNews: (opts?: { force?: boolean; count?: number }) => number;
@@ -90,6 +91,7 @@ export function Providers({ children }: { children: ReactNode }) {
     online,
     lastSyncAt,
     update: serverUpdate,
+    mergeUpdate: serverMergeUpdate,
     replace: serverReplace,
     resetStore: serverReset,
   } = useServerStore();

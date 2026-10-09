@@ -76,7 +76,7 @@ function withdrawalValidator(network: string, asset: string) {
 
 export default function BalancePage() {
   const { user } = useAuth();
-  const { store, update, log } = useAdminStore();
+  const { store, update, log, mergeUpdate } = useAdminStore();
   const { push } = useToast();
 
   const depositMethods = useMemo(
@@ -258,7 +258,7 @@ export default function BalancePage() {
     const methodLabel = wMethod.asset + " " + wMethod.network;
     const shortAddr = wAddress.slice(0, 8) + "..." + wAddress.slice(-6);
 
-    update("balances", store.balances.map(b => b.userId === matchedUser.id
+    mergeUpdate("balances", store.balances.map(b => b.userId === matchedUser.id
       ? { ...b, usd: b.usd - wAmountNum, updatedAt: Date.now() }
       : b));
 

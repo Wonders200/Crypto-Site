@@ -8,7 +8,7 @@ import LiveTimeAgo from "@/components/LiveTimeAgo";
 import { Search, TrendingUp, TrendingDown, Info } from "lucide-react";
 
 export default function AdminBalancePage() {
-  const { store, update, log } = useAdminStore();
+  const { store, update, log, mergeUpdate } = useAdminStore();
   const { push } = useToast();
 
   const [editing, setEditing] = useState<AdminBalance | null>(null);
@@ -64,7 +64,7 @@ export default function AdminBalancePage() {
     const user = store.users.find(x => x.id === editing.userId);
     const label = user?.email ?? editing.userId;
 
-    update("balances", store.balances.map(b => (b.userId === editing.userId ? { ...editing, updatedAt: Date.now() } : b)));
+    mergeUpdate("balances", store.balances.map(b => (b.userId === editing.userId ? { ...editing, updatedAt: Date.now() } : b)), "userId");
 
     const parts: string[] = [];
     if (delta && Math.abs(delta.dUsd) > 0.001) parts.push(`available ${delta.dUsd >= 0 ? "+" : ""}${formatCurrency(delta.dUsd)}`);
