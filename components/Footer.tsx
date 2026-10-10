@@ -1,16 +1,32 @@
+"use client";
 import Link from "next/link";
+import { useI18n } from "@/lib/i18n";
 
 export default function Footer() {
+  const { t } = useI18n();
+
   const cols = [
-    { title: "Product", links: [["Markets", "/markets"], ["Trade", "/trade/btc"], ["Dashboard", "/dashboard"], ["Balance", "/balance"], ["Earn", "/earn"], ["Pricing", "/pricing"]] },
-    { title: "Company", links: [["About", "/about"], ["News", "/news"], ["Careers", "/careers"], ["Contact", "/contact"]] },
-    { title: "Resources", links: [["Learn", "/learn"], ["API Docs", "/api-docs"], ["Status", "/status"], ["Blog", "/blog"]] },
-    { title: "Legal", links: [["Terms", "/terms"], ["Privacy", "/privacy"], ["Risk Disclosures", "/risk-disclosures"]] },
+    { titleKey: "footer.col.product", links: [
+      ["nav.markets", "/markets"], ["nav.trade", "/trade/btc"], ["nav.dashboard", "/dashboard"],
+      ["nav.balance", "/balance"], ["nav.earn", "/earn"], ["nav.pricing", "/pricing"],
+    ]},
+    { titleKey: "footer.col.company", links: [
+      ["footer.link.about", "/about"], ["nav.news", "/news"],
+      ["footer.link.careers", "/careers"], ["footer.link.contact", "/contact"],
+    ]},
+    { titleKey: "footer.col.resources", links: [
+      ["nav.learn", "/learn"], ["footer.link.apiDocs", "/api-docs"],
+      ["footer.link.status", "/status"], ["footer.link.blog", "/blog"],
+    ]},
+    { titleKey: "footer.col.legal", links: [
+      ["footer.link.terms", "/terms"], ["footer.link.privacy", "/privacy"],
+      ["footer.link.risk", "/risk-disclosures"],
+    ]},
   ];
+
   return (
     <footer className="border-t mt-16 md:mt-24" style={{ borderColor: "var(--border)", background: "var(--panel)" }}>
       <div className="max-w-[1400px] mx-auto px-5 md:px-6 py-10 md:py-14 grid grid-cols-2 md:grid-cols-6 gap-8 md:gap-10">
-        {/* Brand  full width on mobile */}
         <div className="col-span-2 md:col-span-2">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-black"
@@ -23,7 +39,7 @@ export default function Footer() {
             <span className="font-bold text-lg">ApexVault</span>
           </div>
           <p className="text-sm mt-4 leading-relaxed" style={{ color: "var(--muted)" }}>
-            Institutional-grade crypto investing. Trade 200+ assets, earn yield, and monitor risk  all with a single account.
+            {t("footer.description")}
           </p>
           <div className="flex gap-2 mt-5 flex-wrap">
             <span className="pill pill-green">SOC 2 Type II</span>
@@ -32,12 +48,14 @@ export default function Footer() {
         </div>
 
         {cols.map(col => (
-          <div key={col.title}>
-            <h4 className="text-xs font-semibold uppercase tracking-wider mb-3 md:mb-4" style={{ color: "var(--muted)" }}>{col.title}</h4>
+          <div key={col.titleKey}>
+            <h4 className="text-xs font-semibold uppercase tracking-wider mb-3 md:mb-4" style={{ color: "var(--muted)" }}>
+              {t(col.titleKey)}
+            </h4>
             <ul className="space-y-2 md:space-y-2.5">
-              {col.links.map(([label, href]) => (
-                <li key={label}>
-                  <Link href={href} className="text-sm transition hover:opacity-80 block py-0.5">{label}</Link>
+              {col.links.map(([key, href]) => (
+                <li key={key}>
+                  <Link href={href} className="text-sm transition hover:opacity-80 block py-0.5">{t(key)}</Link>
                 </li>
               ))}
             </ul>
@@ -47,8 +65,8 @@ export default function Footer() {
 
       <div className="border-t" style={{ borderColor: "var(--border)" }}>
         <div className="max-w-[1400px] mx-auto px-5 md:px-6 py-5 md:py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs" style={{ color: "var(--muted)" }}>
-          <p>  {new Date().getFullYear()} ApexVault Inc. All rights reserved.</p>
-          <p className="max-w-3xl leading-relaxed">Not a registered broker-dealer or investment advisor. Cryptocurrency investments carry risk of loss.</p>
+          <p>&copy; {new Date().getFullYear()} ApexVault Inc. {t("footer.rights")}</p>
+          <p className="max-w-3xl leading-relaxed">{t("footer.disclaimer")}</p>
         </div>
       </div>
     </footer>

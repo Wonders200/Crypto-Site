@@ -4,17 +4,19 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Menu, X, Search, ChevronDown, LogOut, User as UserIcon, Wallet, Shield, LayoutDashboard, Activity, Settings as SettingsIcon } from "lucide-react";
 import { useAuth, useAdminAuth, useAdminStore } from "@/app/providers";
+import { useI18n } from "@/lib/i18n";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
-const NAV = [
-  { href: "/markets",   label: "Markets" },
-  { href: "/trade/btc", label: "Trade" },
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/balance",   label: "Balance" },
-  { href: "/earn",      label: "Earn" },
-  { href: "/pricing",   label: "Pricing" },
-  { href: "/learn",     label: "Learn" },
-  { href: "/news",      label: "News" },
-  { href: "/referrals", label: "Referrals" },
+const NAV: { href: string; key: string }[] = [
+  { href: "/markets",   key: "nav.markets" },
+  { href: "/trade/btc", key: "nav.trade" },
+  { href: "/dashboard", key: "nav.dashboard" },
+  { href: "/balance",   key: "nav.balance" },
+  { href: "/earn",      key: "nav.earn" },
+  { href: "/pricing",   key: "nav.pricing" },
+  { href: "/learn",     key: "nav.learn" },
+  { href: "/news",      key: "nav.news" },
+  { href: "/referrals", key: "nav.referrals" },
 ];
 
 export default function Header() {
@@ -23,6 +25,7 @@ export default function Header() {
   const { user, logout } = useAuth();
   const { admin, logoutAdmin } = useAdminAuth();
   const { store } = useAdminStore();
+  const { t } = useI18n();
 
   const [open, setOpen] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
@@ -79,7 +82,7 @@ export default function Header() {
                     color: active ? "var(--text)" : "var(--muted)",
                     background: active ? "var(--panel-2)" : "transparent",
                   }}>
-                  {n.label}
+                  {t(n.key)}
                 </Link>
               );
             })}
@@ -87,12 +90,13 @@ export default function Header() {
 
           <form onSubmit={onSubmitSearch} className="hidden md:flex flex-1 max-w-xs relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--muted)" }} />
-            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search coins, tokens"
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder={t("header.searchPlaceholder")}
               className="w-full pl-9 pr-3 py-2 rounded-lg text-sm outline-none"
               style={{ background: "var(--panel-2)", border: "1px solid var(--border)", color: "var(--text)" }} />
           </form>
 
           <div className="flex items-center gap-2 ml-auto">
+            <LanguageSwitcher compact />
             {/* -------- Right side: account area -------- */}
             {admin ? (
               /* Admin is signed in  show admin account dropdown */
@@ -184,12 +188,12 @@ export default function Header() {
               /* Nobody signed in  show Sign in / Get Started Free */
               <>
                 <Link href="/login" className="px-2 sm:px-3 py-2 text-xs sm:text-sm" style={{ color: "var(--muted)" }}>
-                  Sign in
+                  {t("nav.signIn")}
                 </Link>
                 <Link href="/signup"
                   className="px-4 py-2 rounded-lg text-sm font-semibold text-black transition hover:opacity-90"
                   style={{ background: "var(--green)" }}>
-                  Get Started Free
+                  {t("nav.getStarted")}
                 </Link>
               </>
             )}
@@ -206,7 +210,7 @@ export default function Header() {
               {NAV.map(n => (
                 <Link key={n.href} href={n.href} onClick={() => setOpen(false)}
                   className="block px-3 py-2 rounded-lg text-sm">
-                  {n.label}
+                  {t(n.key)}
                 </Link>
               ))}
               {admin && (
