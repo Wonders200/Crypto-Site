@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TickerTape from "@/components/TickerTape";
 import { Providers } from "./providers";
+import { I18nProvider } from "@/lib/i18n";
 import DemoBanner from "@/components/DemoBanner";
 
 export const metadata: Metadata = {
@@ -16,6 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
+        <I18nProvider>
         <Providers>
           <TickerTape />
           <Header />
@@ -25,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </main>
           <Footer />
         </Providers>
+        </I18nProvider>
         <Script
           id="chatway"
           src="https://cdn.chatway.app/widget.js?id=KJwei64uf0IZ"
