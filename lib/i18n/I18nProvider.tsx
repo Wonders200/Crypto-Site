@@ -33,10 +33,21 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   // Start with default on both server and first client render (no hydration mismatch).
   const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
 
-  // After mount, swap to user's detected/stored locale.
+  // After hydration completes, swap to user's detected/stored locale.
+  // Deferred by two rAFs so React 18 has fully finished hydrating before
+  // we introduce a locale-driven re-render. Prevents #418/#422 hydration errors.
   useEffect(() => {
-    const detected = detectInitialLocale();
-    if (detected !== DEFAULT_LOCALE) setLocaleState(detected);
+    let raf1 = 0, raf2 = 0;
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        const detected = detectInitialLocale();
+        if (detected !== DEFAULT_LOCALE) setLocaleState(detected);
+      });
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
   }, []);
 
   // Keep <html> attributes + storage in sync
