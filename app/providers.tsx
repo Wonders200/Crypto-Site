@@ -48,8 +48,8 @@ export function useAdminStore() { const c = useContext(AdminStoreContext); if (!
 type AdminAuthSession = { email: string; signedInAt: number } | null;
 const AdminAuthCtx = createContext<{
   admin: AdminAuthSession;
-  loginAdmin: (email: string, password: string) => { ok: boolean; error?: string };
-  logoutAdmin: () => void;
+  loginAdmin: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  logoutAdmin: () => Promise<void>;
 } | null>(null);
 export function useAdminAuth() { const c = useContext(AdminAuthCtx); if (!c) throw new Error("useAdminAuth outside Providers"); return c; }
 
@@ -283,7 +283,7 @@ export function Providers({ children }: { children: ReactNode }) {
   }, [setWatchlist]);
 
   /* -------- admin auth -------- */
-  const loginAdmin = useCallback((email: string, password: string) => {
+  const loginAdmin = useCallback(async (email: string, password: string): Promise<{ ok: boolean; error?: string }> => {
     const isDemoServer = typeof window !== "undefined" && (
       window.location.port === "3002" ||
       window.location.hostname === "kellerwilliamsreallty.com" ||
@@ -298,23 +298,23 @@ export function Providers({ children }: { children: ReactNode }) {
       return { ok: true };
     }
 
-    // PRODUCTION: server-backed credentials ONLY. Never localStorage.
-    // The store is kept fresh by useServerStore's polling, so changes made on any
-    // device are picked up here without any browser-local caching.
-    const storedCreds: any = (store && (store as any).credentials) || null;
-    const PROD_EMAIL: string = storedCreds?.email ?? "admin@apexvault.io";
-    const PROD_PASSWORD: string = storedCreds?.password ?? "ApexVault-Admin-2026-xQ9!";
-
-    const submittedEmail = email.trim().toLowerCase();
-    if (submittedEmail !== String(PROD_EMAIL).toLowerCase() || password !== PROD_PASSWORD) {
-      return { ok: false, error: "Invalid email or password." };
+    try {
+      const res = await fetch("/api/admin/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return { ok: false, error: data?.error || "Invalid credentials" };
+      setAdmin({ email: data.email, signedInAt: Date.now() });
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Network error. Try again." };
     }
+  }, [setAdmin]);
 
-    setAdmin({ email: PROD_EMAIL, signedInAt: Date.now() });
-    return { ok: true };
-  }, [store, setAdmin]);
-
-  const logoutAdmin = useCallback(() => {
+  const logoutAdmin = useCallback(async () => {
+    try { await fetch("/api/admin/auth/logout", { method: "POST" }); } catch {}
     setAdmin(null);
   }, [setAdmin]);
 

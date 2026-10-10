@@ -19,16 +19,14 @@ export default function AdminLoginPage() {
 
   useEffect(() => { if (admin) router.replace("/admin"); }, [admin, router]);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr("");
     setLoading(true);
-    setTimeout(() => {
-      const r = loginAdmin(email, password);
-      setLoading(false);
-      if (!r.ok) { setErr(r.error ?? "Login failed."); return; }
-      router.push("/admin");
-    }, 500);
+    const r = await loginAdmin(email, password);
+    setLoading(false);
+    if (!r.ok) { setErr(r.error ?? "Login failed."); return; }
+    router.push("/admin");
   };
 
   return (

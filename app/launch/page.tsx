@@ -33,15 +33,20 @@ export default function LaunchPage() {
   };
 
   /* ---------- Start admin ---------- */
-  const startAdmin = () => {
+  const startAdmin = async () => {
     if (admin) {
       push({ kind: "info", title: "Already signed in as admin" });
       router.push("/admin");
       return;
     }
+    const creds: any = store.credentials;
+    if (!creds?.password) {
+      // Password is now server-side hashed  use the login form instead
+      router.push("/admin/login");
+      return;
+    }
     setLoading("admin");
-    const creds = store.credentials;
-    const r = loginAdmin(creds.email, creds.password);
+    const r = await loginAdmin(creds.email, creds.password);
     if (!r.ok) {
       push({ kind: "error", title: "Admin login failed", message: r.error });
       setLoading(null);
@@ -52,15 +57,19 @@ export default function LaunchPage() {
   };
 
   /* ---------- Start both at once (new tab for admin) ---------- */
-  const startBoth = () => {
+  const startBoth = async () => {
     if (demo && !user) login({ email: demo.email, name: demo.name, tier: demo.tier });
-    const creds = store.credentials;
+    const creds: any = store.credentials;
     if (!admin) {
-      const r = loginAdmin(creds.email, creds.password);
-      if (!r.ok) { push({ kind: "error", title: "Admin login failed", message: r.error }); return; }
+      if (!creds?.password) {
+        push({ kind: "info", title: "Please sign in as admin", message: "Opening admin login" });
+        if (typeof window !== "undefined") window.open("/admin/login", "_blank", "noopener");
+      } else {
+        const r = await loginAdmin(creds.email, creds.password);
+        if (!r.ok) { push({ kind: "error", title: "Admin login failed", message: r.error }); return; }
+      }
     }
-    push({ kind: "success", title: "Both sessions started", message: "Opening dashboard and admin in new tabs" });
-    // Open customer dashboard in this tab, admin in a new tab
+    push({ kind: "success", title: "Both sessions started" });
     if (typeof window !== "undefined") {
       window.open("/admin", "_blank", "noopener");
     }
@@ -153,7 +162,7 @@ export default function LaunchPage() {
           <div className="text-xs mono mb-3 p-2.5 rounded-lg"
             style={{ background: "var(--panel-2)", color: "var(--muted)", border: "1px solid var(--border)" }}>
             <div>{store.credentials.email}</div>
-            <div style={{ color: "var(--muted-2)" }}>{store.credentials.password}</div>
+            <div style={{ color: "var(--muted-2)" }}>{(store.credentials as any).password ?? " (hashed)"}</div>
           </div>
           <button onClick={startAdmin} disabled={loading === "admin"}
             className="w-full justify-center py-3 rounded-xl font-semibold text-sm transition disabled:opacity-60"
