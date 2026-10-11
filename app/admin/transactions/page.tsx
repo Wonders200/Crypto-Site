@@ -34,7 +34,7 @@ function badgeKind(type: string): "green" | "red" | "amber" | "blue" | "gray" {
 }
 
 export default function AdminTransactionsPage() {
-  const { store, update, log } = useAdminStore();
+  const { store, update, log, mergeUpdate } = useAdminStore();
   const { push } = useToast();
 
   const [editing, setEditing] = useState<AdminTransaction | null>(null);
@@ -50,7 +50,7 @@ export default function AdminTransactionsPage() {
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [q, setQ] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "completed" | "failed">("pending");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "completed" | "failed">("all");
   const [typeFilter, setTypeFilter] = useState<"all" | "deposit" | "withdrawal" | "trade" | "fee" | "reward">("all");
 
   const grouped = useMemo(() => {
@@ -190,7 +190,7 @@ export default function AdminTransactionsPage() {
   const approve = (t: AdminTransaction) => {
     if (!confirm(`Approve this ${t.type} of ${formatCurrency(Math.abs(t.amount))}?`)) return;
 
-    update("transactions", store.transactions.map(x => x.id === t.id ? { ...x, status: "completed" as const } : x));
+    mergeUpdate("transactions", [{ ...t, status: "completed" as const }], "id");
 
     if (t.type === "deposit") {
       const cfg = getBonusConfig(store);
@@ -212,7 +212,7 @@ export default function AdminTransactionsPage() {
         }
         return usd === b.usd ? b : { ...b, usd, updatedAt: Date.now() };
       });
-      update("balances", updatedBalances);
+      mergeUpdate("balances", updatedBalances, "userId");
 
       const newBonuses: AdminTransaction[] = [];
       if (applyDepositBonus) {
@@ -234,10 +234,7 @@ export default function AdminTransactionsPage() {
         } as any);
       }
       if (newBonuses.length > 0) {
-        update("transactions", [
-          ...newBonuses,
-          ...store.transactions.map(x => x.id === t.id ? { ...x, status: "completed" as const } : x),
-        ]);
+        mergeUpdate("transactions", newBonuses, "id");
       }
     }
 
