@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TickerTape from "@/components/TickerTape";
 import { Providers } from "./providers";
+import ChatwayWidget from "@/components/ChatwayWidget";
 import { I18nProvider } from "@/lib/i18n";
 import DemoBanner from "@/components/DemoBanner";
 
@@ -28,11 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Footer />
         </Providers>
         </I18nProvider>
-        <Script
-          id="chatway"
-          src="https://cdn.chatway.app/widget.js?id=KJwei64uf0IZ"
-          strategy="afterInteractive"
-        />
+        <ChatwayWidget />
       </body>
     </html>
   );
