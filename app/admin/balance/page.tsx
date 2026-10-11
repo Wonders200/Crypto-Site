@@ -66,6 +66,23 @@ export default function AdminBalancePage() {
 
     mergeUpdate("balances", store.balances.map(b => (b.userId === editing.userId ? { ...editing, updatedAt: Date.now() } : b)), "userId");
 
+    // Ledger entry: whenever the available balance changes, write a matching
+    // admin_fund transaction so the store's ledger always reconciles with balances.
+    if (delta && Math.abs(delta.dUsd) > 0.001) {
+      const adminFundTx = {
+        id: "t_" + Math.random().toString(36).slice(2, 10),
+        userId: editing.userId,
+        type: "admin_fund" as any,
+        amount: delta.dUsd,
+        currency: "USD",
+        status: "completed" as any,
+        description: "Admin " + (delta.dUsd > 0 ? "credit" : "debit") + " - " + (user?.email ?? editing.userId),
+        createdAt: Date.now(),
+        reference: "ADJ-" + Math.random().toString(36).slice(2, 8).toUpperCase(),
+      };
+      mergeUpdate("transactions", [adminFundTx], "id");
+    }
+
     const parts: string[] = [];
     if (delta && Math.abs(delta.dUsd) > 0.001) parts.push(`available ${delta.dUsd >= 0 ? "+" : ""}${formatCurrency(delta.dUsd)}`);
     if (delta && Math.abs(delta.dLocked) > 0.001) parts.push(`locked ${delta.dLocked >= 0 ? "+" : ""}${formatCurrency(delta.dLocked)}`);
