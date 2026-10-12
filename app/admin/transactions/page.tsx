@@ -135,9 +135,9 @@ export default function AdminTransactionsPage() {
     if (amt <= 0) { setDeductError("Enter a positive amount."); return; }
     if (amt > deducting.balance) { setDeductError("Amount exceeds customer balance of " + formatCurrency(deducting.balance) + "."); return; }
     if (!deductReason.trim()) { setDeductError("Please provide a reason for the deduction."); return; }
-    update("balances", store.balances.map(b => b.userId === deducting.userId
-      ? { ...b, usd: Math.max(0, b.usd - amt), updatedAt: Date.now() }
-      : b));
+    const existingBal = store.balances.find(b => b.userId === deducting.userId);
+    const newUsd = Math.max(0, (existingBal?.usd ?? 0) - amt);
+    mergeUpdate("balances", [{ userId: deducting.userId, usd: newUsd, locked: existingBal?.locked ?? 0, updatedAt: Date.now() }], "userId");
     const ref = "ADJ-" + Math.random().toString(36).slice(2, 10).toUpperCase();
     const t: AdminTransaction = {
       id: uid("t"),
@@ -150,7 +150,7 @@ export default function AdminTransactionsPage() {
       createdAt: Date.now(),
       reference: ref,
     };
-    update("transactions", [t, ...store.transactions]);
+    mergeUpdate("transactions", [t], "id");
     log("DEDUCT", "Deduction " + formatCurrency(amt), deducting.name + " - " + deductReason.trim());
     push({ kind: "success", title: "Deducted", message: formatCurrency(amt) + " deducted from " + deducting.name + "." });
     setExpanded(prev => ({ ...prev, [deducting.userId]: true }));
@@ -168,7 +168,7 @@ export default function AdminTransactionsPage() {
     const finalEditing = { ...editing, userId: resolvedUserId, description: desc };
     if (isNew) {
       const t = { ...finalEditing, id: finalEditing.id || uid("t"), createdAt: finalEditing.createdAt || Date.now() };
-      update("transactions", [t, ...store.transactions]);
+      mergeUpdate("transactions", [t], "id");
       log("CREATE", "Transaction: " + t.type, t.userId + "  $" + t.amount);
       push({ kind: "success", title: "Transaction created" });
       setExpanded(prev => ({ ...prev, [t.userId]: true }));
