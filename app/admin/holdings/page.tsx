@@ -85,7 +85,10 @@ export default function AdminHoldingsPage() {
 
   const startNew = (forUserId?: string) => {
     const h = empty();
-    if (forUserId) h.userId = forUserId;
+    // Default to real values so the <select> isn't visually defaulting to a
+    // "first option" that never reaches React state.
+    h.userId = forUserId || users[0]?.id || "";
+    h.coinId = coins[0]?.id || "";
     setEditing(h);
     setIsNew(true);
   };
@@ -93,10 +96,9 @@ export default function AdminHoldingsPage() {
   const close = () => { setEditing(null); setIsNew(false); };
 
   const save = () => {
-    if (!editing || !editing.userId || !editing.coinId) {
-      push({ kind: "error", title: "User and asset required" });
-      return;
-    }
+    if (!editing) return;
+    if (!editing.userId) { push({ kind: "error", title: "Select a user" }); return; }
+    if (!editing.coinId) { push({ kind: "error", title: "Select an asset" }); return; }
     if (isNew) {
       const h = { ...editing, id: editing.id || uid("h") };
       update("holdings", [h, ...holdings]);
