@@ -10,6 +10,7 @@ import TransactionList from "@/components/TransactionList";
 import LiveTimeAgo from "@/components/LiveTimeAgo";
 import { kycStatusFromStore } from "@/lib/kyc";
 import { formatCurrency } from "@/lib/format";
+import { sendEmail, Templates } from "@/lib/email";
 import {
   Wallet, ArrowDownToLine, ArrowUpFromLine, TrendingUp, Clock,
   CheckCircle2, Copy, Check, AlertTriangle, Hash, UploadCloud,
@@ -234,6 +235,10 @@ export default function BalancePage() {
      }], "id");
 
     log("DEPOSIT", "$" + amt.toLocaleString() + " - " + reference, matchedUser.email + " - " + methodLabel);
+    {
+      const em = Templates.depositSubmitted(reference, formatCurrency(amt));
+      sendEmail({ to: matchedUser.email, subject: em.subject, html: em.html }).catch(() => {});
+    }
     push({ kind: "success", title: "Deposit submitted", message: "Reference " + reference + ". Funds will appear once confirmed." });
 
     setAmount("1000");
@@ -278,6 +283,10 @@ export default function BalancePage() {
      }], "id");
 
     log("WITHDRAWAL", "$" + wAmountNum.toLocaleString() + " - " + reference, matchedUser.email + " - " + methodLabel);
+    {
+      const em = Templates.withdrawalSubmitted(reference, formatCurrency(wAmountNum));
+      sendEmail({ to: matchedUser.email, subject: em.subject, html: em.html }).catch(() => {});
+    }
     push({ kind: "success", title: "Withdrawal submitted", message: "Reference " + reference + ". Processing  you'll be notified once complete." });
 
     setWAmount("5000");
