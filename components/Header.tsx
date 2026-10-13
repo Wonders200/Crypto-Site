@@ -72,7 +72,7 @@ export default function Header() {
             <span className="pill pill-blue hidden md:inline-flex">Pro</span>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 min-w-0 overflow-hidden">
             {NAV.map(n => {
               const active = pathname === n.href || pathname.startsWith(n.href + "/");
               return (
@@ -88,7 +88,7 @@ export default function Header() {
             })}
           </nav>
 
-          <form onSubmit={onSubmitSearch} className="hidden md:flex flex-1 max-w-xs relative">
+          <form onSubmit={onSubmitSearch} className="hidden xl:flex flex-1 max-w-xs relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--muted)" }} />
             <input value={q} onChange={e => setQ(e.target.value)} placeholder={t("header.searchPlaceholder")}
               className="w-full pl-9 pr-3 py-2 rounded-lg text-sm outline-none"
