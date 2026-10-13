@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useLivePrices } from "@/hooks/useLivePrices";
 import { usePortfolio, useAuth } from "@/app/providers";
+import { useI18n } from "@/lib/i18n";
 import { computePortfolio, computeAllocation, computeRiskMetrics } from "@/lib/analytics";
 import AllocationDonut from "@/components/AllocationDonut";
 import PerformanceChart from "@/components/PerformanceChart";
@@ -17,6 +18,7 @@ import { TrendingUp, TrendingDown, Wallet, Activity, Plus, Sparkles, BarChart3 }
 export default function DashboardPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { t } = useI18n();
   const coins = useLivePrices();
   const { holdings } = usePortfolio();
   const portfolio = computePortfolio(holdings, coins);
@@ -37,9 +39,9 @@ export default function DashboardPage() {
       <div className="max-w-md mx-auto px-6 py-24 text-center">
         <div className="panel p-10">
           <Wallet size={32} style={{ color: "var(--muted)", margin: "0 auto" }} />
-          <h1 className="text-xl font-bold mt-4">Sign in to view your portfolio</h1>
-          <p className="text-sm mt-2" style={{ color: "var(--muted)" }}>Track holdings, P/L, and risk analytics.</p>
-          <Link href="/login" className="btn btn-primary inline-block mt-6">Sign in</Link>
+          <h1 className="text-xl font-bold mt-4">{t("dashboard.signInTitle")}</h1>
+          <p className="text-sm mt-2" style={{ color: "var(--muted)" }}>{t("dashboard.signInSubtitle")}</p>
+          <Link href="/login" className="btn btn-primary inline-block mt-6">{t("dashboard.signIn")}</Link>
         </div>
       </div>
     );
@@ -48,22 +50,22 @@ export default function DashboardPage() {
   return (
     <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-6 md:py-10 space-y-6">
       <div className="-ml-2 -mb-2">
-        <BackButton fallback="/" label="Back to home" />
+        <BackButton fallback="/" label={t("dashboard.backHome")} />
       </div>
 
       <div className="flex items-end justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold">Portfolio</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">{t("dashboard.title")}</h1>
           <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
-            Live valuation, risk analytics, and everything you've traded.
+            {t("dashboard.subtitle")}
           </p>
         </div>
         <div className="flex gap-2">
           <Link href="/earn" className="btn btn-ghost text-sm">
-            <Sparkles size={14} /> Earn yield
+            <Sparkles size={14} /> {t("dashboard.earnYield")}
           </Link>
           <Link href="/markets" className="btn btn-primary text-sm">
-            <Plus size={14} /> Add position
+            <Plus size={14} /> {t("dashboard.addPosition")}
           </Link>
         </div>
       </div>
@@ -72,28 +74,28 @@ export default function DashboardPage() {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <SummaryCard
-          label="Total value"
+          label={t("dashboard.totalValue")}
           value={formatCurrency(portfolio.value)}
-          sub={`${holdings.length} position${holdings.length === 1 ? "" : "s"}`}
+          sub={`${holdings.length} ${holdings.length === 1 ? t("dashboard.position") : t("dashboard.positions")}`}
           icon={<Wallet size={14} />}
         />
         <SummaryCard
-          label="Total cost"
+          label={t("dashboard.totalCost")}
           value={formatCurrency(portfolio.cost)}
-          sub="What you paid"
+          sub={t("dashboard.whatYouPaid")}
           icon={<Activity size={14} />}
         />
         <SummaryCard
-          label="Unrealized P/L"
+          label={t("dashboard.unrealizedPL")}
           value={`${plPositive ? "+" : ""}${formatCurrency(portfolio.pl)}`}
-          sub={!hasHoldings ? "No positions yet" : plPositive ? "You're up " : "Down from entry"}
+          sub={!hasHoldings ? t("dashboard.noPositionsYet") : plPositive ? t("dashboard.youreUp") : t("dashboard.downFromEntry")}
           tone={!hasHoldings ? "default" : plPositive ? "green" : "red"}
           icon={plPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
         />
         <SummaryCard
-          label="Total return"
+          label={t("dashboard.totalReturn")}
           value={formatPercent(portfolio.plPct)}
-          sub={!hasHoldings ? "Add a position to track" : "Since purchase"}
+          sub={!hasHoldings ? t("dashboard.addPositionToTrack") : t("dashboard.sincePurchase")}
           tone={!hasHoldings ? "default" : returnPositive ? "green" : "red"}
           icon={returnPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
         />
@@ -102,27 +104,27 @@ export default function DashboardPage() {
       {/* Risk analytics  only show real data, no fake numbers */}
       <div className="panel p-6">
         <div className="flex items-center gap-2 mb-5">
-          <h2 className="text-lg font-semibold">Risk analytics</h2>
-          <span className="pill pill-blue">30d  annualized</span>
+          <h2 className="text-lg font-semibold">{t("dashboard.riskAnalytics")}</h2>
+          <span className="pill pill-blue">{t("dashboard.thirtyDayAnnualized")}</span>
         </div>
         {!hasHoldings ? (
           <div className="text-center py-10">
             <BarChart3 size={32} style={{ color: "var(--muted)", margin: "0 auto" }} />
-            <p className="mt-4 text-sm font-semibold">No analytics yet</p>
+            <p className="mt-4 text-sm font-semibold">{t("dashboard.noAnalytics")}</p>
             <p className="text-xs mt-1 max-w-md mx-auto" style={{ color: "var(--muted)" }}>
-              Risk metrics, volatility, and Sharpe ratio appear once you add positions to your portfolio.
+              {t("dashboard.analyticsDescription")}
             </p>
             <Link href="/markets" className="btn btn-primary inline-flex mt-5 text-sm">
-              <Plus size={14} /> Add your first position
+              <Plus size={14} /> {t("dashboard.addFirstPosition")}
             </Link>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-            <RiskStat label="Volatility"      value={`${risk.annualVol.toFixed(2)}%`} />
-            <RiskStat label="Sharpe ratio"    value={risk.sharpe.toFixed(2)} good={risk.sharpe > 1} />
-            <RiskStat label="Max drawdown"    value={`-${risk.maxDrawdown.toFixed(2)}%`} />
-            <RiskStat label="Weighted risk"   value={`${risk.riskScore.toFixed(2)} / 5`} good={risk.riskScore < 3} />
-            <RiskStat label="Expected return" value={`${risk.annualReturn >= 0 ? "+" : ""}${risk.annualReturn.toFixed(2)}%`} good={risk.annualReturn > 0} />
+            <RiskStat label={t("dashboard.volatility")}      value={`${risk.annualVol.toFixed(2)}%`} />
+            <RiskStat label={t("dashboard.sharpe")}    value={risk.sharpe.toFixed(2)} good={risk.sharpe > 1} />
+            <RiskStat label={t("dashboard.maxDrawdown")}    value={`-${risk.maxDrawdown.toFixed(2)}%`} />
+            <RiskStat label={t("dashboard.weightedRisk")}   value={`${risk.riskScore.toFixed(2)} / 5`} good={risk.riskScore < 3} />
+            <RiskStat label={t("dashboard.expectedReturn")} value={`${risk.annualReturn >= 0 ? "+" : ""}${risk.annualReturn.toFixed(2)}%`} good={risk.annualReturn > 0} />
           </div>
         )}
       </div>
@@ -130,12 +132,12 @@ export default function DashboardPage() {
       {/* Allocation + Performance */}
       <div className="grid lg:grid-cols-2 gap-6">
         <div className="panel p-6">
-          <h2 className="text-lg font-semibold mb-5">Allocation</h2>
+          <h2 className="text-lg font-semibold mb-5">{t("dashboard.allocation")}</h2>
           <AllocationDonut data={allocation} total={portfolio.value} />
         </div>
         <div className="panel p-6">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-lg font-semibold">Performance</h2>
+            <h2 className="text-lg font-semibold">{t("dashboard.performance")}</h2>
             {hasHoldings && <span className="pill pill-green">+{(risk.annualReturn / 4).toFixed(2)}% QTD</span>}
           </div>
           <PerformanceChart />
@@ -145,16 +147,16 @@ export default function DashboardPage() {
       {/* Holdings */}
       <div>
         <div className="flex items-end justify-between mb-4">
-          <h2 className="text-lg font-semibold">Your holdings</h2>
+          <h2 className="text-lg font-semibold">{t("dashboard.yourHoldings")}</h2>
           <Link href="/markets" className="text-xs font-semibold" style={{ color: "var(--green)" }}>
-            Add more
+            {t("dashboard.addMore")}
           </Link>
         </div>
         {holdings.length === 0 ? (
           <div className="panel p-12 text-center">
-            <p style={{ color: "var(--muted)" }}>No holdings yet. Place a trade to get started.</p>
+            <p style={{ color: "var(--muted)" }}>{t("dashboard.noHoldings")}</p>
             <Link href="/markets" className="btn btn-primary inline-flex mt-5 text-sm">
-              Browse markets
+              {t("dashboard.browseMarkets")}
             </Link>
           </div>
         ) : (
@@ -166,9 +168,9 @@ export default function DashboardPage() {
       <div>
         <div className="flex items-end justify-between mb-4">
           <div>
-            <h2 className="text-lg font-semibold">Recent trades</h2>
+            <h2 className="text-lg font-semibold">{t("dashboard.recentTrades")}</h2>
             <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>
-              Every buy and sell you've placed, newest first.
+              {t("dashboard.recentTradesDesc")}
             </p>
           </div>
         </div>
