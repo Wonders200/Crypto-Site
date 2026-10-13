@@ -40,6 +40,23 @@ const en: Dictionary = {
   "footer.link.privacy": "Privacy",
   "footer.link.risk": "Risk Disclosures",
   "footer.disclaimer": "Not a registered broker-dealer or investment advisor. Cryptocurrency investments carry risk of loss.",
+  "login.title": "Welcome back",
+  "login.subtitle": "Sign in to access your dashboard.",
+  "login.email": "Email",
+  "login.emailPlaceholder": "you@example.com",
+  "login.password": "Password",
+  "login.passwordPlaceholder": "At least 6 characters",
+  "login.twoFA": "2FA code",
+  "login.signingIn": "Signing in...",
+  "login.submit": "Sign in",
+  "login.noAccount": "No account?",
+  "login.createOne": "Create one",
+  "login.twoFARequired": "2FA required",
+  "login.twoFAMessage": "Enter your 6-digit authenticator code.",
+  "login.failed": "Sign in failed",
+  "login.unknownError": "Unknown error",
+  "login.welcomeToast": "Welcome back",
+  "login.networkError": "Network error",
 };
 
 export default en;
