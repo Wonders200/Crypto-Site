@@ -77,7 +77,7 @@ export default function Header() {
               const active = pathname === n.href || pathname.startsWith(n.href + "/");
               return (
                 <Link key={n.href} href={n.href}
-                  className="px-3 py-2 rounded-lg text-sm transition"
+                  className="px-3 py-2 rounded-lg text-sm transition whitespace-nowrap"
                   style={{
                     color: active ? "var(--text)" : "var(--muted)",
                     background: active ? "var(--panel-2)" : "transparent",
@@ -187,11 +187,11 @@ export default function Header() {
             ) : (
               /* Nobody signed in  show Sign in / Get Started Free */
               <>
-                <Link href="/login" className="px-2 sm:px-3 py-2 text-xs sm:text-sm" style={{ color: "var(--muted)" }}>
+                <Link href="/login" className="px-2 sm:px-3 py-2 text-xs sm:text-sm whitespace-nowrap" style={{ color: "var(--muted)" }}>
                   {t("nav.signIn")}
                 </Link>
                 <Link href="/signup"
-                  className="px-4 py-2 rounded-lg text-sm font-semibold text-black transition hover:opacity-90"
+                  className="px-4 py-2 rounded-lg text-sm font-semibold text-black transition hover:opacity-90 whitespace-nowrap"
                   style={{ background: "var(--green)" }}>
                   {t("nav.getStarted")}
                 </Link>
