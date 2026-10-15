@@ -11,6 +11,7 @@ import LiveTimeAgo from "@/components/LiveTimeAgo";
 import { kycStatusFromStore } from "@/lib/kyc";
 import { formatCurrency } from "@/lib/format";
 import { sendEmail, Templates } from "@/lib/email";
+import { useI18n } from "@/lib/i18n";
 import {
   Wallet, ArrowDownToLine, ArrowUpFromLine, TrendingUp, Clock,
   CheckCircle2, Copy, Check, AlertTriangle, Hash, UploadCloud,
@@ -51,34 +52,35 @@ function makeReference(prefix: string) {
   return prefix + "-" + Math.random().toString(36).slice(2, 10).toUpperCase();
 }
 
-function hashHint(network: string, asset: string) {
+function hashHint(network: string, asset: string, t: (k: string) => string) {
   const n = (network || "").toLowerCase();
   const a = (asset || "").toUpperCase();
-  if (n.includes("bitcoin") || a === "BTC") return { placeholder: "e.g. 4a5e1e4b... 64 hex characters", pattern: /^[a-fA-F0-9]{64}$/ };
-  if (n.includes("trc20") || n.includes("tron")) return { placeholder: "e.g. 7b9f... 64 hex characters", pattern: /^[a-fA-F0-9]{64}$/ };
-  if (n.includes("erc20") || n.includes("ethereum")) return { placeholder: "0x... 66 characters (with 0x prefix)", pattern: /^0x[a-fA-F0-9]{64}$/ };
-  return { placeholder: "Transaction hash or reference ID", pattern: /^.{6,}$/ };
+  if (n.includes("bitcoin") || a === "BTC") return { placeholder: t("balance.hashHint.btc"), pattern: /^[a-fA-F0-9]{64}$/ };
+  if (n.includes("trc20") || n.includes("tron")) return { placeholder: t("balance.hashHint.tron"), pattern: /^[a-fA-F0-9]{64}$/ };
+  if (n.includes("erc20") || n.includes("ethereum")) return { placeholder: t("balance.hashHint.eth"), pattern: /^0x[a-fA-F0-9]{64}$/ };
+  return { placeholder: t("balance.hashHint.generic"), pattern: /^.{6,}$/ };
 }
 
-function withdrawalValidator(network: string, asset: string) {
+function withdrawalValidator(network: string, asset: string, t: (k: string) => string) {
   const n = (network || "").toLowerCase();
   const a = (asset || "").toUpperCase();
   if (n.includes("bitcoin") || a === "BTC") {
-    return { placeholder: "Enter Bitcoin address (starts with 1, 3, or bc1)", pattern: /^(1|3|bc1)[a-zA-HJ-NP-Z0-9]{25,62}$/, hint: "Bitcoin mainnet (legacy, P2SH, or bech32)", warnWrongChain: "Sending BTC to a non-BTC address will result in permanent loss." };
+    return { placeholder: t("balance.wdVal.btcPlaceholder"), pattern: /^(1|3|bc1)[a-zA-HJ-NP-Z0-9]{25,62}$/, hint: t("balance.wdVal.btcHint"), warnWrongChain: t("balance.wdVal.btcWarn") };
   }
   if (n.includes("erc20") || n.includes("ethereum")) {
-    return { placeholder: "Enter Ethereum address (0x...)", pattern: /^0x[a-fA-F0-9]{40}$/, hint: "Ethereum mainnet ERC20 address", warnWrongChain: "ERC20 withdrawals must go to an Ethereum address." };
+    return { placeholder: t("balance.wdVal.ethPlaceholder"), pattern: /^0x[a-fA-F0-9]{40}$/, hint: t("balance.wdVal.ethHint"), warnWrongChain: t("balance.wdVal.ethWarn") };
   }
   if (n.includes("trc20") || n.includes("tron")) {
-    return { placeholder: "Enter Tron address (starts with T)", pattern: /^T[a-zA-HJ-NP-Z0-9]{33}$/, hint: "Tron mainnet TRC20 address", warnWrongChain: "TRC20 withdrawals must go to a Tron address starting with T." };
+    return { placeholder: t("balance.wdVal.tronPlaceholder"), pattern: /^T[a-zA-HJ-NP-Z0-9]{33}$/, hint: t("balance.wdVal.tronHint"), warnWrongChain: t("balance.wdVal.tronWarn") };
   }
-  return { placeholder: "Enter the destination address", pattern: /^.{6,}$/, hint: "Recipient wallet address", warnWrongChain: "Verify this address is on the correct network before submitting." };
+  return { placeholder: t("balance.wdVal.genericPlaceholder"), pattern: /^.{6,}$/, hint: t("balance.wdVal.genericHint"), warnWrongChain: t("balance.wdVal.genericWarn") };
 }
 
 export default function BalancePage() {
   const { user } = useAuth();
   const { store, update, log, mergeUpdate } = useAdminStore();
   const { push } = useToast();
+  const { t } = useI18n();
 
   const depositMethods = useMemo(
     () => [...(store.depositAddresses ?? [])].filter(a => a.enabled).sort((a, b) => a.order - b.order),
@@ -108,9 +110,9 @@ export default function BalancePage() {
   const [wConfirm, setWConfirm] = useState(false);
 
   const selectedMethod = depositMethods.find(m => m.id === methodId) ?? depositMethods[0];
-  const hint = hashHint(selectedMethod?.network ?? "", selectedMethod?.asset ?? "");
+  const hint = hashHint(selectedMethod?.network ?? "", selectedMethod?.asset ?? "", t);
   const wMethod = depositMethods.find(m => m.id === wMethodId) ?? depositMethods[0];
-  const wValidator = withdrawalValidator(wMethod?.network ?? "", wMethod?.asset ?? "");
+  const wValidator = withdrawalValidator(wMethod?.network ?? "", wMethod?.asset ?? "", t);
 
   const priceOf = (asset: string): number => {
     const coin = store.coins.find(c => c.symbol.toUpperCase() === asset.toUpperCase());
@@ -154,9 +156,9 @@ export default function BalancePage() {
       <div className="max-w-md mx-auto px-6 py-24 text-center">
         <div className="panel p-10">
           <Wallet size={32} style={{ color: "var(--muted)", margin: "0 auto" }} />
-          <h1 className="text-xl font-bold mt-4">Sign in to view your balance</h1>
-          <p className="text-sm mt-2" style={{ color: "var(--muted)" }}>Track deposits, withdrawals, and rewards.</p>
-          <Link href="/login" className="btn btn-primary inline-block mt-6">Sign in</Link>
+          <h1 className="text-xl font-bold mt-4">{t("balance.gate.title")}</h1>
+          <p className="text-sm mt-2" style={{ color: "var(--muted)" }}>{t("balance.gate.subtitle")}</p>
+          <Link href="/login" className="btn btn-primary inline-block mt-6">{t("balance.gate.signIn")}</Link>
         </div>
       </div>
     );
@@ -174,14 +176,14 @@ export default function BalancePage() {
 
   const handleFile = async (file: File) => {
     setFormError("");
-    if (!file.type.startsWith("image/")) { setFormError("Only image files are accepted (PNG, JPG)."); return; }
-    if (file.size > 6 * 1024 * 1024) { setFormError("Image must be under 6 MB."); return; }
+    if (!file.type.startsWith("image/")) { setFormError(t("balance.error.imageOnly")); return; }
+    if (file.size > 6 * 1024 * 1024) { setFormError(t("balance.error.tooBig")); return; }
     setUploading(true);
     try {
       const dataUrl = await fileToResizedDataUrl(file);
       setProofUrl(dataUrl);
       setProofName(file.name);
-    } catch { setFormError("Could not process the image."); }
+    } catch { setFormError(t("balance.error.process")); }
     finally { setUploading(false); }
   };
 
@@ -200,11 +202,11 @@ export default function BalancePage() {
 
   const submitDeposit = () => {
     setFormError("");
-    if (!depositReady) { setFormError("Please upload a payment screenshot to continue."); return; }
+    if (!depositReady) { setFormError(t("balance.error.needScreenshot")); return; }
     const amt = parseFloat(amount) || 0;
-    if (!matchedUser) { setFormError("Please sign in again."); return; }
-    if (!selectedMethod) { setFormError("Please choose a network first."); return; }
-    if (!amt || amt <= 0) { setFormError("Please enter an amount."); return; }
+    if (!matchedUser) { setFormError(t("balance.error.signInAgain")); return; }
+    if (!selectedMethod) { setFormError(t("balance.error.chooseNetwork")); return; }
+    if (!amt || amt <= 0) { setFormError(t("balance.error.enterAmount")); return; }
 
     // Auto-create balance record if the user doesn't have one yet
     if (!(store.balances ?? []).some(b => b.userId === matchedUser.id)) {
@@ -239,7 +241,7 @@ export default function BalancePage() {
       const em = Templates.depositSubmitted(reference, formatCurrency(amt));
       sendEmail({ to: matchedUser.email, subject: em.subject, html: em.html }).catch(() => {});
     }
-    push({ kind: "success", title: "Deposit submitted", message: "Reference " + reference + ". Funds will appear once confirmed." });
+    push({ kind: "success", title: t("balance.toast.depositSubmitted"), message: t("balance.toast.depositRefPrefix") + " " + reference + ". " + t("balance.toast.depositRefBody") });
 
     setAmount("1000");
     setTxHash("");
@@ -250,14 +252,14 @@ export default function BalancePage() {
   const submitWithdrawal = () => {
     setFormError("");
     if (!matchedUser || !balance) return;
-    if (!kycOk) { setFormError("KYC verification is required before withdrawing."); return; }
-    if (!wMethod) { setFormError("Select a network for the withdrawal."); return; }
-    if (wAmountNum <= 0) { setFormError("Enter a positive amount."); return; }
-    if (wAmountNum < MIN_WITHDRAWAL) { setFormError("Minimum withdrawal is " + formatCurrency(MIN_WITHDRAWAL) + "."); return; }
-    if (wAmountNum > balance.usd) { setFormError("Insufficient balance."); return; }
-    if (!wAddress.trim()) { setFormError("Enter the destination address."); return; }
-    if (!wValidator.pattern.test(wAddress.trim())) { setFormError("Invalid address for " + wMethod.network + "."); return; }
-    if (!wConfirm) { setFormError("Please confirm the destination address."); return; }
+    if (!kycOk) { setFormError(t("balance.error.kycRequired")); return; }
+    if (!wMethod) { setFormError(t("balance.error.selectNetwork")); return; }
+    if (wAmountNum <= 0) { setFormError(t("balance.error.positive")); return; }
+    if (wAmountNum < MIN_WITHDRAWAL) { setFormError(t("balance.error.minWithdrawal") + " " + formatCurrency(MIN_WITHDRAWAL) + "."); return; }
+    if (wAmountNum > balance.usd) { setFormError(t("balance.error.insufficient")); return; }
+    if (!wAddress.trim()) { setFormError(t("balance.error.enterAddress")); return; }
+    if (!wValidator.pattern.test(wAddress.trim())) { setFormError(t("balance.error.invalidAddress") + " " + wMethod.network + "."); return; }
+    if (!wConfirm) { setFormError(t("balance.error.confirmAddress")); return; }
 
     const reference = makeReference("WTH");
     const methodLabel = wMethod.asset + " " + wMethod.network;
@@ -287,7 +289,7 @@ export default function BalancePage() {
       const em = Templates.withdrawalSubmitted(reference, formatCurrency(wAmountNum));
       sendEmail({ to: matchedUser.email, subject: em.subject, html: em.html }).catch(() => {});
     }
-    push({ kind: "success", title: "Withdrawal submitted", message: "Reference " + reference + ". Processing  you'll be notified once complete." });
+    push({ kind: "success", title: t("balance.toast.withdrawSubmitted"), message: t("balance.toast.withdrawRefPrefix") + " " + reference + ". " + t("balance.toast.withdrawRefBody") });
 
     setWAmount("5000");
     setWAddress("");
@@ -300,20 +302,20 @@ export default function BalancePage() {
   return (
     <div className="max-w-[1200px] mx-auto px-4 md:px-6 py-6 md:py-10 space-y-6">
       <div className="-ml-2 -mb-3">
-        <BackButton fallback="/dashboard" label="Back to dashboard" />
+        <BackButton fallback="/dashboard" label={t("balance.backToDashboard")} />
       </div>
 
       <div className="flex items-end justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Your Money</h1>
-          <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>Add funds, move them around, and cash out whenever you like.</p>
+          <h1 className="text-3xl font-bold">{t("balance.title")}</h1>
+          <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>{t("balance.subtitle")}</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => { setShowDeposit(true); setShowWithdraw(false); setFormError(""); }} className="btn btn-ghost">
-            <ArrowDownToLine size={14} /> Deposit
+            <ArrowDownToLine size={14} /> {t("balance.deposit")}
           </button>
           <button onClick={() => { setShowWithdraw(true); setShowDeposit(false); setFormError(""); }} className="btn btn-primary">
-            <ArrowUpFromLine size={14} /> Withdraw
+            <ArrowUpFromLine size={14} /> {t("balance.withdraw")}
           </button>
         </div>
       </div>
@@ -330,17 +332,15 @@ export default function BalancePage() {
           </div>
           <div className="flex-1 min-w-[220px]">
             <div className="font-semibold text-sm">
-              {kycStatus === "pending" ? "Verification in review" : "Verify your identity"}
+              {kycStatus === "pending" ? t("balance.kyc.pendingTitle") : t("balance.kyc.verifyTitle")}
             </div>
             <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>
-              {kycStatus === "pending"
-                ? "We're reviewing your documents. Withdrawals unlock once approved."
-                : "Required before you can withdraw funds."}
+              {kycStatus === "pending" ? t("balance.kyc.pendingMsg") : t("balance.kyc.verifyMsg")}
             </div>
           </div>
           <Link href="/kyc" className="text-xs px-4 py-2 rounded-lg font-semibold flex items-center gap-1.5 shrink-0"
             style={{ background: kycStatus === "pending" ? "#e3b341" : "#7c8ff5", color: "#0a0b0f" }}>
-            {kycStatus === "pending" ? "View status" : "Verify now"} <ArrowRight size={11} />
+            {kycStatus === "pending" ? t("balance.kyc.viewStatus") : t("balance.kyc.verifyNow")} <ArrowRight size={11} />
           </Link>
         </div>
       )}
@@ -350,26 +350,26 @@ export default function BalancePage() {
         <div className="relative">
           <div className="flex items-center gap-2 mb-2">
             <Wallet size={14} style={{ color: "var(--muted)" }} />
-            <span className="text-xs uppercase tracking-wider" style={{ color: "var(--muted)" }}>Available to spend</span>
+            <span className="text-xs uppercase tracking-wider" style={{ color: "var(--muted)" }}>{t("balance.available")}</span>
           </div>
           <div className="text-5xl font-bold mono" suppressHydrationWarning>{formatCurrency(balance?.usd ?? 0)}</div>
           {balance?.locked ? (
             <div className="mt-2 text-sm" style={{ color: "var(--amber)" }}>
-              <Clock size={12} className="inline mr-1" /> {formatCurrency(balance.locked)} on hold
+              <Clock size={12} className="inline mr-1" /> {formatCurrency(balance.locked)} {t("balance.onHold")}
             </div>
           ) : (
             <div className="mt-2 text-xs" style={{ color: "var(--muted)" }}>
-              Nothing on hold {balance ? <> Updated <LiveTimeAgo ts={balance.updatedAt} /></> : null}
+              {t("balance.nothingOnHold")} {balance ? <> Updated <LiveTimeAgo ts={balance.updatedAt} /></> : null}
             </div>
           )}
         </div>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Stat icon={<ArrowDownToLine size={16} />} label="Total added" value={formatCurrency(deposits)} tone="green" />
-        <Stat icon={<ArrowUpFromLine size={16} />} label="Total withdrawn" value={formatCurrency(withdrawals)} />
-        <Stat icon={<TrendingUp size={16} />} label="Rewards earned" value={formatCurrency(rewards)} tone="green" />
-        <Stat icon={<Clock size={16} />} label="Pending" value={String(pending)} tone={pending > 0 ? "amber" : "default"} />
+        <Stat icon={<ArrowDownToLine size={16} />} label={t("balance.stats.totalAdded")} value={formatCurrency(deposits)} tone="green" />
+        <Stat icon={<ArrowUpFromLine size={16} />} label={t("balance.stats.totalWithdrawn")} value={formatCurrency(withdrawals)} />
+        <Stat icon={<TrendingUp size={16} />} label={t("balance.stats.rewardsEarned")} value={formatCurrency(rewards)} tone="green" />
+        <Stat icon={<Clock size={16} />} label={t("balance.stats.pending")} value={String(pending)} tone={pending > 0 ? "amber" : "default"} />
       </div>
 
       {showDeposit && (
@@ -382,15 +382,15 @@ export default function BalancePage() {
             <>
               <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <label className="block">
-                  <div className="text-[12px] mb-1.5 uppercase tracking-wider" style={{ color: T.textSecondary }}>How much are you sending? (USD estimate)</div>
+                  <div className="text-[12px] mb-1.5 uppercase tracking-wider" style={{ color: T.textSecondary }}>{t("balance.deposit.amountLabel")}</div>
                   <input type="number" value={amount} onChange={e => setAmount(e.target.value)}
                     className="w-full rounded-xl px-3.5 py-2.5 text-[14px] mono outline-none"
                     style={{ background: T.cardBg, border: "1px solid " + T.border, color: T.textPrimary }} />
                 </label>
                 <div className="flex items-end">
                   <div className="text-[12px] leading-relaxed" style={{ color: T.textSecondary }}>
-                    Network: <strong style={{ color: T.textPrimary }}>{selectedMethod.network}</strong><br />
-                    Asset: <strong style={{ color: T.textPrimary }}>{selectedMethod.asset}</strong>
+                    {t("balance.deposit.network")} <strong style={{ color: T.textPrimary }}>{selectedMethod.network}</strong><br />
+                    {t("balance.deposit.asset")} <strong style={{ color: T.textPrimary }}>{selectedMethod.asset}</strong>
                   </div>
                 </div>
               </div>
@@ -398,14 +398,14 @@ export default function BalancePage() {
               <div className="mt-6">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-[13px]" style={{ color: T.textSecondary }}>
-                    Send <strong style={{ color: T.textPrimary }}>{selectedMethod.asset}</strong> to this address
+                    {t("balance.deposit.sendTo")} <strong style={{ color: T.textPrimary }}>{selectedMethod.asset}</strong>
                   </span>
                 </div>
                 <div className="rounded-2xl p-5 flex flex-col sm:flex-row items-center sm:items-start gap-5"
                   style={{ background: T.cardBg, border: "1px solid " + T.border }}>
-                  <AddressQR value={selectedMethod.address} size={148} label="Point your wallet camera here" />
+                  <AddressQR value={selectedMethod.address} size={148} label={t("balance.deposit.qrLabel")} />
                   <div className="flex-1 min-w-0 w-full">
-                    <div className="text-[12px] font-semibold uppercase tracking-wider mb-2" style={{ color: T.textSecondary }}>Or copy the address manually</div>
+                    <div className="text-[12px] font-semibold uppercase tracking-wider mb-2" style={{ color: T.textSecondary }}>{t("balance.deposit.copyHint")}</div>
                     <div className="flex items-stretch gap-2">
                       <code className="mono flex-1 rounded-xl px-3.5 py-3 text-[12.5px] break-all"
                         style={{ background: T.surface, border: "1px solid " + T.border, color: T.textPrimary }}>
@@ -419,12 +419,12 @@ export default function BalancePage() {
                           border: "1px solid " + (copied ? "#1B7A4D" : "#2449A8"),
                           minWidth: 96,
                         }}>
-                        {copied ? <><Check size={13} /> Copied</> : <><Copy size={13} /> Copy</>}
+                        {copied ? <><Check size={13} /> {t("balance.copied")}</> : <><Copy size={13} /> {t("balance.copy")}</>}
                       </button>
                     </div>
                     {selectedMethod.memo && (
                       <div className="mt-3 text-[13px]" style={{ color: T.textSecondary }}>
-                        Memo / Tag: <span className="mono font-semibold" style={{ color: T.textPrimary }}>{selectedMethod.memo}</span>
+                        {t("balance.deposit.memoTag")} <span className="mono font-semibold" style={{ color: T.textPrimary }}>{selectedMethod.memo}</span>
                       </div>
                     )}
                     {selectedMethod.notes && (
@@ -439,13 +439,13 @@ export default function BalancePage() {
 
               <div className="mt-6 pt-6" style={{ borderTop: "1px solid " + T.border }}>
                 <div className="mb-3">
-                  <div className="text-[13px] font-semibold" style={{ color: T.textPrimary }}>Almost done  just tell us how you paid</div>
-                  <div className="text-[11.5px] mt-0.5" style={{ color: T.textSecondary }}>This helps us credit your account faster. Payment screenshot is required. Transaction hash is optional but speeds up verification.</div>
+                  <div className="text-[13px] font-semibold" style={{ color: T.textPrimary }}>{t("balance.deposit.almostDone")}</div>
+                  <div className="text-[11.5px] mt-0.5" style={{ color: T.textSecondary }}>{t("balance.deposit.help")}</div>
                 </div>
 
                 <label className="block mb-4">
                   <div className="text-[12px] mb-1.5 flex items-center gap-1.5" style={{ color: T.textSecondary }}>
-                    <Hash size={12} /> Transaction hash
+                    <Hash size={12} /> {t("balance.deposit.txHash")}
                   </div>
                   <input type="text" value={txHash}
                     onChange={e => { setTxHash(e.target.value); setFormError(""); }}
@@ -458,13 +458,13 @@ export default function BalancePage() {
                     }} />
                   {txHash && !hint.pattern.test(txHash.trim()) && (
                     <div className="text-[11.5px] mt-1.5" style={{ color: "#B91C1C" }}>
-                      Doesn't match the expected format for {selectedMethod.network}.
+                      {t("balance.deposit.hashInvalid")} {selectedMethod.network}.
                     </div>
                   )}
                 </label>
 
                 <div className="text-[12px] mb-1.5 flex items-center gap-1.5" style={{ color: T.textSecondary }}>
-                  <ImageIcon size={12} /> Payment screenshot <span style={{ color: "#B91C1C" }}>*</span>
+                  <ImageIcon size={12} /> {t("balance.deposit.screenshot")} <span style={{ color: "#B91C1C" }}>*</span>
                 </div>
 
                 {!proofUrl ? (
@@ -479,9 +479,9 @@ export default function BalancePage() {
                     }}>
                     <UploadCloud size={26} style={{ color: dragOver ? "#2449A8" : T.textSecondary, margin: "0 auto 8px" }} />
                     <div className="text-[13px] font-semibold" style={{ color: T.textPrimary }}>
-                      {uploading ? "Processing image..." : "Click to upload or drag & drop"}
+                      {uploading ? t("balance.deposit.processing") : t("balance.deposit.uploadClick")}
                     </div>
-                    <div className="text-[12px] mt-1" style={{ color: T.textSecondary }}>PNG or JPG  up to 6 MB</div>
+                    <div className="text-[12px] mt-1" style={{ color: T.textSecondary }}>{t("balance.deposit.uploadHint")}</div>
                     <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp" className="hidden"
                       onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
                   </div>
@@ -491,7 +491,7 @@ export default function BalancePage() {
                       <CheckCircle2 size={14} style={{ color: "#1B7A4D" }} />
                       <div className="flex-1 min-w-0">
                         <div className="text-[12.5px] font-medium truncate" style={{ color: T.textPrimary }}>{proofName || "screenshot.jpg"}</div>
-                        <div className="text-[11px]" style={{ color: T.textSecondary }}>Ready to attach</div>
+                        <div className="text-[11px]" style={{ color: T.textSecondary }}>{t("balance.deposit.readyAttach")}</div>
                       </div>
                       <button type="button" onClick={clearProof} className="p-1.5 rounded-lg hover:bg-black/5">
                         <XIcon size={13} style={{ color: T.textSecondary }} />
@@ -519,12 +519,12 @@ export default function BalancePage() {
                     color: "#FFFFFF",
                     opacity: depositReady ? 1 : 0.85,
                   }}>
-                  {depositReady ? "I've sent " + selectedMethod.asset + "  submit for review" : "Upload screenshot to submit"}
+                  {depositReady ? t("balance.deposit.submitReady") + " " + selectedMethod.asset : t("balance.deposit.submitNotReady")}
                 </button>
                 <button type="button" onClick={() => { setShowDeposit(false); setFormError(""); }}
                   className="rounded-xl px-5 text-[14px] font-semibold"
                   style={{ background: "transparent", color: T.textSecondary, border: "1px solid " + T.border }}>
-                  Cancel
+                  {t("balance.cancel")}
                 </button>
               </div>
             </>
@@ -547,24 +547,22 @@ export default function BalancePage() {
               </div>
               <div>
                 <div className="text-lg font-semibold" style={{ color: T.textPrimary }}>
-                  {kycStatus === "pending" ? "Verification in review" : "Verify your identity to withdraw"}
+                  {kycStatus === "pending" ? t("balance.kyc.pendingTitle") : t("balance.withdraw.verifyTitle")}
                 </div>
                 <div className="text-sm mt-2 max-w-md mx-auto" style={{ color: T.textSecondary }}>
-                  {kycStatus === "pending"
-                    ? "We're reviewing your documents. Withdrawals unlock automatically once approved."
-                    : "Withdrawals require identity verification. This is required by regulation."}
+                  {kycStatus === "pending" ? t("balance.withdraw.kycPending") : t("balance.withdraw.kycRequired")}
                 </div>
               </div>
               <div className="flex gap-2 mt-2">
                 <Link href="/kyc"
                   className="px-5 py-2.5 rounded-xl text-sm font-semibold text-black inline-flex items-center gap-2"
                   style={{ background: kycStatus === "pending" ? "#e3b341" : "#7c8ff5" }}>
-                  {kycStatus === "pending" ? "View status" : "Verify now"} <ArrowRight size={14} />
+                  {kycStatus === "pending" ? t("balance.kyc.viewStatus") : t("balance.kyc.verifyNow")} <ArrowRight size={14} />
                 </Link>
                 <button type="button" onClick={() => setShowWithdraw(false)}
                   className="px-5 py-2.5 rounded-xl text-sm font-semibold"
                   style={{ background: "transparent", color: T.textSecondary, border: "1px solid " + T.border }}>
-                  Close
+                  {t("balance.close")}
                 </button>
               </div>
             </div>
@@ -572,11 +570,11 @@ export default function BalancePage() {
             <>
               <div className="flex items-start justify-between flex-wrap gap-3 mb-6">
                 <div>
-                  <h2 className="text-[22px] leading-tight font-semibold" style={{ color: T.textPrimary }}>Withdraw funds</h2>
-                  <p className="text-[13.5px] mt-1.5" style={{ color: T.textSecondary }}>Pick a network, then tell us where to send your money.</p>
+                  <h2 className="text-[22px] leading-tight font-semibold" style={{ color: T.textPrimary }}>{t("balance.withdraw.title")}</h2>
+                  <p className="text-[13.5px] mt-1.5" style={{ color: T.textSecondary }}>{t("balance.withdraw.subtitle")}</p>
                 </div>
                 <div className="rounded-xl px-3 py-2" style={{ background: T.cardBg, border: "1px solid " + T.border }}>
-                  <div className="text-[11px] uppercase tracking-wider" style={{ color: T.textSecondary }}>Available</div>
+                  <div className="text-[11px] uppercase tracking-wider" style={{ color: T.textSecondary }}>{t("balance.withdraw.available")}</div>
                   <div className="text-[15px] font-semibold mono" style={{ color: T.textPrimary }}>{formatCurrency(balance?.usd ?? 0)}</div>
                 </div>
               </div>
@@ -585,7 +583,7 @@ export default function BalancePage() {
                 <div className="text-[12px] font-semibold uppercase tracking-wider mb-2.5" style={{ color: T.textSecondary }}>
                   <span className="inline-flex items-center gap-2">
                     <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold" style={{ background: "#2449A8", color: "#FFFFFF" }}>1</span>
-                    Choose network
+                    {t("balance.withdraw.step1")}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -614,15 +612,15 @@ export default function BalancePage() {
                 <div className="text-[12px] font-semibold uppercase tracking-wider mb-2.5" style={{ color: T.textSecondary }}>
                   <span className="inline-flex items-center gap-2">
                     <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold" style={{ background: "#2449A8", color: "#FFFFFF" }}>2</span>
-                    Where should we send it?
+                    {t("balance.withdraw.step2")}
                   </span>
                 </div>
                 {wMethod && (
                   <>
                     <label className="block mb-4">
                       <div className="text-[12px] mb-1.5 flex items-center justify-between" style={{ color: T.textSecondary }}>
-                        <span>Your {wMethod.asset} wallet address</span>
-                        <span className="text-[11px]">Network: <strong style={{ color: T.textPrimary }}>{wMethod.network}</strong></span>
+                        <span>{t("balance.withdraw.addressLabel")} {wMethod.asset}</span>
+                        <span className="text-[11px]">{t("balance.withdraw.networkLabel")} <strong style={{ color: T.textPrimary }}>{wMethod.network}</strong></span>
                       </div>
                       <input type="text" value={wAddress}
                         onChange={e => { setWAddress(e.target.value); setFormError(""); }}
@@ -641,13 +639,13 @@ export default function BalancePage() {
                     {wAddressOk && (
                       <div className="rounded-2xl p-5 mb-4 flex flex-col sm:flex-row items-center gap-5"
                         style={{ background: T.cardBg, border: "1px solid " + T.border }}>
-                        <AddressQR value={wAddress.trim()} size={140} label="Scan to verify address" />
+                        <AddressQR value={wAddress.trim()} size={140} label={t("balance.withdraw.scanToVerify")} />
                         <div className="flex-1 min-w-0">
                           <div className="text-[12px] font-semibold uppercase tracking-wider mb-2" style={{ color: T.textSecondary }}>
                             Verify this is your address
                           </div>
                           <div className="text-[12.5px] leading-relaxed" style={{ color: T.textSecondary }}>
-                            Scan the QR with a wallet app or compare with your own wallet. Double-check every character  crypto transfers can't be reversed.
+                            {t("balance.withdraw.verifyQrBody")}
                           </div>
                           <div className="mono text-[12px] mt-3 break-all p-3 rounded-lg"
                             style={{ background: T.surface, border: "1px solid " + T.border, color: T.textPrimary }}>
@@ -658,16 +656,16 @@ export default function BalancePage() {
                     )}
 
                     <label className="block mb-4">
-                      <div className="text-[12px] mb-1.5" style={{ color: T.textSecondary }}>Memo / Tag (only if your wallet asks for one)</div>
+                      <div className="text-[12px] mb-1.5" style={{ color: T.textSecondary }}>{t("balance.withdraw.memoLabel")}</div>
                       <input type="text" value={wMemo} onChange={e => setWMemo(e.target.value)}
-                        placeholder="Leave blank if unsure"
+                        placeholder={t("balance.withdraw.memoPlaceholder")}
                         className="w-full rounded-xl px-3.5 py-2.5 text-[13px] mono outline-none"
                         style={{ background: T.cardBg, border: "1px solid " + T.border, color: T.textPrimary }} />
                     </label>
                     <label className="block">
-                      <div className="text-[12px] mb-1.5" style={{ color: T.textSecondary }}>Nickname (optional)</div>
+                      <div className="text-[12px] mb-1.5" style={{ color: T.textSecondary }}>{t("balance.withdraw.nicknameLabel")}</div>
                       <input type="text" value={wLabel} onChange={e => setWLabel(e.target.value)}
-                        placeholder="e.g. My Ledger BTC wallet"
+                        placeholder={t("balance.withdraw.nicknamePlaceholder")}
                         className="w-full rounded-xl px-3.5 py-2.5 text-[13px] outline-none"
                         style={{ background: T.cardBg, border: "1px solid " + T.border, color: T.textPrimary }} />
                     </label>
@@ -679,14 +677,14 @@ export default function BalancePage() {
                 <div className="text-[12px] font-semibold uppercase tracking-wider mb-2.5" style={{ color: T.textSecondary }}>
                   <span className="inline-flex items-center gap-2">
                     <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold" style={{ background: "#2449A8", color: "#FFFFFF" }}>3</span>
-                    How much?
+                    {t("balance.withdraw.step3")}
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block">
                       <div className="text-[12px] mb-1.5 flex items-center justify-between" style={{ color: T.textSecondary }}>
-                        <span>USD amount</span>
+                        <span>{t("balance.withdraw.usdAmount")}</span>
                         
                       </div>
                       <input type="number" value={wAmount} onChange={e => { setWAmount(e.target.value); setFormError(""); }}
@@ -705,7 +703,7 @@ export default function BalancePage() {
                     </div>
                   </div>
                   <div className="rounded-xl p-4" style={{ background: T.cardBg, border: "1px solid " + T.border }}>
-                    <div className="text-[11px] uppercase tracking-wider" style={{ color: T.textSecondary }}>You'll receive about</div>
+                    <div className="text-[11px] uppercase tracking-wider" style={{ color: T.textSecondary }}>{t("balance.withdraw.receiveAbout")}</div>
                     <div className="mt-2 flex items-baseline gap-2">
                       <div className="text-[22px] font-bold mono" style={{ color: T.textPrimary }}>
                         {wCryptoAmount > 0 ? wCryptoAmount.toFixed(wPrice > 100 ? 6 : 4) : ""}
@@ -713,7 +711,7 @@ export default function BalancePage() {
                       <div className="text-[13px] font-semibold" style={{ color: T.textSecondary }}>{wAsset}</div>
                     </div>
                     <div className="text-[11.5px] mt-2" style={{ color: T.textSecondary }}>
-                      Rate: 1 {wAsset}  {wPrice > 0 ? formatCurrency(wPrice) : ""}
+                      {t("balance.withdraw.rate")} 1 {wAsset}  {wPrice > 0 ? formatCurrency(wPrice) : ""}
                     </div>
                   </div>
                 </div>
@@ -723,8 +721,7 @@ export default function BalancePage() {
                     style={{ background: "rgba(227,179,65,0.10)", border: "1px solid rgba(227,179,65,0.4)", color: "#92400E" }}>
                     <AlertTriangle size={14} className="shrink-0 mt-0.5" />
                     <span>
-                      Minimum withdrawal is <strong>{formatCurrency(MIN_WITHDRAWAL)}</strong>.
-                      You entered <strong>{formatCurrency(wAmountNum)}</strong>.
+                      {t("balance.withdraw.minWarning1")} <strong>{formatCurrency(MIN_WITHDRAWAL)}</strong>. {t("balance.withdraw.minWarning2")} <strong>{formatCurrency(wAmountNum)}</strong>.
                     </span>
                   </div>
                 )}
@@ -740,7 +737,7 @@ export default function BalancePage() {
                     onChange={e => { setWConfirm(e.target.checked); setFormError(""); }}
                     className="mt-0.5 w-4 h-4 accent-[#2449A8]" />
                   <span className="text-[12.5px]" style={{ color: T.textPrimary }}>
-                    Yes, I've checked  the address <span className="mono font-semibold">{wAddress.slice(0, 10)}...{wAddress.slice(-8)}</span> is on <strong>{wMethod.network}</strong> and it's mine.
+                    {t("balance.withdraw.confirmPrefix")} <span className="mono font-semibold">{wAddress.slice(0, 10)}...{wAddress.slice(-8)}</span> {t("balance.withdraw.confirmMiddle")} <strong>{wMethod.network}</strong> {t("balance.withdraw.confirmSuffix")}
                   </span>
                 </label>
               )}
@@ -760,7 +757,7 @@ export default function BalancePage() {
                     color: "#FFFFFF",
                     opacity: wReady ? 1 : 0.85,
                   }}>
-                  <Send size={14} /> {wReady ? "Send withdrawal request" : wAmountNum > 0 && wAmountNum < MIN_WITHDRAWAL ? "Minimum " + formatCurrency(MIN_WITHDRAWAL) : "Complete the form to continue"}
+                  <Send size={14} /> {wReady ? t("balance.withdraw.submit") : wAmountNum > 0 && wAmountNum < MIN_WITHDRAWAL ? t("balance.withdraw.minBtn") + " " + formatCurrency(MIN_WITHDRAWAL) : t("balance.withdraw.completeForm")}
                 </button>
                 <button type="button" onClick={() => { setShowWithdraw(false); setFormError(""); }}
                   className="rounded-xl px-5 text-[14px] font-semibold"
@@ -771,7 +768,7 @@ export default function BalancePage() {
 
               <div className="mt-4 flex items-start gap-2 text-[11.5px] leading-relaxed" style={{ color: T.textSecondary }}>
                 <Info size={12} className="shrink-0 mt-0.5" />
-                <span>Requests are processed within 1 business day. Network fees come out of the amount shown.</span>
+                <span>{t("balance.withdraw.footnote")}</span>
               </div>
             </>
           )}
@@ -791,15 +788,15 @@ export default function BalancePage() {
                 <Lock size={16} />
               </div>
               <div className="min-w-0">
-                <div className="font-semibold text-sm">Deposit addresses</div>
+                <div className="font-semibold text-sm">{t("balance.addresses.title")}</div>
                 <div className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
-                  {depositMethods.length} networks available  Tap to {showAllAddresses ? "hide" : "view"}
+                  {depositMethods.length} {t("balance.addresses.available")} {showAllAddresses ? t("balance.hide") : t("balance.view")}
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <span className="text-[11px] uppercase tracking-wider font-semibold hidden sm:inline" style={{ color: "var(--muted-2)" }}>
-                {showAllAddresses ? "Hide" : "Show"}
+                {showAllAddresses ? t("balance.hide") : t("balance.show")}
               </span>
               {showAllAddresses ? <ChevronDown size={18} style={{ color: "var(--muted)" }} /> : <ChevronRight size={18} style={{ color: "var(--muted)" }} />}
             </div>
@@ -826,7 +823,7 @@ export default function BalancePage() {
                       <button onClick={() => copyAddress(m.address)}
                         className="mt-3 text-xs font-semibold flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg"
                         style={{ background: "var(--accent-dim)", color: "var(--accent)" }}>
-                        <Copy size={11} /> Copy address
+                        <Copy size={11} /> {t("balance.addresses.copyAddress")}
                       </button>
                     </div>
                   </div>
