@@ -12,6 +12,31 @@ import LiveTimeAgo from "@/components/LiveTimeAgo";
 import { X, AlertTriangle, Calculator, Wallet, TrendingUp, Clock, Calendar } from "lucide-react";
 
 const MIN_DEPOSIT = 200;
+const DEFAULT_LOCK_MS = 24 * 60 * 60 * 1000; // 24 hours — applied when product lockup is "None"
+
+/** Turn a lockup string ("None", "Flexible", "30 days") into a duration in ms.
+ *  Anything that isn't a positive number of days becomes 24 hours. */
+function parseLockupMs(lockup: string | undefined): number {
+  if (!lockup) return DEFAULT_LOCK_MS;
+  const lower = lockup.toLowerCase().trim();
+  if (lower === "none" || lower === "flexible" || lower === "no lock-up" || lower === "") return DEFAULT_LOCK_MS;
+  const days = parseInt(lockup.replace(/[^0-9]/g, ""), 10);
+  if (!Number.isFinite(days) || days <= 0) return DEFAULT_LOCK_MS;
+  return days * 24 * 60 * 60 * 1000;
+}
+
+/** Human-friendly time remaining: "23h 45m" or "5d" or "unlocked". */
+function timeUntil(ts: number): string {
+  const ms = ts - Date.now();
+  if (ms <= 0) return "unlocked";
+  const totalMinutes = Math.ceil(ms / 60000);
+  const days = Math.floor(totalMinutes / (60 * 24));
+  if (days >= 1) return days + "d";
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+  if (hours >= 1) return hours + "h " + mins + "m";
+  return mins + "m";
+}
 
 export default function EarnPage() {
   const { user } = useAuth();
@@ -72,9 +97,7 @@ export default function EarnPage() {
     await new Promise(r => setTimeout(r, 600));
 
     const now = Date.now();
-    const maturesAt = selected.lockup && selected.lockup !== "None"
-      ? now + (parseInt(selected.lockup) || 0) * 86400000
-      : undefined;
+    const maturesAt = now + parseLockupMs(selected.lockup);
 
     const position: AdminEarnPosition = {
       id: uid("ep"), userId: matchedUser.id, productId: selected.id,
@@ -133,7 +156,7 @@ export default function EarnPage() {
         <span className="pill pill-green inline-flex mb-3">Up to {maxApy.toFixed(1)}% APY</span>
         <h1 className="text-2xl md:text-4xl font-bold">Earn yield on your assets</h1>
         <p className="mt-3 md:mt-4 text-sm md:text-lg max-w-2xl" style={{ color: "var(--muted)" }}>
-          Put idle crypto to work. Flexible products pay out daily  no lock-up required.
+          Put idle crypto to work. Flexible products pay out daily with a 24-hour release window.
         </p>
         <p className="mt-3 text-xs md:text-sm" style={{ color: "var(--muted)" }}>
           Minimum deposit: <strong style={{ color: "var(--text)" }}>{formatCurrency(MIN_DEPOSIT)}</strong>
@@ -179,7 +202,7 @@ export default function EarnPage() {
                 {p.apy.toFixed(2)}<span className="text-lg">% APY</span>
               </div>
               <div className="mt-4 md:mt-5 pt-4 md:pt-5 border-t space-y-2 text-sm" style={{ borderColor: "var(--border)" }}>
-                <div className="flex justify-between"><span style={{ color: "var(--muted)" }}>Lock-up</span><span>{p.lockup}</span></div>
+                <div className="flex justify-between"><span style={{ color: "var(--muted)" }}>Lock-up</span><span>{(p.lockup && p.lockup.toLowerCase() !== "none") ? p.lockup : "24 hours"}</span></div>
                 <div className="flex justify-between"><span style={{ color: "var(--muted)" }}>Minimum</span><span className="mono">{formatCurrency(MIN_DEPOSIT)}</span></div>
                 <div className="flex justify-between"><span style={{ color: "var(--muted)" }}>Payout</span><span>Daily</span></div>
               </div>
@@ -214,7 +237,7 @@ export default function EarnPage() {
                     </div>
                     <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>
                       Started <LiveTimeAgo ts={pos.startedAt} />
-                      {pos.maturesAt && <>  {locked ? "unlocks in " + daysUntil(pos.maturesAt) + " days" : "unlocked"}</>}
+                      {pos.maturesAt && <>  {locked ? "unlocks in " + timeUntil(pos.maturesAt) : "unlocked"}</>}
                       {"  tap for details"}
                     </div>
                   </div>
@@ -348,7 +371,7 @@ export default function EarnPage() {
                 {detail.maturesAt && (
                   <div className="flex items-center justify-between py-2 border-b" style={{ borderColor: "var(--border)" }}>
                     <span className="flex items-center gap-2" style={{ color: "var(--muted)" }}><Calendar size={12} /> Unlocks</span>
-                    <span>in {daysUntil(detail.maturesAt)} days</span>
+                    <span>in {timeUntil(detail.maturesAt)}</span>
                   </div>
                 )}
                 <div className="flex items-center justify-between py-2">
@@ -362,7 +385,7 @@ export default function EarnPage() {
                 <button onClick={() => withdraw(detail)} disabled={!!detail.maturesAt && detail.maturesAt > Date.now()}
                   className="flex-1 btn btn-primary disabled:opacity-50">
                   {detail.maturesAt && detail.maturesAt > Date.now()
-                    ? "Locked  " + daysUntil(detail.maturesAt) + " days left"
+                    ? "Locked  " + timeUntil(detail.maturesAt) + " left"
                     : "Withdraw " + formatCurrency(detail.amountUsd + detailAccrued)}
                 </button>
               )}
