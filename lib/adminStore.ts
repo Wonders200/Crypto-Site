@@ -80,6 +80,7 @@ export interface AdminDepositAddress {
   id: string; label: string; asset: string; network: string;
   address: string; memo?: string; notes?: string;
   category: "crypto" | "fiat"; enabled: boolean; order: number;
+  customQrUrl?: string;
 }
 export interface AdminTestimonial {
   id: string; name: string; role: string; company: string; quote: string;

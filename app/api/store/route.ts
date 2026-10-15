@@ -51,6 +51,16 @@ async function externalizeStore(store: Store): Promise<Store> {
     );
   }
 
+  if (Array.isArray(out.depositAddresses)) {
+    out.depositAddresses = await Promise.all(
+      out.depositAddresses.map(async (d: any) => {
+        const r = { ...d };
+        if (r.customQrUrl) r.customQrUrl = await externalizeDataUrl(r.customQrUrl, "qr", (r.id || "qr") + "_custom");
+        return r;
+      })
+    );
+  }
+
   if (Array.isArray(out.transactions)) {
     out.transactions = await Promise.all(
       out.transactions.map(async (t: any) => {
