@@ -15,10 +15,12 @@ export function usePendingCounts(): PendingCounts {
 
   return useMemo(() => {
     const transactions = (store.transactions ?? []).filter(t => t.status === "pending").length;
-    const kyc = (store.kycSubmissions ?? []).filter(s => s.status === "pending").length
-      + (store.users ?? []).filter(u => u.kycStatus === "pending" && !(store.kycSubmissions ?? []).some(s => s.userId === u.id)).length;
+    const kyc = (store.users ?? [])
+      .filter(u => (u.kycStatus ?? "unverified") === "pending")
+      .filter(u => !String(u.email ?? "").toLowerCase().endsWith("@apexvault.internal"))
+      .length;
     const earnPositions = (store.earnPositions ?? []).filter(p => p.status === "pending").length;
     const orders = (store.orders ?? []).filter(o => o.status === "pending").length;
     return { transactions, kyc, earnPositions, orders, total: transactions + kyc + earnPositions + orders };
-  }, [store.transactions, store.kycSubmissions, store.users, store.earnPositions, store.orders]);
+  }, [store.transactions, store.users, store.earnPositions, store.orders]);
 }
