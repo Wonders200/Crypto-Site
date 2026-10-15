@@ -8,6 +8,7 @@ import { getKycStatus } from "@/lib/kyc";
 import BackButton from "@/components/BackButton";
 import LiveTimeAgo from "@/components/LiveTimeAgo";
 import { broadcast } from "@/lib/realtime";
+import { useI18n } from "@/lib/i18n";
 import {
   ShieldCheck, ArrowRight, ArrowLeft, Check, UploadCloud, X as XIcon,
   UserCircle2, FileText, Camera, ClipboardCheck, Clock, XCircle,
@@ -42,9 +43,9 @@ function fileToResizedDataUrl(file: File, maxW = 900, quality = 0.75): Promise<s
 
 const COUNTRIES = ["United States","United Kingdom","Canada","Australia","Germany","France","Netherlands","Spain","Italy","Switzerland","Singapore","Japan","South Korea","Nigeria","South Africa","Kenya","Ghana","UAE","India","Brazil","Mexico","Argentina","Other"];
 const ID_TYPES = [
-  { value: "passport" as const, label: "Passport" },
-  { value: "drivers_license" as const, label: "Driver's license" },
-  { value: "national_id" as const, label: "National ID" },
+  { value: "passport" as const, label: "kyc.idType.passport" },
+  { value: "drivers_license" as const, label: "kyc.idType.drivers" },
+  { value: "national_id" as const, label: "kyc.idType.national" },
 ];
 
 export default function KycPage() {
@@ -52,6 +53,8 @@ export default function KycPage() {
   const { user } = useAuth();
   const { store, update, log } = useAdminStore();
   const { push } = useToast();
+  const { t } = useI18n();
+  const t2 = t;
 
   const demoEmail = store.demoUser?.email ?? "demo@apexvault.io";
   const matchedUser = store.users.find(u => user && u.email.toLowerCase() === user.email.toLowerCase())
@@ -110,18 +113,18 @@ export default function KycPage() {
     const config = isVerified ? {
       icon: CheckCircle2,
       color: "var(--green)",
-      title: "You're verified",
-      msg: "Your identity has been confirmed. You have full access to deposits, withdrawals, trading, and earn products. Nothing more to do.",
+      title: t("kyc.status.verified.title"),
+      msg: t("kyc.status.verified.msg"),
     } : isPending ? {
       icon: Clock,
       color: "var(--amber)",
-      title: "Verification in review",
-      msg: "We're reviewing your documents. This usually takes 1 business day.",
+      title: t("kyc.status.pending.title"),
+      msg: t("kyc.status.pending.msg"),
     } : {
       icon: XCircle,
       color: "var(--red)",
-      title: "Verification rejected",
-      msg: existing?.rejectionReason ?? "Please review and resubmit your documents.",
+      title: t("kyc.status.rejected.title"),
+      msg: existing?.rejectionReason ?? t("kyc.status.rejected.msg"),
     };
 
     const Icon = config.icon;
@@ -129,7 +132,7 @@ export default function KycPage() {
     return (
       <div className="max-w-2xl mx-auto px-6 py-16">
         <div className="mb-4 -ml-2">
-          <BackButton fallback="/dashboard" label="Back to dashboard" />
+          <BackButton fallback="/dashboard" label={t("kyc.backToDashboard")} />
         </div>
 
         <div className="panel p-8 text-center">
@@ -147,18 +150,18 @@ export default function KycPage() {
             <div className="mt-6 rounded-xl p-4 text-left text-xs space-y-2"
               style={{ background: "var(--panel-2)", border: "1px solid var(--border)" }}>
               <div className="flex justify-between">
-                <span style={{ color: "var(--muted)" }}>Submitted</span>
+                <span style={{ color: "var(--muted)" }}>{t("kyc.submitted")}</span>
                 <span><LiveTimeAgo ts={existing.submittedAt} /></span>
               </div>
               {existing.reviewedAt && (
                 <div className="flex justify-between">
-                  <span style={{ color: "var(--muted)" }}>Reviewed</span>
+                  <span style={{ color: "var(--muted)" }}>{t("kyc.reviewed")}</span>
                   <span><LiveTimeAgo ts={existing.reviewedAt} /></span>
                 </div>
               )}
 
               <div className="flex justify-between">
-                <span style={{ color: "var(--muted)" }}>Document</span>
+                <span style={{ color: "var(--muted)" }}>{t("kyc.document")}</span>
                 <span>{ID_TYPES.find(t => t.value === existing.idType)?.label ?? existing.idType}</span>
               </div>
             </div>
@@ -171,18 +174,18 @@ export default function KycPage() {
                   setForceForm(true);
                   setStep(1);
                   setError("");
-                  push({ kind: "info", title: "You can now resubmit" });
+                  push({ kind: "info", title: t("kyc.youCanResubmit") });
                 }}
                 className="btn btn-primary">
-                Resubmit documents <ArrowRight size={14} />
+                {t("kyc.resubmit")} <ArrowRight size={14} />
               </button>
             )}
-            <Link href="/dashboard" className="btn btn-ghost">Back to dashboard</Link>
+            <Link href="/dashboard" className="btn btn-ghost">{t("kyc.backToDashboard")}</Link>
           </div>
 
           {isVerified && (
             <p className="text-xs mt-6" style={{ color: "var(--muted-2)" }}>
-              Need to update your information? Contact support.
+              {t("kyc.needUpdate")}
             </p>
           )}
         </div>
@@ -194,10 +197,10 @@ export default function KycPage() {
      KYC FORM (unverified users only, or after clicking Resubmit)
      ============================================================ */
   const steps = [
-    { n: 1, label: "Personal", icon: UserCircle2 },
-    { n: 2, label: "ID", icon: FileText },
-    { n: 3, label: "Selfie", icon: Camera },
-    { n: 4, label: "Review", icon: ClipboardCheck },
+    { n: 1, label: t("kyc.step.personal"), icon: UserCircle2 },
+    { n: 2, label: t("kyc.step.id"), icon: FileText },
+    { n: 3, label: t("kyc.step.selfie"), icon: Camera },
+    { n: 4, label: t("kyc.step.review"), icon: ClipboardCheck },
   ];
 
   const step1Valid = !!(fullName.trim() && dob && country && address.trim() && city.trim() && phone.trim());
@@ -206,15 +209,15 @@ export default function KycPage() {
   const canAdvance = step === 1 ? step1Valid : step === 2 ? step2Valid : step === 3 ? step3Valid : true;
 
   const handleFile = async (file: File, setter: (v: string) => void) => {
-    if (!file.type.startsWith("image/")) { setError("Only image files accepted."); return; }
-    if (file.size > 8 * 1024 * 1024) { setError("Image must be under 8 MB."); return; }
+    if (!file.type.startsWith("image/")) { setError(t("kyc.error.imageOnly")); return; }
+    if (file.size > 8 * 1024 * 1024) { setError(t("kyc.error.tooBig")); return; }
     setUploading(true);
     setError("");
     try {
       const url = await fileToResizedDataUrl(file);
       setter(url);
     } catch {
-      setError("Could not process image.");
+      setError(t("kyc.error.process"));
     } finally {
       setUploading(false);
     }
@@ -222,16 +225,16 @@ export default function KycPage() {
 
   const next = () => {
     setError("");
-    if (!canAdvance) { setError("Please fill all required fields."); return; }
+    if (!canAdvance) { setError(t("kyc.error.required")); return; }
     setStep(s => Math.min(4, s + 1));
   };
 
   const back = () => { setError(""); setStep(s => Math.max(1, s - 1)); };
 
   const submit = async () => {
-    if (!matchedUser) { setError("No user found."); return; }
+    if (!matchedUser) { setError(t("kyc.error.noUser")); return; }
     if (!step1Valid || !step2Valid || !step3Valid) {
-      setError("Please complete all steps before submitting.");
+      setError(t("kyc.error.complete"));
       return;
     }
 
@@ -266,7 +269,7 @@ export default function KycPage() {
 
     broadcast("CUSTOMER_ACTION", `${fullName} submitted KYC documents  needs review`, { actor: matchedUser.email, payload: { type: "kyc" } });
     log("KYC_SUBMIT", "KYC: " + matchedUser.email, fullName);
-    push({ kind: "success", title: "Documents submitted", message: "We'll confirm within 1 business day." });
+    push({ kind: "success", title: t("kyc.success.title"), message: t("kyc.success.message") });
 
     setSubmitting(false);
     setForceForm(false);
@@ -275,18 +278,18 @@ export default function KycPage() {
   return (
     <div className="max-w-3xl mx-auto px-6 py-10">
       <div className="mb-4 -ml-2">
-        <BackButton fallback="/dashboard" label="Back to dashboard" />
+        <BackButton fallback="/dashboard" label={t("kyc.backToDashboard")} />
       </div>
 
       <div className="mb-8">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-4"
           style={{ background: "var(--accent-dim)", border: "1px solid var(--accent)" }}>
           <ShieldCheck size={12} style={{ color: "var(--accent)" }} />
-          <span className="text-xs uppercase tracking-wider font-bold" style={{ color: "var(--accent)" }}>Identity verification</span>
+          <span className="text-xs uppercase tracking-wider font-bold" style={{ color: "var(--accent)" }}>{t("kyc.badge")}</span>
         </div>
-        <h1 className="text-3xl font-bold">Verify your identity</h1>
+        <h1 className="text-3xl font-bold">{t("kyc.title")}</h1>
         <p className="mt-3 text-sm leading-relaxed" style={{ color: "var(--muted)" }}>
-          Complete these 4 short steps. This unlocks deposits, withdrawals, trading, and earn products.
+          {t("kyc.subtitle")}
         </p>
       </div>
 
@@ -321,40 +324,40 @@ export default function KycPage() {
 
       {step === 1 && (
         <div className="panel p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Your details</h2>
+          <h2 className="text-lg font-semibold">{t("kyc.personal.title")}</h2>
           <label className="block">
-            <div className="text-xs mb-1.5 font-semibold" style={{ color: "var(--muted)" }}>Full legal name *</div>
-            <input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="As shown on your ID" className="input" />
+            <div className="text-xs mb-1.5 font-semibold" style={{ color: "var(--muted)" }}>{t("kyc.personal.fullName")}</div>
+            <input value={fullName} onChange={e => setFullName(e.target.value)} placeholder={t("kyc.personal.fullNamePlaceholder")} className="input" />
           </label>
           <div className="grid sm:grid-cols-2 gap-4">
             <label className="block">
-              <div className="text-xs mb-1.5 font-semibold" style={{ color: "var(--muted)" }}>Date of birth *</div>
+              <div className="text-xs mb-1.5 font-semibold" style={{ color: "var(--muted)" }}>{t("kyc.personal.dob")}</div>
               <input type="date" value={dob} onChange={e => setDob(e.target.value)} className="input" />
             </label>
             <label className="block">
-              <div className="text-xs mb-1.5 font-semibold" style={{ color: "var(--muted)" }}>Country *</div>
+              <div className="text-xs mb-1.5 font-semibold" style={{ color: "var(--muted)" }}>{t("kyc.personal.country")}</div>
               <select value={country} onChange={e => setCountry(e.target.value)} className="input">
-                <option value="">Select country</option>
+                <option value="">{t("kyc.personal.selectCountry")}</option>
                 {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </label>
           </div>
           <label className="block">
-            <div className="text-xs mb-1.5 font-semibold" style={{ color: "var(--muted)" }}>Residential address *</div>
-            <input value={address} onChange={e => setAddress(e.target.value)} placeholder="Street address" className="input" />
+            <div className="text-xs mb-1.5 font-semibold" style={{ color: "var(--muted)" }}>{t("kyc.personal.address")}</div>
+            <input value={address} onChange={e => setAddress(e.target.value)} placeholder={t("kyc.personal.addressPlaceholder")} className="input" />
           </label>
           <div className="grid sm:grid-cols-2 gap-4">
             <label className="block">
-              <div className="text-xs mb-1.5 font-semibold" style={{ color: "var(--muted)" }}>City *</div>
-              <input value={city} onChange={e => setCity(e.target.value)} placeholder="City" className="input" />
+              <div className="text-xs mb-1.5 font-semibold" style={{ color: "var(--muted)" }}>{t("kyc.personal.city")}</div>
+              <input value={city} onChange={e => setCity(e.target.value)} placeholder={t("kyc.personal.cityPlaceholder")} className="input" />
             </label>
             <label className="block">
-              <div className="text-xs mb-1.5 font-semibold" style={{ color: "var(--muted)" }}>Postal code</div>
-              <input value={postalCode} onChange={e => setPostalCode(e.target.value)} placeholder="Optional" className="input" />
+              <div className="text-xs mb-1.5 font-semibold" style={{ color: "var(--muted)" }}>{t("kyc.personal.postalCode")}</div>
+              <input value={postalCode} onChange={e => setPostalCode(e.target.value)} placeholder={t("kyc.personal.optional")} className="input" />
             </label>
           </div>
           <label className="block">
-            <div className="text-xs mb-1.5 font-semibold" style={{ color: "var(--muted)" }}>Phone number *</div>
+            <div className="text-xs mb-1.5 font-semibold" style={{ color: "var(--muted)" }}>{t("kyc.personal.phone")}</div>
             <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+1 555 123 4567" className="input" />
           </label>
         </div>
@@ -362,9 +365,9 @@ export default function KycPage() {
 
       {step === 2 && (
         <div className="panel p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Upload your ID</h2>
+          <h2 className="text-lg font-semibold">{t("kyc.id.title")}</h2>
           <div>
-            <div className="text-xs mb-1.5 font-semibold" style={{ color: "var(--muted)" }}>Document type *</div>
+            <div className="text-xs mb-1.5 font-semibold" style={{ color: "var(--muted)" }}>{t("kyc.id.docType")}</div>
             <div className="grid grid-cols-3 gap-2">
               {ID_TYPES.map(t => (
                 <button key={t.value} type="button" onClick={() => setIdType(t.value)}
@@ -374,46 +377,46 @@ export default function KycPage() {
                     border: "1px solid " + (idType === t.value ? "var(--accent)" : "var(--border)"),
                     color: idType === t.value ? "var(--accent)" : "var(--muted)",
                   }}>
-                  {t.label}
+                  {t2(t.label)}
                 </button>
               ))}
             </div>
           </div>
           <label className="block">
-            <div className="text-xs mb-1.5 font-semibold" style={{ color: "var(--muted)" }}>Document number *</div>
-            <input value={idNumber} onChange={e => setIdNumber(e.target.value)} placeholder="e.g. 1234567890" className="input mono" />
+            <div className="text-xs mb-1.5 font-semibold" style={{ color: "var(--muted)" }}>{t("kyc.id.docNumber")}</div>
+            <input value={idNumber} onChange={e => setIdNumber(e.target.value)} placeholder={t("kyc.id.docNumberPlaceholder")} className="input mono" />
           </label>
-          <DocUpload label="Front of document *" value={idFrontUrl} onChange={setIdFrontUrl} inputRef={frontRef} onFile={handleFile} uploading={uploading} />
-          <DocUpload label="Back of document (not required for passports)" value={idBackUrl} onChange={setIdBackUrl} inputRef={backRef} onFile={handleFile} uploading={uploading} />
+          <DocUpload label={t("kyc.id.front")} value={idFrontUrl} onChange={setIdFrontUrl} inputRef={frontRef} onFile={handleFile} uploading={uploading} />
+          <DocUpload label={t("kyc.id.back")} value={idBackUrl} onChange={setIdBackUrl} inputRef={backRef} onFile={handleFile} uploading={uploading} />
         </div>
       )}
 
       {step === 3 && (
         <div className="panel p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Take a selfie</h2>
+          <h2 className="text-lg font-semibold">{t("kyc.selfie.title")}</h2>
           <div className="rounded-xl p-4 text-xs leading-relaxed"
             style={{ background: "var(--panel-2)", border: "1px solid var(--border)", color: "var(--muted)" }}>
-            <strong style={{ color: "var(--text)" }}>Tips:</strong> Face the camera, good lighting, remove hats/sunglasses, hold your ID next to your face.
+            <strong style={{ color: "var(--text)" }}>{t("kyc.selfie.tipsLabel")}</strong> {t("kyc.selfie.tips")}
           </div>
-          <DocUpload label="Selfie holding your ID *" value={selfieUrl} onChange={setSelfieUrl} inputRef={selfieRef} onFile={handleFile} uploading={uploading} />
+          <DocUpload label={t("kyc.selfie.upload")} value={selfieUrl} onChange={setSelfieUrl} inputRef={selfieRef} onFile={handleFile} uploading={uploading} />
         </div>
       )}
 
       {step === 4 && (
         <div className="panel p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Review and submit</h2>
-          <p className="text-sm" style={{ color: "var(--muted)" }}>Confirm everything is correct.</p>
+          <h2 className="text-lg font-semibold">{t("kyc.review.title")}</h2>
+          <p className="text-sm" style={{ color: "var(--muted)" }}>{t("kyc.review.subtitle")}</p>
           <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
             {[
-              ["Full name", fullName],
-              ["Date of birth", dob],
-              ["Country", country],
-              ["Address", address + ", " + city + (postalCode ? ", " + postalCode : "")],
-              ["Phone", phone],
-              ["Document type", ID_TYPES.find(t => t.value === idType)?.label ?? idType],
-              ["Document number", idNumber],
+              [t("kyc.review.fullName"), fullName],
+              [t("kyc.review.dob"), dob],
+              [t("kyc.review.country"), country],
+              [t("kyc.review.address"), address + ", " + city + (postalCode ? ", " + postalCode : "")],
+              [t("kyc.review.phone"), phone],
+              [t("kyc.review.docType"), t2(ID_TYPES.find(x => x.value === idType)?.label ?? idType)],
+              [t("kyc.review.docNumber"), idNumber],
             ].map(([k, v], i) => (
-              <div key={k} className="flex justify-between px-4 py-2.5 text-sm gap-4"
+              <div key={i} className="flex justify-between px-4 py-2.5 text-sm gap-4"
                 style={{ background: i % 2 === 0 ? "transparent" : "var(--panel-2)", borderTop: i > 0 ? "1px solid var(--border)" : "none" }}>
                 <span style={{ color: "var(--muted)" }}>{k}</span>
                 <span className="mono font-medium text-right truncate">{v || ""}</span>
@@ -423,17 +426,17 @@ export default function KycPage() {
 
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: "ID front", url: idFrontUrl },
-              { label: "ID back", url: idBackUrl },
-              { label: "Selfie", url: selfieUrl },
-            ].map(d => (
-              <div key={d.label}>
+              { label: t("kyc.review.idFront"), url: idFrontUrl },
+              { label: t("kyc.review.idBack"), url: idBackUrl },
+              { label: t("kyc.review.selfie"), url: selfieUrl },
+            ].map((d, di) => (
+              <div key={di}>
                 <div className="text-[10px] uppercase tracking-wider mb-1.5" style={{ color: "var(--muted)" }}>{d.label}</div>
                 {d.url ? (
                   <img src={d.url} alt={d.label} className="rounded-lg w-full h-24 object-cover" style={{ border: "1px solid var(--border)" }} />
                 ) : (
                   <div className="rounded-lg w-full h-24 flex items-center justify-center text-xs"
-                    style={{ border: "1px dashed var(--border)", color: "var(--muted-2)" }}>Not provided</div>
+                    style={{ border: "1px dashed var(--border)", color: "var(--muted-2)" }}>{t("kyc.review.notProvided")}</div>
                 )}
               </div>
             ))}
@@ -442,7 +445,7 @@ export default function KycPage() {
           <div className="rounded-xl p-3.5 flex items-start gap-3 text-xs"
             style={{ background: "var(--accent-dim)", border: "1px solid var(--accent)" }}>
             <Lock size={14} style={{ color: "var(--accent)", marginTop: 1, flexShrink: 0 }} />
-            <span style={{ color: "var(--text)" }}>Your data is encrypted and only used for identity verification.</span>
+            <span style={{ color: "var(--text)" }}>{t("kyc.review.encrypted")}</span>
           </div>
         </div>
       )}
@@ -457,18 +460,18 @@ export default function KycPage() {
       <div className="mt-6 flex gap-2">
         {step > 1 && step < 4 && (
           <button type="button" onClick={back} className="btn btn-ghost">
-            <ArrowLeft size={14} /> Back
+            <ArrowLeft size={14} /> {t("kyc.btn.back")}
           </button>
         )}
         <div className="flex-1"></div>
         {step < 4 ? (
           <button type="button" onClick={next} disabled={!canAdvance} className="btn btn-primary disabled:opacity-40">
-            Continue <ArrowRight size={14} />
+            {t("kyc.btn.continue")} <ArrowRight size={14} />
           </button>
         ) : (
           <button type="button" onClick={submit} disabled={submitting || !step1Valid || !step2Valid || !step3Valid}
             className="btn btn-primary disabled:opacity-40">
-            {submitting ? "Submitting" : <><Check size={14} /> Submit for review</>}
+            {submitting ? t("kyc.btn.submitting") : <><Check size={14} /> {t("kyc.btn.submit")}</>}
           </button>
         )}
       </div>
@@ -486,6 +489,7 @@ function DocUpload({
   onFile: (file: File, setter: (v: string) => void) => Promise<void>;
   uploading: boolean;
 }) {
+  const { t } = useI18n();
   const [drag, setDrag] = useState(false);
   return (
     <div>
@@ -502,8 +506,8 @@ function DocUpload({
             border: "1.5px dashed " + (drag ? "var(--accent)" : "var(--border)"),
           }}>
           <UploadCloud size={22} style={{ color: drag ? "var(--accent)" : "var(--muted)", margin: "0 auto 6px" }} />
-          <div className="text-xs font-semibold">{uploading ? "Processing" : "Click to upload or drag & drop"}</div>
-          <div className="text-[10px] mt-0.5" style={{ color: "var(--muted)" }}>PNG or JPG  up to 8 MB</div>
+          <div className="text-xs font-semibold">{uploading ? t("kyc.upload.processing") : t("kyc.upload.click")}</div>
+          <div className="text-[10px] mt-0.5" style={{ color: "var(--muted)" }}>{t("kyc.upload.hint")}</div>
           <input ref={inputRef} type="file" accept="image/*" className="hidden"
             onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f, onChange as (v: string) => void); }} />
         </div>
@@ -511,7 +515,7 @@ function DocUpload({
         <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)", background: "var(--panel-2)" }}>
           <div className="flex items-center gap-2 px-3 py-2 border-b" style={{ borderColor: "var(--border)" }}>
             <CheckCircle2 size={12} style={{ color: "var(--green)" }} />
-            <div className="text-xs flex-1 font-medium">Uploaded</div>
+            <div className="text-xs flex-1 font-medium">{t("kyc.upload.uploaded")}</div>
             <button type="button" onClick={() => onChange(undefined)} className="p-1 rounded hover:bg-white/5">
               <XIcon size={12} style={{ color: "var(--muted)" }} />
             </button>
