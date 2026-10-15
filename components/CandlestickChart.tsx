@@ -2,9 +2,33 @@
 import { useMemo, useState } from "react";
 import { generateCandles } from "@/lib/cryptoData";
 
+// Per-tab config: how many candles to show, and how long each candle represents.
+// Longer timeframes use wider spacing + more volatility so the chart looks realistic.
+const RANGE_CONFIG: Record<"1H" | "4H" | "1D" | "1W", { count: number; intervalMs: number; volMult: number }> = {
+  "1H": { count: 96, intervalMs: 60 * 60 * 1000,       volMult: 1 },
+  "4H": { count: 90, intervalMs: 4 * 60 * 60 * 1000,   volMult: 1.6 },
+  "1D": { count: 90, intervalMs: 24 * 60 * 60 * 1000,  volMult: 2.8 },
+  "1W": { count: 52, intervalMs: 7 * 24 * 60 * 60 * 1000, volMult: 5 },
+};
+
 export default function CandlestickChart({ symbol, price, height = 380 }: { symbol: string; price: number; height?: number }) {
   const [range, setRange] = useState<"1H" | "4H" | "1D" | "1W">("4H");
-  const candles = useMemo(() => generateCandles(symbol, price, 96), [symbol, price]);
+  const candles = useMemo(() => {
+    const cfg = RANGE_CONFIG[range];
+    const raw = generateCandles(symbol, price, cfg.count, cfg.intervalMs);
+    if (cfg.volMult === 1) return raw;
+    // Scale volatility for longer timeframes — synthetic data would otherwise
+    // look too flat on 1D / 1W compared to real markets.
+    return raw.map((candle, i) => {
+      const mid = (candle.o + candle.c) / 2;
+      const expand = (v: number) => mid + (v - mid) * cfg.volMult;
+      return {
+        ...candle,
+        h: expand(candle.h),
+        l: expand(candle.l),
+      };
+    });
+  }, [symbol, price, range]);
 
   const W = 900, H = height, padL = 8, padR = 64, padT = 12, padB = 24;
   const cW = W - padL - padR, cH = H - padT - padB;
