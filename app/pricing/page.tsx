@@ -5,24 +5,27 @@ import { useI18n } from "@/lib/i18n";
 
 export default function PricingPage() {
   const { store } = useAdminStore();
-  const { t } = useI18n();
-  const tiers = store.pricingTiers.filter(t => t.enabled);
+  const { t: tr } = useI18n();
+  const tiers = (store?.pricingTiers ?? []).filter(t => t.enabled);
   return (
     <div className="max-w-[1400px] mx-auto px-6 py-10">
       <div className="text-center max-w-2xl mx-auto mb-14">
-        <h1 className="text-4xl font-bold">{t("pricing.title")}</h1>
-        <p className="mt-4 text-lg" style={{ color: "var(--muted)" }}>{t("pricing.subtitle")}</p>
+        <h1 className="text-4xl font-bold">{tr("pricing.title")}</h1>
+        <p className="mt-4 text-lg" style={{ color: "var(--muted)" }}>{tr("pricing.subtitle")}</p>
       </div>
 
+      {tiers.length === 0 ? (
+        <div className="text-center py-12" style={{ color: "var(--muted)" }}>No pricing tiers available right now.</div>
+      ) : (
       <div className="grid md:grid-cols-3 gap-6">
         {tiers.map(t => (
           <div key={t.id} className="panel p-7 relative" style={t.highlight ? { border: "1px solid var(--green)" } : {}}>
-            {t.highlight && <span className="pill pill-green absolute -top-3 left-7" style={{ background: "var(--green)", color: "#0a0b0f" }}>{t("pricing.popular")}</span>}
+            {t.highlight && <span className="pill pill-green absolute -top-3 left-7" style={{ background: "var(--green)", color: "#0a0b0f" }}>{tr("pricing.popular")}</span>}
             <h2 className="text-xl font-bold">{t.name}</h2>
             <p className="text-sm mt-1" style={{ color: "var(--muted)" }}>{t.volume}</p>
             <div className="mt-7 grid grid-cols-2 gap-4">
-              <div><div className="text-xs uppercase" style={{ color: "var(--muted)" }}>{t("pricing.maker")}</div><div className="text-2xl font-bold mono mt-1" style={{ color: "var(--green)" }}>{t.maker}</div></div>
-              <div><div className="text-xs uppercase" style={{ color: "var(--muted)" }}>{t("pricing.taker")}</div><div className="text-2xl font-bold mono mt-1">{t.taker}</div></div>
+              <div><div className="text-xs uppercase" style={{ color: "var(--muted)" }}>{tr("pricing.maker")}</div><div className="text-2xl font-bold mono mt-1" style={{ color: "var(--green)" }}>{t.maker}</div></div>
+              <div><div className="text-xs uppercase" style={{ color: "var(--muted)" }}>{tr("pricing.taker")}</div><div className="text-2xl font-bold mono mt-1">{t.taker}</div></div>
             </div>
             <ul className="mt-7 space-y-2.5 text-sm">
               {t.features.map(f => (<li key={f} className="flex items-start gap-2"><span style={{ color: "var(--green)" }}></span><span>{f}</span></li>))}
@@ -34,6 +37,7 @@ export default function PricingPage() {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }
