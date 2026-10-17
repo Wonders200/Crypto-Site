@@ -14,11 +14,13 @@ import TradeHistory from "@/components/TradeHistory";
 import { formatCurrency, formatPercent, formatCompact } from "@/lib/format";
 import { useWatchlist, usePortfolio } from "@/app/providers";
 import { Star } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 export default function TradePage() {
   const params = useParams<{ symbol: string }>();
   const coins = useLivePrices();
   const { has, toggle } = useWatchlist();
+  const { t } = useI18n();
   const symbol = (params.symbol ?? "btc").toLowerCase();
   const coin = coins.find(c => c.symbol.toLowerCase() === symbol || c.id === symbol) ?? coins[0];
 
@@ -26,7 +28,7 @@ export default function TradePage() {
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
       {/* Back button */}
       <div className="mb-3 -ml-2">
-        <BackButton fallback="/markets" label="Back to markets" />
+        <BackButton fallback="/markets" label={t("trade.backToMarkets")} />
       </div>
 
       {/* KYC banner */}
@@ -45,16 +47,16 @@ export default function TradePage() {
               <Star size={16} fill={has(coin.id) ? "var(--amber)" : "none"} stroke={has(coin.id) ? "var(--amber)" : "var(--muted)"} />
             </button>
           </div>
-          <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>{coin.category}  Risk {coin.risk}/5</div>
+          <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>{coin.category}  {t("trade.risk")} {coin.risk}/5</div>
         </div>
 
         <div className="flex-1" />
 
-        <Metric label="Price"     value={formatCurrency(coin.price)} accent />
-        <Metric label="24h"       value={formatPercent(coin.change24h)} positive={coin.change24h >= 0} />
-        <Metric label="7d"        value={formatPercent(coin.change7d)} positive={coin.change7d >= 0} />
-        <Metric label="Market Cap" value={formatCompact(coin.marketCap)} />
-        <Metric label="Volume 24h" value={formatCompact(coin.volume24h)} />
+        <Metric label={t("trade.metric.price")} value={formatCurrency(coin.price)} accent />
+        <Metric label={t("trade.metric.24h")} value={formatPercent(coin.change24h)} positive={coin.change24h >= 0} />
+        <Metric label={t("trade.metric.7d")} value={formatPercent(coin.change7d)} positive={coin.change7d >= 0} />
+        <Metric label={t("trade.metric.marketCap")} value={formatCompact(coin.marketCap)} />
+        <Metric label={t("trade.metric.volume24h")} value={formatCompact(coin.volume24h)} />
         <div className="hidden md:block">
           <div className="text-xs mb-1" style={{ color: "var(--muted)" }}>7d</div>
           <Sparkline data={coin.sparkline} positive={coin.change7d >= 0} width={90} height={28} />
@@ -95,6 +97,7 @@ function Metric({ label, value, positive, accent }: { label: string; value: stri
 interface Trade { side: "buy" | "sell"; price: number; size: number; time: number; }
 
 function RecentTrades({ coin }: { coin: { price: number; symbol: string } }) {
+  const { t } = useI18n();
   const [trades, setTrades] = useState<Trade[]>([]);
   const [mounted, setMounted] = useState(false);
 
@@ -126,16 +129,16 @@ function RecentTrades({ coin }: { coin: { price: number; symbol: string } }) {
   return (
     <div className="panel mt-5">
       <div className="px-4 py-3 border-b flex items-center justify-between" style={{ borderColor: "var(--border)" }}>
-        <h3 className="font-semibold text-sm">Recent Trades</h3>
+        <h3 className="font-semibold text-sm">{t("trade.recentTrades.title")}</h3>
         <span className="text-xs" style={{ color: "var(--muted)" }}>{coin.symbol}/USDT</span>
       </div>
       <div className="px-4 py-2 grid grid-cols-3 text-xs font-medium" style={{ color: "var(--muted)" }}>
-        <span>Price</span><span className="text-right">Size</span><span className="text-right">Time</span>
+        <span>{t("trade.recentTrades.price")}</span><span className="text-right">{t("trade.recentTrades.size")}</span><span className="text-right">{t("trade.recentTrades.time")}</span>
       </div>
       <div className="max-h-64 overflow-y-auto scrollbar-thin">
         {!mounted || trades.length === 0 ? (
           <div className="px-4 py-6 text-center text-xs" style={{ color: "var(--muted-2)" }}>
-            Loading recent trades
+            {t("trade.recentTrades.loading")}
           </div>
         ) : (
           trades.map((t, i) => (
@@ -152,16 +155,17 @@ function RecentTrades({ coin }: { coin: { price: number; symbol: string } }) {
 }
 
 function PositionSummary({ coinId }: { coinId: string }) {
+  const { t } = useI18n();
   const { holdings } = usePortfolio();
   const h = holdings.find(x => x.coinId === coinId);
   if (!h) return null;
   return (
     <div className="panel mt-5 p-5">
-      <h3 className="font-semibold text-sm mb-4">Your Position</h3>
+      <h3 className="font-semibold text-sm mb-4">{t("trade.position.title")}</h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
-        <div><div className="text-xs uppercase" style={{ color: "var(--muted)" }}>Quantity</div><div className="mono font-semibold mt-1">{h.amount}</div></div>
-        <div><div className="text-xs uppercase" style={{ color: "var(--muted)" }}>Avg cost</div><div className="mono font-semibold mt-1">{formatCurrency(h.avgBuyPrice)}</div></div>
-        <div><div className="text-xs uppercase" style={{ color: "var(--muted)" }}>Acquired</div><div className="mono font-semibold mt-1"><LiveDate ts={h.acquiredAt} mode="date" /></div></div>
+        <div><div className="text-xs uppercase" style={{ color: "var(--muted)" }}>{t("trade.position.quantity")}</div><div className="mono font-semibold mt-1">{h.amount}</div></div>
+        <div><div className="text-xs uppercase" style={{ color: "var(--muted)" }}>{t("trade.position.avgCost")}</div><div className="mono font-semibold mt-1">{formatCurrency(h.avgBuyPrice)}</div></div>
+        <div><div className="text-xs uppercase" style={{ color: "var(--muted)" }}>{t("trade.position.acquired")}</div><div className="mono font-semibold mt-1"><LiveDate ts={h.acquiredAt} mode="date" /></div></div>
       </div>
     </div>
   );

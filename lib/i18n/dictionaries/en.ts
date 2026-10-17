@@ -428,6 +428,22 @@ const en: Dictionary = {
   "settings.2faOffDesc": "Add an extra layer of security to your account. You'll need an authenticator app.",
   "settings.preparing": "Preparing",
   "settings.enable2fa": "Enable 2FA",
+  "trade.backToMarkets": "Back to markets",
+  "trade.risk": "Risk",
+  "trade.metric.price": "Price",
+  "trade.metric.24h": "24h",
+  "trade.metric.7d": "7d",
+  "trade.metric.marketCap": "Market Cap",
+  "trade.metric.volume24h": "Volume 24h",
+  "trade.recentTrades.title": "Recent Trades",
+  "trade.recentTrades.price": "Price",
+  "trade.recentTrades.size": "Size",
+  "trade.recentTrades.time": "Time",
+  "trade.recentTrades.loading": "Loading recent trades",
+  "trade.position.title": "Your Position",
+  "trade.position.quantity": "Quantity",
+  "trade.position.avgCost": "Avg cost",
+  "trade.position.acquired": "Acquired",
 };
 
 export default en;
