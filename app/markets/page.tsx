@@ -5,11 +5,13 @@ import { useSearchParams } from "next/navigation";
 import { useLivePrices } from "@/hooks/useLivePrices";
 import MarketTable from "@/components/MarketTable";
 import EmptyState from "@/components/EmptyState";
+import { useI18n } from "@/lib/i18n";
 
 const CATEGORIES = ["All", "Layer 1", "Layer 2", "DeFi", "Stablecoin", "Infra", "Meme", "Exchange"] as const;
 
 function MarketsInner() {
   const params = useSearchParams();
+  const { t } = useI18n();
   const coins = useLivePrices();
   const [q, setQ] = useState(params.get("q") ?? "");
   const [cat, setCat] = useState<(typeof CATEGORIES)[number]>("All");
@@ -28,32 +30,35 @@ function MarketsInner() {
   return (
     <div className="max-w-[1400px] mx-auto px-6 py-10">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Markets</h1>
-        <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>Live pricing across {coins.length} assets. Updates every 3 seconds.</p>
+        <h1 className="text-3xl font-bold">{t("markets.title")}</h1>
+        <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>{t("markets.subtitle").replace("{count}", String(coins.length))}</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6 mb-8">
-        <MoversCard title="Top Gainers (24h)" rows={gainers} kind="up" />
-        <MoversCard title="Top Losers (24h)"  rows={losers}  kind="down" />
+        <MoversCard title={t("markets.gainers")} rows={gainers} kind="up" />
+        <MoversCard title={t("markets.losers")} rows={losers} kind="down" />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
-        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search by name or symbol"
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder={t("markets.search")}
           className="flex-1 px-4 py-2.5 rounded-lg text-sm outline-none"
           style={{ background: "var(--panel)", border: "1px solid var(--border)", color: "var(--text)" }} />
         <div className="flex gap-1 overflow-x-auto scrollbar-thin p-1 rounded-lg" style={{ background: "var(--panel)" }}>
-          {CATEGORIES.map(c => (
-            <button key={c} onClick={() => setCat(c)}
-              className="px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition"
-              style={{ background: cat === c ? "var(--panel-2)" : "transparent", color: cat === c ? "var(--text)" : "var(--muted)" }}>
-              {c}
-            </button>
-          ))}
+          {CATEGORIES.map(c => {
+            const catKey = `markets.cat.${c.toLowerCase().replace(/\s+/g, "")}`;
+            return (
+              <button key={c} onClick={() => setCat(c)}
+                className="px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition"
+                style={{ background: cat === c ? "var(--panel-2)" : "transparent", color: cat === c ? "var(--text)" : "var(--muted)" }}>
+                {t(catKey)}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState title="No assets match" message="Try a different search term or category." />
+        <EmptyState title={t("markets.noMatchTitle")} message={t("markets.noMatchMsg")} />
       ) : (
         <MarketTable coins={filtered} />
       )}
