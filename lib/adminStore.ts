@@ -127,6 +127,7 @@ export interface Store {
   demoUser: DemoUser;
   kycSubmissions: AdminKycSubmission[];
   earnPositions: AdminEarnPosition[];
+  resetTokens: { userId: string; token: string; expiresAt: number }[];
 }
 
 export const DEFAULT_CREDENTIALS: AdminCredentials = {
@@ -202,6 +203,7 @@ export const DEFAULT_STORE: Store = {
   sessions: [],
   kycSubmissions: [],
   earnPositions: [],
+  resetTokens: [],
 
   /* Audit trail  starts EMPTY. Only real actions get logged. */
   audit: [],

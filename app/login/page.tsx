@@ -78,6 +78,7 @@ export default function LoginPage() {
                 style={{ background: "var(--panel-2)", border: "1px solid var(--border)", color: "var(--text)" }} />
             </label>
           )}
+          <div className="flex justify-end"><Link href="/forgot-password" className="text-xs font-semibold" style={{ color: "var(--green)" }}>Forgot password?</Link></div>
           <button type="submit" disabled={loading}
             className="w-full py-3 rounded-lg font-semibold text-sm text-black disabled:opacity-60 transition"
             style={{ background: "var(--green)" }}>

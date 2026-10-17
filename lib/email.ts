@@ -227,6 +227,19 @@ export const Templates = {
     }),
   }),
 
+  passwordReset: (link: string) => ({
+    subject: "Reset your ApexVault password",
+    html: layout({
+      preheader: "Someone requested a password reset for your account.",
+      heading: "Reset your password",
+      body: `<p style="margin:0 0 14px 0;">We received a request to reset the password for your ApexVault account. Click the button below to choose a new password.</p>
+             <p style="margin:0;color:#8b92a5;font-size:13px;">This link expires in 1 hour. If you didn't request this, you can safely ignore this email.</p>`,
+      ctaLabel: "Reset Password",
+      ctaHref: link,
+      tone: "default",
+    }),
+  }),
+
   twoFAEnabled: () => ({
     subject: "Two-factor authentication enabled",
     html: layout({
