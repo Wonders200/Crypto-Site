@@ -10,6 +10,7 @@ import { computeAccrued, dailyRate } from "@/lib/earn";
 import KycBanner from "@/components/KycBanner";
 import LiveTimeAgo from "@/components/LiveTimeAgo";
 import { X, AlertTriangle, Calculator, Wallet, TrendingUp, Clock, Calendar } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 const MIN_DEPOSIT = 200;
 const DEFAULT_LOCK_MS = 24 * 60 * 60 * 1000; // 24 hours — applied when product lockup is "None"
@@ -42,6 +43,7 @@ export default function EarnPage() {
   const { user } = useAuth();
   const { store, update, log } = useAdminStore();
   const { push } = useToast();
+  const { t } = useI18n();
 
   const [selected, setSelected] = useState<AdminEarnProduct | null>(null);
   const [detail, setDetail] = useState<AdminEarnPosition | null>(null);
@@ -154,12 +156,12 @@ export default function EarnPage() {
     <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-6 md:py-10">
       <div className="mb-6 md:mb-10">
         <span className="pill pill-green inline-flex mb-3">Up to {maxApy.toFixed(1)}% APY</span>
-        <h1 className="text-2xl md:text-4xl font-bold">Earn yield on your assets</h1>
+        <h1 className="text-2xl md:text-4xl font-bold">{t("earn.title")}</h1>
         <p className="mt-3 md:mt-4 text-sm md:text-lg max-w-2xl" style={{ color: "var(--muted)" }}>
           Put idle crypto to work. Flexible products pay out daily with a 24-hour release window.
         </p>
         <p className="mt-3 text-xs md:text-sm" style={{ color: "var(--muted)" }}>
-          Minimum deposit: <strong style={{ color: "var(--text)" }}>{formatCurrency(MIN_DEPOSIT)}</strong>
+          {t("earn.minDeposit")} <strong style={{ color: "var(--text)" }}>{formatCurrency(MIN_DEPOSIT)}</strong>
         </p>
       </div>
 
@@ -168,22 +170,22 @@ export default function EarnPage() {
       {user && positions.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
           <div className="panel p-4 md:p-5">
-            <div className="text-xs uppercase tracking-wider" style={{ color: "var(--muted)" }}>Currently earning</div>
+            <div className="text-xs uppercase tracking-wider" style={{ color: "var(--muted)" }}>{t("earn.stats.earning")}</div>
             <div className="text-xl md:text-2xl font-bold mono mt-2">{formatCurrency(totalEarning)}</div>
           </div>
           <div className="panel p-4 md:p-5">
-            <div className="text-xs uppercase tracking-wider" style={{ color: "var(--muted)" }}>Rewards accrued</div>
+            <div className="text-xs uppercase tracking-wider" style={{ color: "var(--muted)" }}>{t("earn.stats.accrued")}</div>
             <div className="text-xl md:text-2xl font-bold mono mt-2" style={{ color: "var(--green)" }}>+{formatCurrency(totalAccrued)}</div>
           </div>
           <div className="panel p-4 md:p-5">
-            <div className="text-xs uppercase tracking-wider" style={{ color: "var(--muted)" }}>Active positions</div>
+            <div className="text-xs uppercase tracking-wider" style={{ color: "var(--muted)" }}>{t("earn.stats.active")}</div>
             <div className="text-xl md:text-2xl font-bold mono mt-2">{positions.filter(p => p.status === "active").length}</div>
           </div>
         </div>
       )}
 
       {products.length === 0 ? (
-        <div className="panel p-12 text-center" style={{ color: "var(--muted)" }}>No products available right now.</div>
+        <div className="panel p-12 text-center" style={{ color: "var(--muted)" }}>{t("earn.noProducts")}</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
           {products.map(p => (
@@ -202,14 +204,14 @@ export default function EarnPage() {
                 {p.apy.toFixed(2)}<span className="text-lg">% APY</span>
               </div>
               <div className="mt-4 md:mt-5 pt-4 md:pt-5 border-t space-y-2 text-sm" style={{ borderColor: "var(--border)" }}>
-                <div className="flex justify-between"><span style={{ color: "var(--muted)" }}>Lock-up</span><span>{(p.lockup && p.lockup.toLowerCase() !== "none") ? p.lockup : "24 hours"}</span></div>
-                <div className="flex justify-between"><span style={{ color: "var(--muted)" }}>Minimum</span><span className="mono">{formatCurrency(MIN_DEPOSIT)}</span></div>
-                <div className="flex justify-between"><span style={{ color: "var(--muted)" }}>Payout</span><span>Daily</span></div>
+                <div className="flex justify-between"><span style={{ color: "var(--muted)" }}>{t("earn.lockup")}</span><span>{(p.lockup && p.lockup.toLowerCase() !== "none") ? p.lockup : "24 hours"}</span></div>
+                <div className="flex justify-between"><span style={{ color: "var(--muted)" }}>{t("earn.minimum")}</span><span className="mono">{formatCurrency(MIN_DEPOSIT)}</span></div>
+                <div className="flex justify-between"><span style={{ color: "var(--muted)" }}>{t("earn.payout")}</span><span>{t("earn.daily")}</span></div>
               </div>
               <button onClick={() => openSubscribe(p)} disabled={!kycOk}
                 className="w-full mt-4 md:mt-5 py-3 rounded-xl text-sm font-semibold text-black transition hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{ background: "var(--green)" }}>
-                {kycOk ? "Start earning" : "Verify to earn"}
+                {kycOk ? t("earn.start") : t("earn.verify")}
               </button>
             </div>
           ))}
@@ -218,7 +220,7 @@ export default function EarnPage() {
 
       {user && positions.length > 0 && (
         <div className="mt-8 md:mt-10">
-          <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-5">My positions</h2>
+          <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-5">{t("earn.myPositions")}</h2>
           <div className="space-y-3">
             {positions.map(pos => {
               const locked = !!pos.maturesAt && pos.maturesAt > Date.now();
@@ -232,21 +234,21 @@ export default function EarnPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-semibold">{pos.asset} earn</span>
                       <span className="pill pill-green">{pos.apy.toFixed(2)}% APY</span>
-                      {pos.status === "active" && <span className="pill pill-blue">ACTIVE</span>}
-                      {pos.status === "withdrawn" && <span className="pill pill-gray">WITHDRAWN</span>}
+                      {pos.status === "active" && <span className="pill pill-blue">{t("earn.status.active")}</span>}
+                      {pos.status === "withdrawn" && <span className="pill pill-gray">{t("earn.status.withdrawn")}</span>}
                     </div>
                     <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>
-                      Started <LiveTimeAgo ts={pos.startedAt} />
-                      {pos.maturesAt && <>  {locked ? "unlocks in " + timeUntil(pos.maturesAt) : "unlocked"}</>}
-                      {"  tap for details"}
+                      {t("earn.pos.started")} <LiveTimeAgo ts={pos.startedAt} />
+                      {pos.maturesAt && <>  {locked ? t("earn.pos.unlocksIn") + " " + timeUntil(pos.maturesAt) : t("earn.pos.unlocked")}</>}
+                      {"  " + t("earn.pos.tap")}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs uppercase tracking-wider" style={{ color: "var(--muted)" }}>Principal</div>
+                    <div className="text-xs uppercase tracking-wider" style={{ color: "var(--muted)" }}>{t("earn.pos.principal")}</div>
                     <div className="mono font-semibold">{formatCurrency(pos.amountUsd)}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs uppercase tracking-wider" style={{ color: "var(--muted)" }}>Accrued</div>
+                    <div className="text-xs uppercase tracking-wider" style={{ color: "var(--muted)" }}>{t("earn.pos.accrued")}</div>
                     <div className="mono font-semibold" style={{ color: "var(--green)" }}>+{formatCurrency(accrued)}</div>
                     <div className="text-[10px]" style={{ color: "var(--muted-2)" }}>{formatCurrency(rate)}/day</div>
                   </div>
@@ -258,10 +260,9 @@ export default function EarnPage() {
       )}
 
       <div className="panel p-6 md:p-8 mt-8 md:mt-10">
-        <h2 className="text-lg md:text-xl font-semibold mb-3">Risk disclosure</h2>
+        <h2 className="text-lg md:text-xl font-semibold mb-3">{t("earn.riskTitle")}</h2>
         <p className="text-xs md:text-sm leading-relaxed" style={{ color: "var(--muted)" }}>
-          Staking involves locking your assets. Rewards are variable and not guaranteed. Read the full{" "}
-          <Link href="/legal/disclosures" className="underline" style={{ color: "var(--accent)" }}>risk disclosures</Link>.
+          {t("earn.riskBody")} <Link href="/legal/disclosures" className="underline" style={{ color: "var(--accent)" }}>{t("earn.riskLink")}</Link>.
         </p>
       </div>
 
@@ -273,7 +274,7 @@ export default function EarnPage() {
               <div className="flex items-center gap-3">
                 <CoinIcon symbol={selected.asset} color={selected.color} size={40} />
                 <div>
-                  <div className="font-semibold">Start earning {selected.asset}</div>
+                  <div className="font-semibold">{t("earn.modal.startTitle")} {selected.asset}</div>
                   <div className="text-xs" style={{ color: "var(--muted)" }}>{selected.tier}  {selected.apy.toFixed(2)}% APY</div>
                 </div>
               </div>
@@ -283,12 +284,12 @@ export default function EarnPage() {
               <div className="flex items-center justify-between text-sm p-3 rounded-xl"
                 style={{ background: "var(--panel-2)", border: "1px solid var(--border)" }}>
                 <span className="flex items-center gap-2" style={{ color: "var(--muted)" }}>
-                  <Wallet size={13} /> Available to invest
+                  <Wallet size={13} /> {t("earn.modal.available")}
                 </span>
                 <span className="mono font-semibold">{formatCurrency(balance?.usd ?? 0)}</span>
               </div>
               <label className="block">
-                <div className="text-xs uppercase tracking-wider mb-1.5" style={{ color: "var(--muted)" }}>How much do you want to earn on?</div>
+                <div className="text-xs uppercase tracking-wider mb-1.5" style={{ color: "var(--muted)" }}>{t("earn.modal.amountLabel")}</div>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-semibold" style={{ color: "var(--muted)" }}>$</span>
                   <input type="number" value={amount} onChange={e => { setAmount(e.target.value); setError(""); }}
@@ -307,12 +308,12 @@ export default function EarnPage() {
               </label>
               <div className="rounded-xl p-4" style={{ background: "var(--panel-2)", border: "1px solid var(--border-2)" }}>
                 <div className="flex items-center gap-2 mb-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--muted)" }}>
-                  <Calculator size={12} /> Estimated rewards
+                  <Calculator size={12} /> {t("earn.modal.estimated")}
                 </div>
                 <div className="grid grid-cols-3 gap-3 text-center">
-                  <div><div className="text-xs" style={{ color: "var(--muted)" }}>Daily</div><div className="mono font-bold mt-1" style={{ color: "var(--green)" }}>+{formatCurrency(daily)}</div></div>
-                  <div><div className="text-xs" style={{ color: "var(--muted)" }}>Monthly</div><div className="mono font-bold mt-1" style={{ color: "var(--green)" }}>+{formatCurrency(monthly)}</div></div>
-                  <div><div className="text-xs" style={{ color: "var(--muted)" }}>Yearly</div><div className="mono font-bold mt-1" style={{ color: "var(--green)" }}>+{formatCurrency(yearly)}</div></div>
+                  <div><div className="text-xs" style={{ color: "var(--muted)" }}>{t("earn.modal.daily")}</div><div className="mono font-bold mt-1" style={{ color: "var(--green)" }}>+{formatCurrency(daily)}</div></div>
+                  <div><div className="text-xs" style={{ color: "var(--muted)" }}>{t("earn.modal.monthly")}</div><div className="mono font-bold mt-1" style={{ color: "var(--green)" }}>+{formatCurrency(monthly)}</div></div>
+                  <div><div className="text-xs" style={{ color: "var(--muted)" }}>{t("earn.modal.yearly")}</div><div className="mono font-bold mt-1" style={{ color: "var(--green)" }}>+{formatCurrency(yearly)}</div></div>
                 </div>
               </div>
               {error && (
@@ -323,9 +324,9 @@ export default function EarnPage() {
             </div>
             <div className="px-6 py-4 border-t flex gap-2" style={{ borderColor: "var(--border)" }}>
               <button onClick={subscribe} disabled={submitting || previewAmt < MIN_DEPOSIT} className="flex-1 btn btn-primary disabled:opacity-50">
-                {submitting ? "Starting..." : "Earn " + selected.apy.toFixed(2) + "% on " + formatCurrency(previewAmt)}
+                {submitting ? t("earn.modal.starting") : t("earn.modal.btnStart") + " " + selected.apy.toFixed(2) + "%"}
               </button>
-              <button onClick={closeModal} disabled={submitting} className="btn btn-ghost">Cancel</button>
+              <button onClick={closeModal} disabled={submitting} className="btn btn-ghost">{t("earn.cancel")}</button>
             </div>
           </div>
         </div>
@@ -339,7 +340,7 @@ export default function EarnPage() {
               <div className="flex items-center gap-3">
                 <CoinIcon symbol={detail.asset} color={products.find(p => p.asset === detail.asset)?.color ?? "#5b7cfa"} size={40} />
                 <div>
-                  <div className="font-semibold">{detail.asset} earn position</div>
+                  <div className="font-semibold">{detail.asset} {t("earn.detail.title")}</div>
                   <div className="text-xs" style={{ color: "var(--muted)" }}>{detail.apy.toFixed(2)}% APY  {detail.status.toUpperCase()}</div>
                 </div>
               </div>
@@ -347,35 +348,35 @@ export default function EarnPage() {
             </div>
             <div className="p-5 md:p-6 space-y-4">
               <div className="rounded-xl p-5 text-center" style={{ background: "var(--panel-2)", border: "1px solid var(--border)" }}>
-                <div className="text-xs uppercase tracking-wider mb-2" style={{ color: "var(--muted)" }}>Accrued rewards</div>
+                <div className="text-xs uppercase tracking-wider mb-2" style={{ color: "var(--muted)" }}>{t("earn.detail.accrued")}</div>
                 <div className="text-3xl md:text-4xl font-bold mono" style={{ color: "var(--green)" }}>+{formatCurrency(detailAccrued)}</div>
                 <div className="text-xs mt-2 flex items-center justify-center gap-1" style={{ color: "var(--muted)" }}>
-                  <TrendingUp size={11} /> Earning {formatCurrency(detailDaily)} per day
+                  <TrendingUp size={11} /> {t("earn.detail.earning")} {formatCurrency(detailDaily)} {t("earn.detail.perDay")}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-xl p-4" style={{ background: "var(--panel-2)", border: "1px solid var(--border)" }}>
-                  <div className="text-xs uppercase tracking-wider" style={{ color: "var(--muted)" }}>Principal</div>
+                  <div className="text-xs uppercase tracking-wider" style={{ color: "var(--muted)" }}>{t("earn.detail.principal")}</div>
                   <div className="mono font-bold text-lg mt-1">{formatCurrency(detail.amountUsd)}</div>
                 </div>
                 <div className="rounded-xl p-4" style={{ background: "var(--panel-2)", border: "1px solid var(--border)" }}>
-                  <div className="text-xs uppercase tracking-wider" style={{ color: "var(--muted)" }}>Total value</div>
+                  <div className="text-xs uppercase tracking-wider" style={{ color: "var(--muted)" }}>{t("earn.detail.totalValue")}</div>
                   <div className="mono font-bold text-lg mt-1" style={{ color: "var(--green)" }}>{formatCurrency(detail.amountUsd + detailAccrued)}</div>
                 </div>
               </div>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between py-2 border-b" style={{ borderColor: "var(--border)" }}>
-                  <span className="flex items-center gap-2" style={{ color: "var(--muted)" }}><Clock size={12} /> Started</span>
+                  <span className="flex items-center gap-2" style={{ color: "var(--muted)" }}><Clock size={12} /> {t("earn.detail.started")}</span>
                   <span>{new Date(detail.startedAt).toLocaleDateString()}</span>
                 </div>
                 {detail.maturesAt && (
                   <div className="flex items-center justify-between py-2 border-b" style={{ borderColor: "var(--border)" }}>
-                    <span className="flex items-center gap-2" style={{ color: "var(--muted)" }}><Calendar size={12} /> Unlocks</span>
-                    <span>in {timeUntil(detail.maturesAt)}</span>
+                    <span className="flex items-center gap-2" style={{ color: "var(--muted)" }}><Calendar size={12} /> {t("earn.detail.unlocks")}</span>
+                    <span>{t("earn.detail.in")} {timeUntil(detail.maturesAt)}</span>
                   </div>
                 )}
                 <div className="flex items-center justify-between py-2">
-                  <span style={{ color: "var(--muted)" }}>Status</span>
+                  <span style={{ color: "var(--muted)" }}>{t("earn.detail.status")}</span>
                   <span className="pill pill-blue">{detail.status.toUpperCase()}</span>
                 </div>
               </div>
@@ -385,11 +386,11 @@ export default function EarnPage() {
                 <button onClick={() => withdraw(detail)} disabled={!!detail.maturesAt && detail.maturesAt > Date.now()}
                   className="flex-1 btn btn-primary disabled:opacity-50">
                   {detail.maturesAt && detail.maturesAt > Date.now()
-                    ? "Locked  " + timeUntil(detail.maturesAt) + " left"
-                    : "Withdraw " + formatCurrency(detail.amountUsd + detailAccrued)}
+                    ? t("earn.detail.locked") + "  " + timeUntil(detail.maturesAt) + " " + t("earn.detail.left")
+                    : t("earn.detail.withdraw") + " " + formatCurrency(detail.amountUsd + detailAccrued)}
                 </button>
               )}
-              <button onClick={closeDetail} className="btn btn-ghost">Close</button>
+              <button onClick={closeDetail} className="btn btn-ghost">{t("earn.detail.close")}</button>
             </div>
           </div>
         </div>
