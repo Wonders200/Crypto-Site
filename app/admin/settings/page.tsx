@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useAdminStore, useToast } from "@/app/providers";
+import { useAdminStore, useToast , useAdminAuth } from "@/app/providers";
 import { SiteSettings, AdminCredentials, DemoUser, DEFAULT_STORE, DEFAULT_DEMO_USER } from "@/lib/adminStore";
 import { DEFAULT_BONUS_CONFIG } from "@/lib/bonuses";
 import { PageHeader, Btn, Panel, Field, Input, Textarea, Toggle, Select } from "@/components/admin/ui";
