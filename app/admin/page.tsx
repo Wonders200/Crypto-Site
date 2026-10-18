@@ -1,11 +1,22 @@
 "use client";
 import Link from "next/link";
-import { useAdminStore } from "@/app/providers";
+import { useAdminStore, useAdminAuth } from "@/app/providers";
 import { Kpi, Panel, Btn } from "@/components/admin/ui";
 import { formatCompact, formatCurrency } from "@/lib/format";
 
 export default function AdminDashboard() {
   const { store } = useAdminStore();
+  const { admin } = useAdminAuth();
+  const isSuper = admin?.role === "superadmin";
+
+  const maskEmail = (email: string | undefined | null) => {
+    if (!email) return "";
+    if (isSuper) return email;
+    const parts = email.split("@");
+    if (parts.length !== 2) return "[Hidden]";
+    return "***@" + parts[1];
+  };
+
 
   const totalHoldingsValue = store.holdings.reduce((s, h) => {
     const c = store.coins.find(x => x.id === h.coinId);
