@@ -17,6 +17,12 @@ export default function AdminDashboard() {
     return "***@" + parts[1];
   };
 
+  const maskText = (text: string | undefined | null) => {
+    if (!text) return "";
+    if (isSuper) return text;
+    return text.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '***@hidden.com');
+  };
+
 
   const totalHoldingsValue = store.holdings.reduce((s, h) => {
     const c = store.coins.find(x => x.id === h.coinId);
@@ -82,10 +88,10 @@ export default function AdminDashboard() {
                 >
                   <span className="pill pill-blue shrink-0">{a.action}</span>
                   <div className="flex-1 min-w-0">
-                    <div className="truncate">{a.target}</div>
+                    <div className="truncate">{maskText(a.target)}</div>
                     {a.details && (
                       <div className="truncate" style={{ color: "var(--muted)" }}>
-                        {a.details}
+                        {maskText(a.details)}
                       </div>
                     )}
                   </div>
