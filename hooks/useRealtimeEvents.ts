@@ -5,7 +5,7 @@ import { usePersistentState } from "./usePersistentState";
 
 const FEED_KEY = "cs.activityFeed";
 const MAX_FEED = 100;
-const POLL_MS = 8000;
+const POLL_MS = 3000; // Poll every 3 seconds for near-instant updates
 
 type AuditEntry = {
   id: string;

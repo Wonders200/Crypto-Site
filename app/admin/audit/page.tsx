@@ -1,6 +1,6 @@
 "use client";
 import { useState, useMemo } from "react";
-import { useAdminStore, useToast } from "@/app/providers";
+import { useAdminStore, useToast, useAdminAuth } from "@/app/providers";
 import { PageHeader, Btn, Panel, Badge } from "@/components/admin/ui";
 import LiveDate from "@/components/LiveDate";
 import { Search, ScrollText, Trash2 } from "lucide-react";
@@ -8,6 +8,7 @@ import { Search, ScrollText, Trash2 } from "lucide-react";
 export default function AdminAuditPage() {
   const { store, update, log } = useAdminStore();
   const { push } = useToast();
+  const { admin } = useAdminAuth();
   const [q, setQ] = useState("");
 
   const entries = useMemo(() => {
@@ -34,9 +35,17 @@ export default function AdminAuditPage() {
       <PageHeader
         title="Audit Log"
         subtitle={`${(store.audit ?? []).length} entries (most recent first, max 500)`}
-        actions={(store.audit ?? []).length > 0 ? (
-          <Btn kind="danger" onClick={clearLog}><Trash2 size={12} /> Clear log</Btn>
-        ) : undefined}
+        actions={
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-md" style={{ background: "var(--green-dim)", color: "var(--green)", border: "1px solid var(--green)" }}>
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "var(--green)" }} />
+              Live Feed
+            </span>
+            {(store.audit ?? []).length > 0 && (
+              <Btn kind="danger" onClick={clearLog}><Trash2 size={12} /> Clear log</Btn>
+            )}
+          </div>
+        }
       />
 
       <div className="mb-4 flex flex-wrap gap-3 items-center">
@@ -60,7 +69,12 @@ export default function AdminAuditPage() {
         ) : (
           <div>
             {entries.map(a => (
-              <div key={a.id} className="px-5 py-3 border-b flex items-center gap-4 text-sm" style={{ borderColor: "var(--border)" }}>
+              <div key={a.id} className="px-5 py-3 border-b flex items-center gap-4 text-sm transition-colors duration-500" 
+                style={{ 
+                  borderColor: "var(--border)",
+                  background: Date.now() - a.at < 10000 ? "rgba(63,185,80,0.08)" : "transparent",
+                  borderLeft: Date.now() - a.at < 10000 ? "3px solid var(--green)" : "3px solid transparent"
+                }}>
                 <Badge kind={
                   a.action.includes("DELETE") || a.action.includes("REJECT") ? "red"
                   : a.action.includes("CREATE") || a.action.includes("APPROVE") || a.action.includes("LOGIN") ? "green"
@@ -73,7 +87,14 @@ export default function AdminAuditPage() {
                   <div className="truncate font-medium">{a.target}</div>
                   {a.details && <div className="truncate text-xs" style={{ color: "var(--muted)" }}>{a.details}</div>}
                 </div>
-                <span className="text-xs mono shrink-0" style={{ color: "var(--muted)" }}>{a.actor}</span>
+                <span className="text-xs mono shrink-0 px-2 py-1 rounded border" 
+                  style={{ 
+                    color: a.actor !== admin?.email ? "var(--accent)" : "var(--muted)", 
+                    background: a.actor !== admin?.email ? "var(--accent-dim)" : "transparent",
+                    borderColor: a.actor !== admin?.email ? "var(--accent)" : "transparent"
+                  }}>
+                  {a.actor} {a.actor !== admin?.email && "(Admin)"}
+                </span>
                 <span className="text-xs shrink-0" style={{ color: "var(--muted-2)" }}>
                   <LiveDate ts={a.at} mode="datetime" />
                 </span>
