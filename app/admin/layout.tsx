@@ -40,13 +40,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const pending = usePendingCounts();
   const isLogin = pathname === "/admin/login";
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [role, setRole] = useState<"superadmin" | "support">("superadmin"); // Default to superadmin to avoid flash
-
-  useEffect(() => {
-    fetch("/api/admin/auth/me").then(r => r.json()).then(d => {
-      if (d.role) setRole(d.role);
-    }).catch(() => {});
-  }, []);
+  // Read the role directly from the admin session (localStorage) instead of fetching
+  const role = admin?.role || "support";
 
   useEffect(() => {
     if (!isLogin && !admin) router.replace("/admin/login");
