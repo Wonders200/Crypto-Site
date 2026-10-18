@@ -25,7 +25,6 @@ const NAV = [
   { href: "/admin/earn",            label: "Earn Products",   icon: Percent,         key: null },
   { href: "/admin/earn-positions",  label: "Earn Positions",  icon: TrendingUp,      key: "earnPositions" },
   { href: "/admin/pricing",         label: "Pricing Tiers",   icon: Tag,             key: null },
-  { href: "/admin/team",            label: "Team",            icon: Users,           key: null },
   { href: "/admin/settings",        label: "Site Settings",   icon: Settings,        key: null },
   { href: "/admin/activity",        label: "Live Activity",   icon: Activity,        key: null },
   { href: "/admin/audit",           label: "Audit Log",       icon: ScrollText,      key: null },
@@ -40,13 +39,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const pending = usePendingCounts();
   const isLogin = pathname === "/admin/login";
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [role, setRole] = useState<"superadmin" | "support">("support");
-
-  useEffect(() => {
-    fetch("/api/admin/auth/me").then(r => r.json()).then(d => {
-      if (d.role) setRole(d.role);
-    }).catch(() => {});
-  }, []);
 
   useEffect(() => {
     if (!isLogin && !admin) router.replace("/admin/login");
@@ -96,11 +88,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <DemoSidebarNotice />
 
       <nav className="flex-1 overflow-y-auto py-3 scrollbar-thin">
-        {NAV.filter(n => {
-          if (role === "superadmin") return true;
-          const restricted = ["/admin/settings", "/admin/team", "/admin/debug"];
-          return !restricted.includes(n.href);
-        }).map(({ href, label, icon: Icon, key }) => {
+        {NAV.map(({ href, label, icon: Icon, key }) => {
           const active = pathname === href || (href !== "/admin" && pathname.startsWith(href));
           const count = key ? (pending as any)[key] : 0;
           return (

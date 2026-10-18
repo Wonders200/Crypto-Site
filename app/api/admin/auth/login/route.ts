@@ -80,8 +80,9 @@ export async function POST(req: Request) {
 
   attempts.delete(ip);
 
-  const version = buildAdminVersion("v1");
-  const token = await signAdminSession({ email, version, role });
+  const effectiveHash = upgradedHash ?? storedHash;
+  const version = buildAdminVersion(effectiveHash || storedEmail);
+  const token = await signAdminSession({ email: storedEmail, version });
 
   const res = NextResponse.json({ ok: true, email: storedEmail });
   (await cookies()).set(SESSION_COOKIE, token, {

@@ -87,13 +87,6 @@ export interface AdminTestimonial {
   rating: number; avatarColor: string; featured: boolean; enabled: boolean; order: number;
 }
 export interface AdminCredentials { email: string; password: string; }
-export interface AdminAccount {
-  id: string;
-  email: string;
-  passwordHash: string;
-  role: "superadmin" | "support";
-  createdAt: number;
-}
 export interface DemoUser { email: string; password: string; name: string; tier: "Standard" | "Pro" | "Institutional"; }
 export interface AdminKycSubmission {
   id: string; userId: string;
@@ -131,7 +124,6 @@ export interface Store {
   depositAddresses: AdminDepositAddress[];
   testimonials: AdminTestimonial[];
   credentials: AdminCredentials;
-  admins: AdminAccount[];
   demoUser: DemoUser;
   kycSubmissions: AdminKycSubmission[];
   earnPositions: AdminEarnPosition[];
@@ -288,7 +280,6 @@ export const DEFAULT_STORE: Store = {
     },
   },
   credentials: DEFAULT_CREDENTIALS,
-  admins: [],
   demoUser: DEFAULT_DEMO_USER,
 };
 
