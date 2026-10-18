@@ -22,7 +22,7 @@ export async function verifyPassword(plain: string, hash: string): Promise<boole
   }
 }
 
-export async function signAdminSession(payload: { email: string; version: string }): Promise<string> {
+export async function signAdminSession(payload: { email: string; version: string; role: "superadmin" | "support" }): Promise<string> {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -30,11 +30,12 @@ export async function signAdminSession(payload: { email: string; version: string
     .sign(ADMIN_JWT_SECRET);
 }
 
-export async function verifyAdminSession(token: string): Promise<{ email: string; version: string } | null> {
+export async function verifyAdminSession(token: string): Promise<{ email: string; version: string; role: "superadmin" | "support" } | null> {
   try {
     const { payload } = await jwtVerify(token, ADMIN_JWT_SECRET);
     if (typeof payload.email !== "string" || typeof payload.version !== "string") return null;
-    return { email: payload.email, version: payload.version };
+    const role = (payload.role as "superadmin" | "support") || "support";
+    return { email: payload.email, version: payload.version, role };
   } catch {
     return null;
   }

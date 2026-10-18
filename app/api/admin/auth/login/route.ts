@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { readStore } from "@/lib/serverStore";
+import { readStore, writeStore } from "@/lib/serverStore";
+import { sanitizeStore } from "@/lib/sanitizeStore";
 import {
   signAdminSession, verifyPassword, buildAdminVersion,
   SESSION_COOKIE, SESSION_MAX_AGE,
@@ -9,7 +10,6 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// In-memory rate limiter (resets on redeploy). 5 attempts / 15 min per IP.
 const attempts = new Map<string, { count: number; until: number }>();
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_MS = 15 * 60 * 1000;
@@ -39,28 +39,33 @@ export async function POST(req: Request) {
   }
 
   const { store } = await readStore();
-  const creds: any = (store as any).credentials || {};
-  const storedEmail = String(creds.email ?? "").toLowerCase();
-  const storedHash = String(creds.passwordHash ?? "");
-  const storedPlain = String(creds.password ?? "");
-
-  const emailOk = email === storedEmail;
-
-  // Prefer hash. Fall back to plaintext during the transition, then upgrade on success.
+  
+  // Check the new multi-admin array first
+  const admins = store.admins || [];
+  const adminAccount = admins.find((a: any) => a.email === email);
+  
+  // Fallback to legacy single credential setup just in case
+  const legacyCreds: any = store.credentials || {};
+  const isLegacy = !adminAccount && email === legacyCreds.email;
+  
   let passOk = false;
+  let role: "superadmin" | "support" = "superadmin"; // Default legacy to superadmin
   let upgradedHash: string | null = null;
-  if (storedHash) {
-    passOk = await verifyPassword(password, storedHash);
-  } else if (storedPlain) {
-    passOk = password === storedPlain;
+
+  if (adminAccount) {
+    passOk = await verifyPassword(password, adminAccount.passwordHash);
+    role = adminAccount.role;
+  } else if (isLegacy && legacyCreds.passwordHash) {
+    passOk = await verifyPassword(password, legacyCreds.passwordHash);
+  } else if (isLegacy && legacyCreds.password) {
+    passOk = password === legacyCreds.password;
     if (passOk) {
-      // Auto-upgrade plaintext -> hash on first successful login
       const bcrypt = await import("bcryptjs");
       upgradedHash = await bcrypt.hash(password, 10);
     }
   }
 
-  if (!emailOk || !passOk) {
+  if (!passOk) {
     const cur = attempts.get(ip) ?? { count: 0, until: 0 };
     cur.count += 1;
     cur.until = now + LOCKOUT_MS;
@@ -68,23 +73,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
-  // Optionally persist the auto-upgraded hash
-  if (upgradedHash) {
-    try {
-      const { writeStore } = await import("@/lib/serverStore");
-      const { sanitizeStore } = await import("@/lib/sanitizeStore");
-      const next = sanitizeStore({ ...store, credentials: { email: storedEmail, passwordHash: upgradedHash } } as any);
-      await writeStore(next);
-    } catch {}
-  }
-
   attempts.delete(ip);
 
-  const effectiveHash = upgradedHash ?? storedHash;
-  const version = buildAdminVersion(effectiveHash || storedEmail);
-  const token = await signAdminSession({ email: storedEmail, version });
+  const effectiveHash = adminAccount?.passwordHash || upgradedHash || legacyCreds.passwordHash || "v1";
+  const version = buildAdminVersion(effectiveHash);
+  
+  // THIS is the crucial part that was missing: we pass the role into the JWT
+  const token = await signAdminSession({ email, version, role });
 
-  const res = NextResponse.json({ ok: true, email: storedEmail });
+  const res = NextResponse.json({ ok: true, email, role });
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
