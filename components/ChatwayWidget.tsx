@@ -1,7 +1,7 @@
 "use client";
 import Script from "next/script";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 
 const CHATWAY_ID = "KJwei64uf0IZ";
 const CHATWAY_SRC = "https://cdn.chatway.app/widget.js?id=" + CHATWAY_ID;
@@ -13,6 +13,16 @@ const CHATWAY_SRC = "https://cdn.chatway.app/widget.js?id=" + CHATWAY_ID;
 export default function ChatwayWidget() {
   const pathname = usePathname() ?? "";
   const isAdmin = pathname.startsWith("/admin");
+  const [hasChatAccess, setHasChatAccess] = useState(true);
+
+  useEffect(() => {
+    // Check if an admin is logged in and lacks chat permission
+    fetch("/api/admin/auth/me").then(r => r.json()).then(d => {
+      if (d.role === "support" && !d.permissions?.includes("can_chat")) {
+        setHasChatAccess(false);
+      }
+    }).catch(() => {});
+  }, []);
 
   // If a customer opened the chat and then navigates to /admin,
   // tear down the widget from the DOM.
@@ -29,7 +39,7 @@ export default function ChatwayWidget() {
     } catch {}
   }, [isAdmin]);
 
-  if (isAdmin) return null;
+  if (isAdmin || !hasChatAccess) return null;
 
   return (
     <>

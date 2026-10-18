@@ -50,11 +50,13 @@ export async function POST(req: Request) {
   
   let passOk = false;
   let role: "superadmin" | "support" = "superadmin"; // Default legacy to superadmin
+  let permissions: string[] = ["can_message", "can_chat"]; // Super admins get everything
   let upgradedHash: string | null = null;
 
   if (adminAccount) {
     passOk = await verifyPassword(password, adminAccount.passwordHash);
     role = adminAccount.role;
+    permissions = adminAccount.permissions || [];
   } else if (isLegacy && legacyCreds.passwordHash) {
     passOk = await verifyPassword(password, legacyCreds.passwordHash);
   } else if (isLegacy && legacyCreds.password) {
@@ -79,7 +81,7 @@ export async function POST(req: Request) {
   const version = buildAdminVersion(effectiveHash);
   
   // THIS is the crucial part that was missing: we pass the role into the JWT
-  const token = await signAdminSession({ email, version, role });
+  const token = await signAdminSession({ email, version, role, permissions });
 
   const res = NextResponse.json({ ok: true, email, role });
   (await cookies()).set(SESSION_COOKIE, token, {

@@ -69,3 +69,25 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: String(e) }, { status: 500 });
   }
 }
+
+export async function PUT(req: Request) {
+  if (!(await checkSuperAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
+  try {
+    const { id, permissions } = await req.json();
+    const { store } = await readStore();
+    const admins = store.admins || [];
+
+    const nextStore = sanitizeStore({
+      ...store,
+      admins: admins.map((a: any) => a.id === id ? { ...a, permissions } : a)
+    });
+    
+    await writeStore(nextStore);
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 500 });
+  }
+}

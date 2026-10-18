@@ -22,7 +22,7 @@ export async function verifyPassword(plain: string, hash: string): Promise<boole
   }
 }
 
-export async function signAdminSession(payload: { email: string; version: string; role: "superadmin" | "support" }): Promise<string> {
+export async function signAdminSession(payload: { email: string; version: string; role: "superadmin" | "support"; permissions?: string[] }): Promise<string> {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -30,12 +30,13 @@ export async function signAdminSession(payload: { email: string; version: string
     .sign(ADMIN_JWT_SECRET);
 }
 
-export async function verifyAdminSession(token: string): Promise<{ email: string; version: string; role: "superadmin" | "support" } | null> {
+export async function verifyAdminSession(token: string): Promise<{ email: string; version: string; role: "superadmin" | "support"; permissions?: string[] } | null> {
   try {
     const { payload } = await jwtVerify(token, ADMIN_JWT_SECRET);
     if (typeof payload.email !== "string" || typeof payload.version !== "string") return null;
     const role = (payload.role as "superadmin" | "support") || "support";
-    return { email: payload.email, version: payload.version, role };
+    const permissions = (payload.permissions as string[]) || [];
+    return { email: payload.email, version: payload.version, role, permissions };
   } catch {
     return null;
   }

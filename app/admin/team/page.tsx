@@ -1,9 +1,9 @@
 "use client";
 import { useState } from "react";
 import { useAdminStore, useToast } from "@/app/providers";
-import { PageHeader, Btn, Panel, Field, Input, Select } from "@/components/admin/ui";
+import { PageHeader, Btn, Panel, Field, Input, Select, Modal, Toggle } from "@/components/admin/ui";
 import { AdminAccount } from "@/lib/adminStore";
-import { Trash2, Shield, ShieldAlert } from "lucide-react";
+import { Trash2, Shield, ShieldAlert, Settings2 } from "lucide-react";
 
 export default function AdminTeamPage() {
   const { store, log } = useAdminStore();
@@ -11,6 +11,11 @@ export default function AdminTeamPage() {
   
   const [form, setForm] = useState({ email: "", password: "", role: "support" as "support" | "superadmin" });
   const [busy, setBusy] = useState(false);
+  
+  // Modal state
+  const [editingAdmin, setEditingAdmin] = useState<AdminAccount | null>(null);
+  const [perms, setPerms] = useState<string[]>([]);
+  const [savingPerms, setSavingPerms] = useState(false);
 
   const admins = store.admins || [];
 
@@ -29,8 +34,7 @@ export default function AdminTeamPage() {
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      
-      if (!res.ok) throw new Error(data.error || "Failed to add admin");
+      if (!res.ok) throw new Error(data.error || "Failed");
       
       log("ADMIN_CREATE", form.email, form.role);
       push({ kind: "success", title: "Team member added" });
@@ -44,20 +48,49 @@ export default function AdminTeamPage() {
 
   const removeAdmin = async (id: string, email: string) => {
     if (!confirm(`Remove admin ${email}?`)) return;
-    
     try {
       const res = await fetch("/api/admin/team", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
       });
-      if (!res.ok) throw new Error("Failed to remove admin");
+      if (!res.ok) throw new Error("Failed to remove");
       
       log("ADMIN_DELETE", email);
       push({ kind: "success", title: "Team member removed" });
     } catch (err: any) {
       push({ kind: "error", title: "Error", message: err.message });
     }
+  };
+
+  const openPermissions = (a: AdminAccount) => {
+    setEditingAdmin(a);
+    setPerms(a.permissions || []);
+  };
+
+  const savePermissions = async () => {
+    if (!editingAdmin) return;
+    setSavingPerms(true);
+    try {
+      const res = await fetch("/api/admin/team", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: editingAdmin.id, permissions: perms }),
+      });
+      if (!res.ok) throw new Error("Failed to save permissions");
+      
+      log("ADMIN_PERMS", editingAdmin.email, perms.join(", "));
+      push({ kind: "success", title: "Permissions updated" });
+      setEditingAdmin(null);
+    } catch (err: any) {
+      push({ kind: "error", title: "Error", message: err.message });
+    } finally {
+      setSavingPerms(false);
+    }
+  };
+
+  const togglePerm = (key: string) => {
+    setPerms(prev => prev.includes(key) ? prev.filter(p => p !== key) : [...prev, key]);
   };
 
   return (
@@ -90,7 +123,7 @@ export default function AdminTeamPage() {
           <tbody>
             {admins.map(a => (
               <tr key={a.id} style={{ borderBottom: "1px solid var(--border)" }}>
-                <td className="py-3 px-4 font-medium flex items-center gap-2">
+                <td className="py-3 px-4 font-medium flex items-center gap-2 cursor-pointer hover:opacity-80" onClick={() => a.role === "support" && openPermissions(a)}>
                   {a.role === "superadmin" ? <Shield size={14} style={{ color: "var(--accent)" }} /> : <ShieldAlert size={14} style={{ color: "var(--muted)" }} />}
                   {a.email}
                 </td>
@@ -100,22 +133,53 @@ export default function AdminTeamPage() {
                   </span>
                 </td>
                 <td className="py-3 px-4 text-right">
-                  {a.email !== "davidfreeman081@gmail.com" ? (
-                    <Btn kind="danger" size="sm" onClick={() => removeAdmin(a.id, a.email)}>
-                      <Trash2 size={11} /> Remove
-                    </Btn>
-                  ) : (
-                    <span className="text-xs" style={{ color: "var(--muted-2)" }}>Cannot remove self</span>
-                  )}
+                  <div className="flex items-center justify-end gap-2">
+                    {a.role === "support" && (
+                      <Btn kind="ghost" size="sm" onClick={() => openPermissions(a)}>
+                        <Settings2 size={12} /> Permissions
+                      </Btn>
+                    )}
+                    {a.email !== "davidfreeman081@gmail.com" ? (
+                      <Btn kind="danger" size="sm" onClick={() => removeAdmin(a.id, a.email)}>
+                        <Trash2 size={11} />
+                      </Btn>
+                    ) : (
+                      <span className="text-xs" style={{ color: "var(--muted-2)" }}>Cannot remove</span>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
-            {admins.length === 0 && (
-              <tr><td colSpan={3} className="py-6 text-center" style={{ color: "var(--muted)" }}>No team members yet.</td></tr>
-            )}
           </tbody>
         </table>
       </Panel>
+
+      <Modal open={!!editingAdmin} onClose={() => setEditingAdmin(null)} title="Manage Permissions"
+        footer={<><Btn kind="ghost" onClick={() => setEditingAdmin(null)}>Cancel</Btn><Btn onClick={savePermissions} disabled={savingPerms}>{savingPerms ? "Saving..." : "Save Permissions"}</Btn></>}>
+        {editingAdmin && (
+          <div className="space-y-6">
+            <p className="text-sm" style={{ color: "var(--muted)" }}>Customize what <strong>{editingAdmin.email}</strong> is allowed to do.</p>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: "var(--border)" }}>
+                <div>
+                  <div className="font-semibold text-sm">Message Customers</div>
+                  <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>Can send emails, update KYC status, and approve deposits.</div>
+                </div>
+                <Toggle checked={perms.includes("can_message")} onChange={() => togglePerm("can_message")} label="" />
+              </div>
+
+              <div className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: "var(--border)" }}>
+                <div>
+                  <div className="font-semibold text-sm">Live Chat Access</div>
+                  <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>Can see and use the Chatway widget on the public site.</div>
+                </div>
+                <Toggle checked={perms.includes("can_chat")} onChange={() => togglePerm("can_chat")} label="" />
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
