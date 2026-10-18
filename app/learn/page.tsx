@@ -3,11 +3,13 @@ import { useState, useEffect } from "react";
 import { useAdminStore, useAuth, useToast } from "@/app/providers";
 import BackButton from "@/components/BackButton";
 import { X, Check, BookOpen, Clock, ChevronRight } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 export default function LearnPage() {
   const { store, update } = useAdminStore();
   const { user } = useAuth();
   const { push } = useToast();
+  const { t: tr } = useI18n();
   const [detail, setDetail] = useState<any | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
@@ -23,11 +25,11 @@ export default function LearnPage() {
   };
 
   const markComplete = (topicId: string) => {
-    if (!me) { push({ kind: "info", title: "Sign in to track progress" }); return; }
+    if (!me) { push({ kind: "info", title: tr("learn.signInToast") }); return; }
     const already = completed.includes(topicId);
     const next = already ? completed.filter((id: string) => id !== topicId) : [...completed, topicId];
     update("users", (store.users ?? []).map((u: any) => u.id === me.id ? { ...u, completedLessons: next } : u));
-    push({ kind: "success", title: already ? "Marked as unread" : "Marked as complete" });
+    push({ kind: "success", title: already ? tr("learn.markedUnread") : tr("learn.markedComplete") });
   };
 
   const progressPct = topics.length > 0
@@ -37,31 +39,31 @@ export default function LearnPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-10">
       <div className="mb-3 -ml-2">
-        <BackButton fallback="/" label="Back to home" />
+        <BackButton fallback="/" label={tr("learn.backHome")} />
       </div>
 
       <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-4xl font-bold">Learn Crypto</h1>
-        <p className="mt-2 text-sm md:text-base" style={{ color: "var(--muted)" }}>Short, practical lessons to build your foundation.</p>
+        <h1 className="text-2xl md:text-4xl font-bold">{tr("learn.title")}</h1>
+        <p className="mt-2 text-sm md:text-base" style={{ color: "var(--muted)" }}>{tr("learn.subtitle")}</p>
       </div>
 
       {user && topics.length > 0 && (
         <div className="mb-6 panel p-4 md:p-5">
           <div className="flex items-center justify-between mb-2">
-            <div className="text-xs uppercase tracking-wider font-semibold" style={{ color: "var(--muted)" }}>Your progress</div>
+            <div className="text-xs uppercase tracking-wider font-semibold" style={{ color: "var(--muted)" }}>{tr("learn.yourProgress")}</div>
             <div className="text-sm font-bold" style={{ color: "var(--green)" }}>{progressPct}%</div>
           </div>
           <div style={{ height: 8, background: "var(--panel-2)", borderRadius: 4, overflow: "hidden" }}>
             <div style={{ height: "100%", width: progressPct + "%", background: "var(--green)", transition: "width 0.4s" }} />
           </div>
           <div className="text-xs mt-2" style={{ color: "var(--muted-2)" }}>
-            {completed.filter((id: string) => topics.some((t: any) => t.id === id)).length} of {topics.length} lessons completed
+            {completed.filter((id: string) => topics.some((t: any) => t.id === id)).length} {tr("learn.of")} {topics.length} {tr("learn.lessonsCompleted")}
           </div>
         </div>
       )}
 
       {topics.length === 0 ? (
-        <div className="panel p-12 text-center" style={{ color: "var(--muted)" }}>No topics yet.</div>
+        <div className="panel p-12 text-center" style={{ color: "var(--muted)" }}>{tr("learn.noTopics")}</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {topics.map(t => {
@@ -77,7 +79,7 @@ export default function LearnPage() {
                   <div className="text-3xl">{t.icon || ""}</div>
                   {isDone && (
                     <span className="pill pill-green" style={{ fontSize: "0.7rem" }}>
-                      <Check size={10} /> DONE
+                      <Check size={10} /> {tr("learn.done")}
                     </span>
                   )}
                 </div>
@@ -86,7 +88,7 @@ export default function LearnPage() {
                 <div className="flex items-center justify-between mt-4 pt-3 border-t text-xs" style={{ borderColor: "var(--border)", color: "var(--muted-2)" }}>
                   <span className="flex items-center gap-1"><Clock size={11} /> {t.readTime || "3 min"}</span>
                   <span className="flex items-center gap-1 font-semibold" style={{ color: "var(--green)" }}>
-                    Read <ChevronRight size={12} />
+                    {tr("learn.read")} <ChevronRight size={12} />
                   </span>
                 </div>
               </button>
@@ -124,15 +126,15 @@ export default function LearnPage() {
                 </div>
               ) : (
                 <div className="text-sm" style={{ color: "var(--muted)" }}>
-                  <p className="mb-3">This lesson is being prepared. In the meantime, here's a quick overview:</p>
-                  <p className="mb-3">Content for <strong style={{ color: "var(--text)" }}>{detail.title}</strong> will cover practical, hands-on explanation to get you confident with the topic.</p>
-                  <p>Check back soon  new material is added regularly.</p>
+                  <p className="mb-3">{tr("learn.prepared")}</p>
+                  <p className="mb-3">{tr("learn.preparedDesc1")} <strong style={{ color: "var(--text)" }}>{detail.title}</strong> {tr("learn.preparedDesc2")}</p>
+                  <p>{tr("learn.checkBack")}</p>
                 </div>
               )}
 
               {detail.keyTakeaways && Array.isArray(detail.keyTakeaways) && detail.keyTakeaways.length > 0 && (
                 <div className="mt-6 pt-5 border-t" style={{ borderColor: "var(--border)" }}>
-                  <div className="text-xs uppercase tracking-wider font-semibold mb-3" style={{ color: "var(--muted)" }}>Key takeaways</div>
+                  <div className="text-xs uppercase tracking-wider font-semibold mb-3" style={{ color: "var(--muted)" }}>{tr("learn.keyTakeaways")}</div>
                   <ul className="space-y-2 text-sm" style={{ color: "var(--text-soft)" }}>
                     {detail.keyTakeaways.map((k: string, i: number) => (
                       <li key={i} className="flex items-start gap-2">
@@ -147,7 +149,7 @@ export default function LearnPage() {
 
             <div className="px-5 md:px-6 py-4 border-t flex flex-wrap items-center justify-between gap-3" style={{ borderColor: "var(--border)" }}>
               <div className="text-xs" style={{ color: "var(--muted-2)" }}>
-                {completed.includes(detail.id) ? " Completed" : "Mark as complete when you're done"}
+                {completed.includes(detail.id) ? " " + tr("learn.completedStatus") : tr("learn.markWhenDone")}
               </div>
               <div className="flex gap-2">
                 <button
@@ -157,9 +159,9 @@ export default function LearnPage() {
                     ? { background: "var(--panel-2)", color: "var(--muted)", border: "1px solid var(--border)" }
                     : { background: "var(--green)", color: "#0a0b0f", border: "none" }}
                 >
-                  {completed.includes(detail.id) ? "Mark as unread" : "Mark as complete"}
+                  {completed.includes(detail.id) ? tr("learn.markUnread") : tr("learn.markComplete")}
                 </button>
-                <button onClick={() => setDetail(null)} className="btn btn-ghost text-sm">Close</button>
+                <button onClick={() => setDetail(null)} className="btn btn-ghost text-sm">{tr("learn.close")}</button>
               </div>
             </div>
           </div>

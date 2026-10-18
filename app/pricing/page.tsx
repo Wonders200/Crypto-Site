@@ -15,7 +15,7 @@ export default function PricingPage() {
       </div>
 
       {tiers.length === 0 ? (
-        <div className="text-center py-12" style={{ color: "var(--muted)" }}>No pricing tiers available right now.</div>
+        <div className="text-center py-12" style={{ color: "var(--muted)" }}>{tr("pricing.noTiers")}</div>
       ) : (
       <div className="grid md:grid-cols-3 gap-6">
         {tiers.map(t => (
