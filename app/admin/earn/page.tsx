@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useAdminStore, useToast } from "@/app/providers";
+import { useAdminStore, useToast, useAdminAuth } from "@/app/providers";
 import { AdminEarnProduct, uid } from "@/lib/adminStore";
 import { PageHeader, Btn, Panel, DataTable, Modal, Field, Input, Select, Toggle, Badge } from "@/components/admin/ui";
 import { Trash2 } from "lucide-react";
@@ -20,6 +20,8 @@ const empty = (): AdminEarnProduct => ({
 export default function AdminEarnPage() {
   const { store, update, log } = useAdminStore();
   const { push } = useToast();
+  const { admin } = useAdminAuth();
+  const isSuper = admin?.role === "superadmin";
   const [editing, setEditing] = useState<AdminEarnProduct | null>(null);
   const [isNew, setIsNew] = useState(false);
 
@@ -146,14 +148,14 @@ export default function AdminEarnPage() {
               key: "act",
               label: "",
               align: "right",
-              render: p => (
+              render: p => isSuper ? (
                 <div className="flex justify-end gap-1.5">
                   <Btn kind="ghost" size="sm" onClick={() => startEdit(p)}>Edit</Btn>
                   <Btn kind="danger" size="sm" onClick={() => remove(p)}>
                     <Trash2 size={11} /> Delete
                   </Btn>
                 </div>
-              ),
+              ) : null,
             },
           ]}
         />
