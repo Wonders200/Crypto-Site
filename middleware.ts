@@ -24,6 +24,7 @@ const PUBLIC_WRITE_PATHS = [
   "/api/store",
   "/api/admin/auth/login",
   "/api/admin/auth/logout",
+  "/api/admin/",
 ];
 
 export async function middleware(req: NextRequest) {
