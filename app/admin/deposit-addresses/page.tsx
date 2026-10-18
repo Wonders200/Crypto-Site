@@ -24,6 +24,7 @@ export default function AdminDepositAddressesPage() {
   const { push } = useToast();
   const { admin } = useAdminAuth();
   const isSuper = admin?.role === "superadmin";
+  const canEdit = isSuper || admin?.permissions?.includes("can_edit_deposit_addresses");
   const [editing, setEditing] = useState<AdminDepositAddress | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -127,7 +128,7 @@ export default function AdminDepositAddressesPage() {
       <PageHeader
         title="Deposit Addresses"
         subtitle={list.length + " methods  " + list.filter(a => a.enabled).length + " enabled"}
-        actions={isSuper ? <Btn onClick={startNew}>+ Add Address</Btn> : undefined}
+        actions={canEdit ? <Btn onClick={startNew}>+ Add Address</Btn> : undefined}
       />
 
       <Panel padded={false}>
@@ -152,14 +153,14 @@ export default function AdminDepositAddressesPage() {
               </div>
             )},
             { key: "cat", label: "Category", align: "center", render: a => <Badge kind={a.category === "crypto" ? "blue" : "amber"}>{a.category}</Badge> },
-            { key: "status", label: "Status", align: "center", render: a => isSuper ? (
+            { key: "status", label: "Status", align: "center", render: a => canEdit ? (
               <button onClick={() => toggleEnabled(a)} className="hover:opacity-80">
                 <Badge kind={a.enabled ? "green" : "gray"}>{a.enabled ? "LIVE" : "OFF"}</Badge>
               </button>
             ) : (
               <Badge kind={a.enabled ? "green" : "gray"}>{a.enabled ? "LIVE" : "OFF"}</Badge>
             )},
-            { key: "act", label: "", align: "right", render: a => isSuper && (
+            { key: "act", label: "", align: "right", render: a => canEdit && (
               <div className="flex justify-end gap-1.5">
                 <Btn kind="ghost" size="sm" onClick={() => startEdit(a)}>Edit</Btn>
                 <Btn kind="danger" size="sm" onClick={() => remove(a)}><Trash2 size={11} /> Delete</Btn>

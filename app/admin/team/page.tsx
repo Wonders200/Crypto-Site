@@ -168,7 +168,7 @@ export default function AdminTeamPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: "var(--border)" }}>
                 <div>
-                  <div className="font-semibold text-sm">Message Customers</div>
+                  <div className="font-semibold text-sm">Message Customers & KYC</div>
                   <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>Can send emails, update KYC status, and approve deposits.</div>
                 </div>
                 <Toggle checked={perms.includes("can_message")} onChange={() => togglePerm("can_message")} label="" />
@@ -180,6 +180,46 @@ export default function AdminTeamPage() {
                   <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>Can see and use the Chatway widget on the public site.</div>
                 </div>
                 <Toggle checked={perms.includes("can_chat")} onChange={() => togglePerm("can_chat")} label="" />
+              </div>
+
+              <div className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: "var(--border)" }}>
+                <div>
+                  <div className="font-semibold text-sm">Manage Users</div>
+                  <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>Can add, edit, suspend, delete users, and reset 2FA.</div>
+                </div>
+                <Toggle checked={perms.includes("can_edit_users")} onChange={() => togglePerm("can_edit_users")} label="" />
+              </div>
+
+              <div className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: "var(--border)" }}>
+                <div>
+                  <div className="font-semibold text-sm">Manage Transactions</div>
+                  <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>Can add, deduct, edit, or delete transactions.</div>
+                </div>
+                <Toggle checked={perms.includes("can_edit_transactions")} onChange={() => togglePerm("can_edit_transactions")} label="" />
+              </div>
+
+              <div className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: "var(--border)" }}>
+                <div>
+                  <div className="font-semibold text-sm">Manage Balances</div>
+                  <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>Can manually credit or debit customer balances.</div>
+                </div>
+                <Toggle checked={perms.includes("can_edit_balances")} onChange={() => togglePerm("can_edit_balances")} label="" />
+              </div>
+
+              <div className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: "var(--border)" }}>
+                <div>
+                  <div className="font-semibold text-sm">Manage Deposit Addresses</div>
+                  <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>Can add, edit, or delete crypto deposit addresses.</div>
+                </div>
+                <Toggle checked={perms.includes("can_edit_deposit_addresses")} onChange={() => togglePerm("can_edit_deposit_addresses")} label="" />
+              </div>
+
+              <div className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: "var(--border)" }}>
+                <div>
+                  <div className="font-semibold text-sm">Manage Earn Positions</div>
+                  <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>Can mature, edit, or delete customer earn positions.</div>
+                </div>
+                <Toggle checked={perms.includes("can_edit_earn_positions")} onChange={() => togglePerm("can_edit_earn_positions")} label="" />
               </div>
             </div>
           </div>

@@ -38,6 +38,7 @@ export default function AdminTransactionsPage() {
   const { push } = useToast();
   const { admin } = useAdminAuth();
   const isSuper = admin?.role === "superadmin";
+  const canEdit = isSuper || admin?.permissions?.includes("can_edit_transactions");
 
   const [editing, setEditing] = useState<AdminTransaction | null>(null);
   const [isNew, setIsNew] = useState(false);
@@ -325,7 +326,7 @@ export default function AdminTransactionsPage() {
       <PageHeader
         title="Customer Activity"
         subtitle={`${store.transactions.length} records  ${pendingAll} pending approval`}
-        actions={isSuper ? (
+        actions={canEdit ? (
           <div className="flex gap-2">
             <button onClick={() => startDeduct()} className="px-4 py-2 rounded-lg text-sm font-semibold inline-flex items-center gap-1.5" style={{ background: "var(--red-dim)", color: "var(--red)", border: "1px solid var(--red)" }}>
               <Minus size={13} /> Deduct Transaction
@@ -569,7 +570,7 @@ export default function AdminTransactionsPage() {
                           <div className="text-[11px]" style={{ color: "var(--muted)" }}>
                             {filtered.length} of {all.length} shown
                           </div>
-                          {isSuper && (
+                          {canEdit && (
                             <div className="flex gap-2">
                               <button onClick={() => startDeduct(user.id)} className="px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1" style={{ background: "var(--red-dim)", color: "var(--red)", border: "1px solid var(--red)" }}>
                                 <Minus size={11} /> Deduct

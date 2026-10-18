@@ -18,6 +18,7 @@ export default function AdminUsersPage() {
   const { push } = useToast();
   const { admin } = useAdminAuth();
   const isSuper = admin?.role === "superadmin";
+  const canEdit = isSuper || admin?.permissions?.includes("can_edit_users");
   const [editing, setEditing] = useState<any>(null);
   const [isNew, setIsNew] = useState(false);
   const [q, setQ] = useState("");
@@ -96,7 +97,7 @@ export default function AdminUsersPage() {
   return (
     <div>
       <PageHeader title="Users" subtitle={store.users.length + " registered  " + store.users.filter(u => u.status === "active").length + " active"}
-        actions={isSuper ? <Btn onClick={startNew}><UserPlus size={13} /> Add User</Btn> : undefined} />
+        actions={canEdit ? <Btn onClick={startNew}><UserPlus size={13} /> Add User</Btn> : undefined} />
 
       <div className="mb-4 flex flex-wrap gap-3 items-center">
         <div className="flex-1 min-w-[240px] relative">
@@ -143,7 +144,7 @@ export default function AdminUsersPage() {
                   <td className="py-3 px-3 mono font-semibold">{formatCurrency(balance(u.id))}</td>
                   <td className="py-3 px-3"><Badge kind={u.kycStatus === "verified" ? "green" : u.kycStatus === "pending" ? "amber" : u.kycStatus === "rejected" ? "red" : "gray"}>{(u.kycStatus ?? "unverified").toUpperCase()}</Badge></td>
                   <td className="py-3 px-3 text-xs" style={{ color: "var(--muted)" }}>{new Date(u.createdAt ?? 0).toLocaleDateString()}</td>
-                  <td className="py-3 px-3">{isSuper ? (
+                  <td className="py-3 px-3">{canEdit ? (
                   <div className="flex justify-end gap-1.5 flex-wrap">
                     <Btn kind="ghost" size="sm" onClick={() => startEdit(u)}><Edit3 size={11} /> Edit</Btn>
                     <button onClick={() => forceKYC(u)} className="px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1"

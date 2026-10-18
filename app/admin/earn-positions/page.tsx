@@ -12,6 +12,7 @@ export default function AdminEarnPositionsPage() {
   const { push } = useToast();
   const { admin } = useAdminAuth();
   const isSuper = admin?.role === "superadmin";
+  const canEdit = isSuper || admin?.permissions?.includes("can_edit_earn_positions");
   const [editing, setEditing] = useState<AdminEarnPosition | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -95,7 +96,7 @@ export default function AdminEarnPositionsPage() {
             { key: "status", label: "Status", align: "center", render: p => (
               <Badge kind={p.status === "active" ? "green" : p.status === "withdrawn" ? "gray" : "blue"}>{p.status}</Badge>
             )},
-            { key: "act", label: "", align: "right", render: p => isSuper ? (
+            { key: "act", label: "", align: "right", render: p => canEdit ? (
               <div className="flex justify-end gap-1.5">
                 {p.status === "active" && <Btn kind="ghost" size="sm" onClick={() => setStatus(p, "matured")}>Mature</Btn>}
                 <Btn kind="ghost" size="sm" onClick={() => setEditing({ ...p })}>Edit</Btn>
