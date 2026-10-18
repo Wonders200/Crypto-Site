@@ -36,3 +36,6 @@ tsconfig.tsbuildinfo
 
 # runtime image uploads
 uploads/
+
+data/store.json
+data/store.json.*
