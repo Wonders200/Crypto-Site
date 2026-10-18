@@ -32,6 +32,7 @@ export function sanitizeStore(input: any): Store {
       ? { ...base.settings, ...input.settings, depositRequirements: input.settings.depositRequirements ?? base.settings.depositRequirements, trustBar: Array.isArray(input.settings.trustBar) ? input.settings.trustBar : base.settings.trustBar }
       : base.settings,
     credentials:     input.credentials && typeof input.credentials === "object" ? input.credentials : base.credentials,
+    admins:          arr(input.admins, base.admins),
     demoUser:        input.demoUser && typeof input.demoUser === "object" ? input.demoUser : base.demoUser,
   };
 }
