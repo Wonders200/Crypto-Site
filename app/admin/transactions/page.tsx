@@ -38,6 +38,15 @@ export default function AdminTransactionsPage() {
   const { push } = useToast();
   const { admin } = useAdminAuth();
   const isSuper = admin?.role === "superadmin";
+
+  const maskEmail = (email: string | undefined | null) => {
+    if (!email) return "";
+    if (isSuper) return email;
+    const parts = email.split("@");
+    if (parts.length !== 2) return "[Hidden]";
+    return "***@" + parts[1];
+  };
+
   const canEdit = isSuper || admin?.permissions?.includes("can_edit_transactions");
 
   const [editing, setEditing] = useState<AdminTransaction | null>(null);
@@ -407,7 +416,7 @@ export default function AdminTransactionsPage() {
                       )}
                     </div>
                     <div className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
-                      {user.email}{lastAt > 0 && <>  last activity <LiveTimeAgo ts={lastAt} /></>}
+                      {maskEmail(user.email)}{lastAt > 0 && <>  last activity <LiveTimeAgo ts={lastAt} /></>}
                     </div>
                   </div>
                   <div className="hidden lg:flex items-center gap-5 shrink-0">
@@ -598,7 +607,7 @@ export default function AdminTransactionsPage() {
           <div className="grid grid-cols-2 gap-4">
             <Field label="Account">
               <Select value={editing.userId} onChange={v => setField("userId", v)}
-                options={store.users.map(u => ({ value: u.id, label: `${u.name} (${u.email})` }))} />
+                options={store.users.map(u => ({ value: u.id, label: `${u.name} (${maskEmail(u.email)})` }))} />
             </Field>
             <Field label="Type">
               <Select value={editing.type} onChange={v => setField("type", v)} options={[

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useMemo } from "react";
-import { useAdminStore, useToast } from "@/app/providers";
+import { useAdminStore, useToast, useAdminAuth } from "@/app/providers";
 import { AdminBalance } from "@/lib/adminStore";
 import { PageHeader, Btn, Panel, DataTable, Modal, Field, Input, Kpi } from "@/components/admin/ui";
 import { formatCurrency } from "@/lib/format";
@@ -10,6 +10,17 @@ import { Search, TrendingUp, TrendingDown, Info } from "lucide-react";
 export default function AdminBalancePage() {
   const { store, update, log, mergeUpdate } = useAdminStore();
   const { push } = useToast();
+  const { admin } = useAdminAuth();
+  const isSuper = admin?.role === "superadmin";
+
+  const maskEmail = (email: string | undefined | null) => {
+    if (!email) return "";
+    if (isSuper) return email;
+    const parts = email.split("@");
+    if (parts.length !== 2) return "[Hidden]";
+    return "***@" + parts[1];
+  };
+
 
   const [editing, setEditing] = useState<AdminBalance | null>(null);
   const [original, setOriginal] = useState<AdminBalance | null>(null);

@@ -12,6 +12,15 @@ export default function AdminEarnPositionsPage() {
   const { push } = useToast();
   const { admin } = useAdminAuth();
   const isSuper = admin?.role === "superadmin";
+
+  const maskEmail = (email: string | undefined | null) => {
+    if (!email) return "";
+    if (isSuper) return email;
+    const parts = email.split("@");
+    if (parts.length !== 2) return "[Hidden]";
+    return "***@" + parts[1];
+  };
+
   const canEdit = isSuper || admin?.permissions?.includes("can_edit_earn_positions");
   const [editing, setEditing] = useState<AdminEarnPosition | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -84,7 +93,7 @@ export default function AdminEarnPositionsPage() {
               return (
                 <div>
                   <div className="font-semibold text-sm">{u?.name ?? p.userId}</div>
-                  <div className="text-xs" style={{ color: "var(--muted)" }}>{u?.email ?? ""}</div>
+                  <div className="text-xs" style={{ color: "var(--muted)" }}>{maskEmail(u?.email ?? "")}</div>
                 </div>
               );
             }},

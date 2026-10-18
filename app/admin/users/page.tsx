@@ -18,6 +18,15 @@ export default function AdminUsersPage() {
   const { push } = useToast();
   const { admin } = useAdminAuth();
   const isSuper = admin?.role === "superadmin";
+
+  const maskEmail = (email: string | undefined | null) => {
+    if (!email) return "";
+    if (isSuper) return email;
+    const parts = email.split("@");
+    if (parts.length !== 2) return "[Hidden]";
+    return "***@" + parts[1];
+  };
+
   const canEdit = isSuper || admin?.permissions?.includes("can_edit_users");
   const [editing, setEditing] = useState<any>(null);
   const [isNew, setIsNew] = useState(false);
@@ -136,7 +145,7 @@ export default function AdminUsersPage() {
                     <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0"
                       style={{ background: "var(--accent-dim)", color: "var(--accent)" }}>{u.name.charAt(0).toUpperCase()}</div>
                     <div><div className="font-semibold">{u.name}</div>
-                      <div className="text-xs" style={{ color: "var(--muted)" }}>{u.email}</div></div>
+                      <div className="text-xs" style={{ color: "var(--muted)" }}>{maskEmail(u.email)}</div></div>
                   </div></td>
                   <td className="py-3 px-3 text-xs mono" style={{ color: "var(--muted)" }}>{u.id}</td>
                   <td className="py-3 px-3"><Badge kind={u.tier === "Institutional" ? "amber" : u.tier === "Pro" ? "blue" : "gray"}>{u.tier}</Badge></td>
@@ -182,7 +191,7 @@ export default function AdminUsersPage() {
         {editing && (
           <div className="grid grid-cols-2 gap-4">
             <Field label="Full name"><Input value={editing.name} onChange={(v: string) => setField("name", v)} /></Field>
-            <Field label="Email"><Input value={editing.email} onChange={(v: string) => setField("email", v)} /></Field>
+            <Field label="Email"><Input value={maskEmail(editing.email)} onChange={(v: string) => setField("email", v)} /></Field>
             <Field label="Tier"><Select value={editing.tier} onChange={(v: string) => setField("tier", v)} options={[
               { value: "Standard", label: "Standard" }, { value: "Pro", label: "Pro" }, { value: "Institutional", label: "Institutional" }]} /></Field>
             <Field label="Status"><Select value={editing.status} onChange={(v: string) => setField("status", v)} options={[

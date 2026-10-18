@@ -1,6 +1,6 @@
 "use client";
 import { useState, useMemo } from "react";
-import { useAdminStore, useToast } from "@/app/providers";
+import { useAdminStore, useToast, useAdminAuth } from "@/app/providers";
 import { AdminHolding, uid } from "@/lib/adminStore";
 import { PageHeader, Btn, Panel, Modal, Field, Input, Select, Kpi, Badge } from "@/components/admin/ui";
 import { formatCurrency, formatPercent } from "@/lib/format";
@@ -18,6 +18,17 @@ const empty = (): AdminHolding => ({
 export default function AdminHoldingsPage() {
   const { store, update, log } = useAdminStore();
   const { push } = useToast();
+  const { admin } = useAdminAuth();
+  const isSuper = admin?.role === "superadmin";
+
+  const maskEmail = (email: string | undefined | null) => {
+    if (!email) return "";
+    if (isSuper) return email;
+    const parts = email.split("@");
+    if (parts.length !== 2) return "[Hidden]";
+    return "***@" + parts[1];
+  };
+
   const [editing, setEditing] = useState<AdminHolding | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [q, setQ] = useState("");
@@ -184,7 +195,7 @@ export default function AdminHoldingsPage() {
                       <Badge kind={user.tier === "Institutional" ? "amber" : user.tier === "Pro" ? "blue" : "gray"}>{user.tier}</Badge>
                       <Badge kind="gray">{uholdings.length} position{uholdings.length === 1 ? "" : "s"}</Badge>
                     </div>
-                    <div className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>{user.email}</div>
+                    <div className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>{maskEmail(user.email)}</div>
                   </div>
                   <div className="hidden lg:flex items-center gap-6 shrink-0">
                     <div className="text-right">

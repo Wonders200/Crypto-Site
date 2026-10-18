@@ -22,6 +22,16 @@ export default function KycPage() {
     }).catch(() => {});
   }, []);
   const { push } = useToast();
+  const isSuper = admin?.role === "superadmin";
+
+  const maskEmail = (email: string | undefined | null) => {
+    if (!email) return "";
+    if (isSuper) return email;
+    const parts = email.split("@");
+    if (parts.length !== 2) return "[Hidden]";
+    return "***@" + parts[1];
+  };
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
@@ -227,7 +237,7 @@ export default function KycPage() {
                 <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #2a2e3b' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <div style={{ width: '40px', height: '40px', background: '#2a2e3b', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', color: '#22c55e', flexShrink: 0 }}>{u.name.charAt(0)}</div>
-                    <div><div style={{ fontWeight: '600' }}>{u.name}</div><div style={{ color: '#6b7280', fontSize: '0.85rem' }}>{u.email}</div></div>
+                    <div><div style={{ fontWeight: '600' }}>{u.name}</div><div style={{ color: '#6b7280', fontSize: '0.85rem' }}>{maskEmail(u.email)}</div></div>
                   </div>
                 </td>
                 <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #2a2e3b' }}>{u.country}</td>
@@ -272,7 +282,7 @@ export default function KycPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid #2a2e3b', paddingBottom: '1rem' }}>
               <div>
                 <h3 style={{ fontSize: '1.5rem', fontWeight: '700', margin: 0 }}>{selectedUser.name}</h3>
-                <p style={{ color: '#8b92a5', fontSize: '0.9rem', marginTop: '0.25rem' }}>{selectedUser.email}  {selectedUser.country}</p>
+                <p style={{ color: '#8b92a5', fontSize: '0.9rem', marginTop: '0.25rem' }}>{maskEmail(selectedUser.email)}  {selectedUser.country}</p>
                 {selectedUser.submission && (
                   <p style={{ color: '#8b92a5', fontSize: '0.85rem', marginTop: '0.5rem' }}>
                     <strong style={{ color: '#e5e7eb' }}>Document:</strong> {selectedUser.submission.idType}  <strong style={{ color: '#e5e7eb', marginLeft: 12 }}>Number:</strong> {selectedUser.submission.idNumber}
@@ -322,7 +332,7 @@ export default function KycPage() {
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ background: '#1a1d27', border: '1px solid #2a2e3b', borderRadius: '1rem', padding: '2rem', width: '480px', maxWidth: '90%' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.5rem' }}>Backdate KYC</h3>
-            <p style={{ color: '#8b92a5', fontSize: '0.85rem', marginBottom: '1.5rem' }}>{backdating.name}  {backdating.email}</p>
+            <p style={{ color: '#8b92a5', fontSize: '0.85rem', marginBottom: '1.5rem' }}>{backdating.name}  {maskEmail(backdating.email)}</p>
 
             <label style={{ display: 'block', color: '#8b92a5', fontSize: '0.85rem', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Submission date</label>
             <input type="date" value={backdateDate} onChange={e => setBackdateDate(e.target.value)}
