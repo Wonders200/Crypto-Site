@@ -60,7 +60,9 @@ export default function CandlestickChart({ symbol, price, height = 380 }: { symb
 
     fetchData();
     return () => { cancelled = true; };
-  }, [symbol, price, range]);
+    // Only refetch when symbol or timeframe changes, not on every price tick
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [symbol, range]);
 
   const W = 900, H = height, padL = 8, padR = 64, padT = 12, padB = 24;
   const cW = W - padL - padR, cH = H - padT - padB;
