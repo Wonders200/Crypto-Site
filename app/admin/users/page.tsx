@@ -1,6 +1,6 @@
 "use client";
 import { useState, useMemo } from "react";
-import { useAdminStore, useToast } from "@/app/providers";
+import { useAdminStore, useToast, useAdminAuth } from "@/app/providers";
 import { AdminUser, uid } from "@/lib/adminStore";
 import { PageHeader, Btn, Panel, Modal, Field, Input, Select, Badge } from "@/components/admin/ui";
 import { formatCurrency } from "@/lib/format";
@@ -16,6 +16,8 @@ const fromDate = (s: string) => s ? new Date(s + "T12:00:00").getTime() : Date.n
 export default function AdminUsersPage() {
   const { store, update, log } = useAdminStore();
   const { push } = useToast();
+  const { admin } = useAdminAuth();
+  const isSuper = admin?.role === "superadmin";
   const [editing, setEditing] = useState<any>(null);
   const [isNew, setIsNew] = useState(false);
   const [q, setQ] = useState("");
@@ -94,7 +96,7 @@ export default function AdminUsersPage() {
   return (
     <div>
       <PageHeader title="Users" subtitle={store.users.length + " registered  " + store.users.filter(u => u.status === "active").length + " active"}
-        actions={<Btn onClick={startNew}><UserPlus size={13} /> Add User</Btn>} />
+        actions={isSuper ? <Btn onClick={startNew}><UserPlus size={13} /> Add User</Btn> : undefined} />
 
       <div className="mb-4 flex flex-wrap gap-3 items-center">
         <div className="flex-1 min-w-[240px] relative">
@@ -141,7 +143,8 @@ export default function AdminUsersPage() {
                   <td className="py-3 px-3 mono font-semibold">{formatCurrency(balance(u.id))}</td>
                   <td className="py-3 px-3"><Badge kind={u.kycStatus === "verified" ? "green" : u.kycStatus === "pending" ? "amber" : u.kycStatus === "rejected" ? "red" : "gray"}>{(u.kycStatus ?? "unverified").toUpperCase()}</Badge></td>
                   <td className="py-3 px-3 text-xs" style={{ color: "var(--muted)" }}>{new Date(u.createdAt ?? 0).toLocaleDateString()}</td>
-                  <td className="py-3 px-3"><div className="flex justify-end gap-1.5 flex-wrap">
+                  <td className="py-3 px-3">{isSuper ? (
+                  <div className="flex justify-end gap-1.5 flex-wrap">
                     <Btn kind="ghost" size="sm" onClick={() => startEdit(u)}><Edit3 size={11} /> Edit</Btn>
                     <button onClick={() => forceKYC(u)} className="px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1"
                       style={{ background: "rgba(250,204,21,0.10)", color: "#facc15", border: "1px solid rgba(250,204,21,0.3)" }}>
@@ -160,7 +163,12 @@ export default function AdminUsersPage() {
                     <button onClick={() => remove(u)} className="px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1"
                       style={{ background: "var(--red-dim)", color: "var(--red)", border: "1px solid var(--red)" }}>
                       <Trash2 size={11} /></button>
-                  </div></td>
+                  </div>
+                ) : (
+                  <div className="flex justify-end gap-1.5 flex-wrap">
+                    <span className="text-xs" style={{ color: "var(--muted)" }}>Read Only</span>
+                  </div>
+                )}</td>
                 </tr>
               ))}</tbody>
             </table>

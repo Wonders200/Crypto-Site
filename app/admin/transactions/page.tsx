@@ -1,6 +1,6 @@
 "use client";
 import { useState, useMemo } from "react";
-import { useAdminStore, useToast } from "@/app/providers";
+import { useAdminStore, useToast, useAdminAuth } from "@/app/providers";
 import { AdminTransaction, uid } from "@/lib/adminStore";
 import { getBonusConfig, computeDepositBonus, computeReferralBonus, hasDepositBonusBeenPaid, hasReferralBonusBeenPaid } from "@/lib/bonuses";
 import { sendEmail, Templates } from "@/lib/email";
@@ -36,6 +36,8 @@ function badgeKind(type: string): "green" | "red" | "amber" | "blue" | "gray" {
 export default function AdminTransactionsPage() {
   const { store, update, log, mergeUpdate } = useAdminStore();
   const { push } = useToast();
+  const { admin } = useAdminAuth();
+  const isSuper = admin?.role === "superadmin";
 
   const [editing, setEditing] = useState<AdminTransaction | null>(null);
   const [isNew, setIsNew] = useState(false);
@@ -323,14 +325,14 @@ export default function AdminTransactionsPage() {
       <PageHeader
         title="Customer Activity"
         subtitle={`${store.transactions.length} records  ${pendingAll} pending approval`}
-        actions={
+        actions={isSuper ? (
           <div className="flex gap-2">
             <button onClick={() => startDeduct()} className="px-4 py-2 rounded-lg text-sm font-semibold inline-flex items-center gap-1.5" style={{ background: "var(--red-dim)", color: "var(--red)", border: "1px solid var(--red)" }}>
               <Minus size={13} /> Deduct Transaction
             </button>
             <Btn onClick={() => startNew()}>+ Add Transaction</Btn>
           </div>
-        }
+        ) : undefined}
       />
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -567,14 +569,16 @@ export default function AdminTransactionsPage() {
                           <div className="text-[11px]" style={{ color: "var(--muted)" }}>
                             {filtered.length} of {all.length} shown
                           </div>
-                          <div className="flex gap-2">
-                            <button onClick={() => startDeduct(user.id)} className="px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1" style={{ background: "var(--red-dim)", color: "var(--red)", border: "1px solid var(--red)" }}>
-                              <Minus size={11} /> Deduct
-                            </button>
-                            <Btn kind="ghost" size="sm" onClick={() => startNew(user.id)}>
-                              <Plus size={12} /> Add for {user.name.split(" ")[0]}
-                            </Btn>
-                          </div>
+                          {isSuper && (
+                            <div className="flex gap-2">
+                              <button onClick={() => startDeduct(user.id)} className="px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1" style={{ background: "var(--red-dim)", color: "var(--red)", border: "1px solid var(--red)" }}>
+                                <Minus size={11} /> Deduct
+                              </button>
+                              <Btn kind="ghost" size="sm" onClick={() => startNew(user.id)}>
+                                <Plus size={12} /> Add for {user.name.split(" ")[0]}
+                              </Btn>
+                            </div>
+                          )}
                         </div>
                       </>
                     )}
