@@ -20,12 +20,6 @@ export default function AdminBalancePage() {
     return "***@" + parts[1];
   };
 
-  const maskText = (text: string | undefined | null) => {
-    if (!text) return "";
-    if (isSuper) return text;
-    return text.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '***@hidden.com');
-  };
-
   const { push } = useToast();
 
   const [editing, setEditing] = useState<AdminBalance | null>(null);
