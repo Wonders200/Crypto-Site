@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
-import { useAdminStore, useToast } from "@/app/providers";
+import { useAdminStore, useToast, useAdminAuth } from "@/app/providers";
 import { AdminDepositAddress, uid } from "@/lib/adminStore";
 import { PageHeader, Btn, Panel, DataTable, Modal, Field, Input, Textarea, Select, Toggle, Badge } from "@/components/admin/ui";
 import { Trash2, Copy, Check, UploadCloud, X as XIcon } from "lucide-react";
@@ -22,6 +22,8 @@ const empty = (): AdminDepositAddress => ({
 export default function AdminDepositAddressesPage() {
   const { store, update, log } = useAdminStore();
   const { push } = useToast();
+  const { admin } = useAdminAuth();
+  const isSuper = admin?.role === "superadmin";
   const [editing, setEditing] = useState<AdminDepositAddress | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -125,7 +127,7 @@ export default function AdminDepositAddressesPage() {
       <PageHeader
         title="Deposit Addresses"
         subtitle={list.length + " methods  " + list.filter(a => a.enabled).length + " enabled"}
-        actions={<Btn onClick={startNew}>+ Add Address</Btn>}
+        actions={isSuper ? <Btn onClick={startNew}>+ Add Address</Btn> : undefined}
       />
 
       <Panel padded={false}>
@@ -150,12 +152,14 @@ export default function AdminDepositAddressesPage() {
               </div>
             )},
             { key: "cat", label: "Category", align: "center", render: a => <Badge kind={a.category === "crypto" ? "blue" : "amber"}>{a.category}</Badge> },
-            { key: "status", label: "Status", align: "center", render: a => (
+            { key: "status", label: "Status", align: "center", render: a => isSuper ? (
               <button onClick={() => toggleEnabled(a)} className="hover:opacity-80">
                 <Badge kind={a.enabled ? "green" : "gray"}>{a.enabled ? "LIVE" : "OFF"}</Badge>
               </button>
+            ) : (
+              <Badge kind={a.enabled ? "green" : "gray"}>{a.enabled ? "LIVE" : "OFF"}</Badge>
             )},
-            { key: "act", label: "", align: "right", render: a => (
+            { key: "act", label: "", align: "right", render: a => isSuper && (
               <div className="flex justify-end gap-1.5">
                 <Btn kind="ghost" size="sm" onClick={() => startEdit(a)}>Edit</Btn>
                 <Btn kind="danger" size="sm" onClick={() => remove(a)}><Trash2 size={11} /> Delete</Btn>
