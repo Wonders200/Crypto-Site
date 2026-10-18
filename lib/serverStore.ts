@@ -1,156 +1,107 @@
-import fs from "fs/promises";
-import fssync from "fs";
+import Database from "better-sqlite3";
+import fs from "fs";
 import path from "path";
 import { Store, DEFAULT_STORE } from "./adminStore";
 import { sanitizeStore } from "./sanitizeStore";
 
-/* =====================================================================
-   Multi-server-safe file store.
-
-   Works across N servers when all servers share the same
-   DATA_DIR (NFS, SMB, Azure Files, EFS, a mounted volume in k8s, etc.).
-
-   Guarantees:
-      Atomic writes  temp file + rename (POSIX atomic on the same FS)
-      Cache invalidation  every read checks file mtime; if it changed
-       on ANY server, this server reloads from disk
-      No in-process cross-talk  each server always serves the truth
-
-   The public API is identical to before.
-   ===================================================================== */
-
 const DATA_DIR = process.env.CRYPTO_DATA_DIR
   ? path.resolve(process.env.CRYPTO_DATA_DIR)
   : path.join(process.cwd(), "data");
-const STORE_FILE = path.join(DATA_DIR, "store.json");
-const LOCK_FILE = path.join(DATA_DIR, "store.lock");
-const VERSION_FILE = path.join(DATA_DIR, "store.version");
 
-/* -------------------- In-process cache (per server) -------------------- */
+const DB_FILE = path.join(DATA_DIR, "store.db");
+const LEGACY_JSON_FILE = path.join(DATA_DIR, "store.json");
+
+// Ensure data directory exists
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+// Initialize Database
+const db = new Database(DB_FILE);
+db.pragma("journal_mode = WAL"); // WAL mode is crucial for high-performance concurrent reads/writes
+db.pragma("synchronous = NORMAL");
+
+// Create the single-row table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS store_data (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    data TEXT NOT NULL,
+    version INTEGER NOT NULL
+  );
+`);
+
+// -----------------------------------------
+// ONE-TIME MIGRATION FROM JSON TO SQLITE
+// -----------------------------------------
+const rowCount = (db.prepare("SELECT COUNT(*) as count FROM store_data").get() as any).count;
+
+if (rowCount === 0 && fs.existsSync(LEGACY_JSON_FILE)) {
+  try {
+    console.log("[serverStore] Migrating store.json to SQLite...");
+    const raw = fs.readFileSync(LEGACY_JSON_FILE, "utf-8");
+    const parsed = sanitizeStore(JSON.parse(raw));
+    const version = Date.now();
+    
+    db.prepare("INSERT INTO store_data (id, data, version) VALUES (1, ?, ?)").run(
+      JSON.stringify(parsed),
+      version
+    );
+    
+    console.log("[serverStore] Migration successful. Backing up old JSON file.");
+    fs.renameSync(LEGACY_JSON_FILE, LEGACY_JSON_FILE + ".migrated.bak");
+  } catch (err) {
+    console.error("[serverStore] Migration failed:", err);
+  }
+}
+
+// Prepare statements for speed
+const getStmt = db.prepare("SELECT data, version FROM store_data WHERE id = 1");
+const setStmt = db.prepare("INSERT OR REPLACE INTO store_data (id, data, version) VALUES (1, ?, ?)");
+
+// In-memory cache (per server)
 declare global {
-  // eslint-disable-next-line no-var
   var __cryptoSiteStore: Store | undefined;
-  // eslint-disable-next-line no-var
   var __cryptoSiteVersion: number | undefined;
-  // eslint-disable-next-line no-var
-  var __cryptoSiteMtime: number | undefined;
 }
 
-function touchMtime(ms: number) {
-  globalThis.__cryptoSiteMtime = ms;
-  globalThis.__cryptoSiteVersion = ms;
-}
-
-/* -------------------- File-mtime probe -------------------- */
-async function currentMtime(): Promise<number> {
-  try {
-    const st = await fs.stat(STORE_FILE);
-    return st.mtimeMs;
-  } catch {
-    return 0;
-  }
-}
-
-/* -------------------- Atomic write -------------------- */
-async function atomicWrite(file: string, content: string): Promise<void> {
-  const tmp = `${file}.tmp.${process.pid}.${Date.now()}`;
-  await fs.writeFile(tmp, content, "utf-8");
-  await fs.rename(tmp, file);   // atomic on same filesystem
-}
-
-/* -------------------- Simple cross-process file lock -------------------- */
-/* Uses O_EXCL to create a lock file  fails immediately if held by another
-   process. Falls back to a time-based stale-lock cleanup. */
-async function acquireLock(timeoutMs = 3000): Promise<() => Promise<void>> {
-  const start = Date.now();
-  while (Date.now() - start < timeoutMs) {
-    try {
-      const fd = fssync.openSync(LOCK_FILE, "wx");
-      fssync.closeSync(fd);
-      await fs.writeFile(LOCK_FILE, String(process.pid));
-      return async () => { try { await fs.unlink(LOCK_FILE); } catch {} };
-    } catch {
-      // Someone else holds the lock. Check if it's stale (older than 10s)
-      try {
-        const st = await fs.stat(LOCK_FILE);
-        if (Date.now() - st.mtimeMs > 10_000) {
-          await fs.unlink(LOCK_FILE).catch(() => {});
-          continue;
-        }
-      } catch {}
-      await new Promise(r => setTimeout(r, 50));
-    }
-  }
-  // Timeout  proceed without lock (fail-open, log it)
-  console.warn("[serverStore] Lock acquisition timed out; proceeding");
-  return async () => {};
-}
-
-/* -------------------- Read (with mtime invalidation) -------------------- */
 export async function readStore(): Promise<{ store: Store; version: number }> {
-  // Fast path: check mtime against our cached mtime
-  const diskMtime = await currentMtime();
-
-  //  CACHE BUST MARKER 
-  // If this file exists, force a fresh read from disk regardless of mtime.
-  // Used to break out of stale-cache situations like an admin value change.
-  const BUST_MARKER = path.join(DATA_DIR, "cache.bust");
   try {
-    await fs.stat(BUST_MARKER);
-    // Marker exists  clear cache and delete marker
-    globalThis.__cryptoSiteStore = undefined;
-    globalThis.__cryptoSiteMtime = undefined;
-    globalThis.__cryptoSiteVersion = undefined;
-    await fs.unlink(BUST_MARKER).catch(() => {});
-  } catch {}
-
-  // Cache is valid only if disk hasn't changed since we cached it
-  if (
-    globalThis.__cryptoSiteStore &&
-    globalThis.__cryptoSiteMtime === diskMtime &&
-    diskMtime > 0
-  ) {
-    return { store: globalThis.__cryptoSiteStore, version: globalThis.__cryptoSiteVersion ?? 0 };
+    const row = getStmt.get() as { data: string; version: number } | undefined;
+    
+    if (row) {
+      // If we have a cache and the version hasn't changed, return cache instantly
+      if (globalThis.__cryptoSiteStore && globalThis.__cryptoSiteVersion === row.version) {
+        return { store: globalThis.__cryptoSiteStore, version: row.version };
+      }
+      
+      // Otherwise, parse the database data
+      const parsed = sanitizeStore(JSON.parse(row.data));
+      globalThis.__cryptoSiteStore = parsed;
+      globalThis.__cryptoSiteVersion = row.version;
+      return { store: parsed, version: row.version };
+    }
+  } catch (err) {
+    console.error("[serverStore] SQLite read error:", err);
   }
 
-  // Otherwise reload from disk
-  try {
-    const raw = await fs.readFile(STORE_FILE, "utf-8");
-    const parsed = JSON.parse(raw);
-    const sanitized = sanitizeStore(parsed);
-    globalThis.__cryptoSiteStore = sanitized;
-    touchMtime(diskMtime);
-    return { store: sanitized, version: diskMtime };
-  } catch {
-    // File missing  initialize with defaults
-    const fresh = sanitizeStore(DEFAULT_STORE);
-    await writeStore(fresh);
-    return { store: fresh, version: globalThis.__cryptoSiteVersion ?? 0 };
-  }
+  // Fallback to defaults if database is somehow empty
+  const fresh = sanitizeStore(DEFAULT_STORE);
+  await writeStore(fresh);
+  return { store: fresh, version: Date.now() };
 }
 
-/* -------------------- Write (atomic + locked) -------------------- */
 export async function writeStore(s: Store): Promise<number> {
   const sanitized = sanitizeStore(s);
-  await fs.mkdir(DATA_DIR, { recursive: true });
-
-  const release = await acquireLock();
+  const version = Date.now();
+  
   try {
-    const serialized = JSON.stringify(sanitized, null, 2);
-    await atomicWrite(STORE_FILE, serialized);
-
-    // Bump a version marker file so other servers can detect the change
-    const stamp = Date.now();
-    await atomicWrite(VERSION_FILE, String(stamp));
-
-    // Update our own cache
-    const diskMtime = await currentMtime();
+    setStmt.run(JSON.stringify(sanitized), version);
     globalThis.__cryptoSiteStore = sanitized;
-    touchMtime(diskMtime || stamp);
-
-    return globalThis.__cryptoSiteVersion ?? stamp;
-  } finally {
-    await release();
+    globalThis.__cryptoSiteVersion = version;
+    return version;
+  } catch (err) {
+    console.error("[serverStore] SQLite write error:", err);
+    return 0;
   }
 }
 
