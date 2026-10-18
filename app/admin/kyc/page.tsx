@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAdminStore, useToast, useAdminAuth } from '@/app/providers';
 import { uid, AdminUser, KycStatus } from '@/lib/adminStore';
 import { formatCurrency } from '@/lib/format';
