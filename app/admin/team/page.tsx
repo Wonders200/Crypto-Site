@@ -1,16 +1,11 @@
 "use client";
 import { useState } from "react";
-import { useAdminStore, useToast , useAdminAuth } from "@/app/providers";
+import { useAdminStore, useToast } from "@/app/providers";
 import { PageHeader, Btn, Panel, Field, Input, Select, Modal, Toggle } from "@/components/admin/ui";
 import { AdminAccount } from "@/lib/adminStore";
 import { Trash2, Shield, ShieldAlert, Settings2 } from "lucide-react";
 
 export default function AdminTeamPage() {
-  const { admin } = useAdminAuth();
-  if (admin?.role !== "superadmin") {
-    return <div className="p-8 text-center" style={{ color: "var(--red)" }}>Access Denied. Super Admin only.</div>;
-  }
-
   const { store, log } = useAdminStore();
   const { push } = useToast();
   
@@ -98,6 +93,16 @@ export default function AdminTeamPage() {
     setPerms(prev => prev.includes(key) ? prev.filter(p => p !== key) : [...prev, key]);
   };
 
+  const PERMS = [
+    { key: "can_message", title: "Message Customers & KYC", desc: "Can send emails, update KYC status, and approve deposits." },
+    { key: "can_chat", title: "Live Chat Access", desc: "Can see and use the Chatway widget on the public site." },
+    { key: "can_edit_users", title: "Manage Users", desc: "Can add, edit, suspend, delete users, and reset 2FA." },
+    { key: "can_edit_transactions", title: "Manage Transactions", desc: "Can add, deduct, edit, or delete transactions." },
+    { key: "can_edit_balances", title: "Manage Balances", desc: "Can manually credit or debit customer balances." },
+    { key: "can_edit_deposit_addresses", title: "Manage Deposit Addresses", desc: "Can add, edit, or delete crypto deposit addresses." },
+    { key: "can_edit_earn_positions", title: "Manage Earn Positions", desc: "Can mature, edit, or delete customer earn positions." },
+  ];
+
   return (
     <div className="space-y-6 max-w-4xl">
       <PageHeader title="Team" subtitle="Manage admin accounts and access levels" />
@@ -162,65 +167,19 @@ export default function AdminTeamPage() {
       <Modal open={!!editingAdmin} onClose={() => setEditingAdmin(null)} title="Manage Permissions"
         footer={<><Btn kind="ghost" onClick={() => setEditingAdmin(null)}>Cancel</Btn><Btn onClick={savePermissions} disabled={savingPerms}>{savingPerms ? "Saving..." : "Save Permissions"}</Btn></>}>
         {editingAdmin && (
-          <div className="space-y-6">
+          <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
             <p className="text-sm" style={{ color: "var(--muted)" }}>Customize what <strong>{editingAdmin.email}</strong> is allowed to do.</p>
             
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: "var(--border)" }}>
-                <div>
-                  <div className="font-semibold text-sm">Message Customers & KYC</div>
-                  <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>Can send emails, update KYC status, and approve deposits.</div>
+              {PERMS.map(p => (
+                <div key={p.key} className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: "var(--border)" }}>
+                  <div>
+                    <div className="font-semibold text-sm">{p.title}</div>
+                    <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>{p.desc}</div>
+                  </div>
+                  <Toggle checked={perms.includes(p.key)} onChange={() => togglePerm(p.key)} label="" />
                 </div>
-                <Toggle checked={perms.includes("can_message")} onChange={() => togglePerm("can_message")} label="" />
-              </div>
-
-              <div className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: "var(--border)" }}>
-                <div>
-                  <div className="font-semibold text-sm">Live Chat Access</div>
-                  <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>Can see and use the Chatway widget on the public site.</div>
-                </div>
-                <Toggle checked={perms.includes("can_chat")} onChange={() => togglePerm("can_chat")} label="" />
-              </div>
-
-              <div className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: "var(--border)" }}>
-                <div>
-                  <div className="font-semibold text-sm">Manage Users</div>
-                  <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>Can add, edit, suspend, delete users, and reset 2FA.</div>
-                </div>
-                <Toggle checked={perms.includes("can_edit_users")} onChange={() => togglePerm("can_edit_users")} label="" />
-              </div>
-
-              <div className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: "var(--border)" }}>
-                <div>
-                  <div className="font-semibold text-sm">Manage Transactions</div>
-                  <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>Can add, deduct, edit, or delete transactions.</div>
-                </div>
-                <Toggle checked={perms.includes("can_edit_transactions")} onChange={() => togglePerm("can_edit_transactions")} label="" />
-              </div>
-
-              <div className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: "var(--border)" }}>
-                <div>
-                  <div className="font-semibold text-sm">Manage Balances</div>
-                  <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>Can manually credit or debit customer balances.</div>
-                </div>
-                <Toggle checked={perms.includes("can_edit_balances")} onChange={() => togglePerm("can_edit_balances")} label="" />
-              </div>
-
-              <div className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: "var(--border)" }}>
-                <div>
-                  <div className="font-semibold text-sm">Manage Deposit Addresses</div>
-                  <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>Can add, edit, or delete crypto deposit addresses.</div>
-                </div>
-                <Toggle checked={perms.includes("can_edit_deposit_addresses")} onChange={() => togglePerm("can_edit_deposit_addresses")} label="" />
-              </div>
-
-              <div className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: "var(--border)" }}>
-                <div>
-                  <div className="font-semibold text-sm">Manage Earn Positions</div>
-                  <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>Can mature, edit, or delete customer earn positions.</div>
-                </div>
-                <Toggle checked={perms.includes("can_edit_earn_positions")} onChange={() => togglePerm("can_edit_earn_positions")} label="" />
-              </div>
+              ))}
             </div>
           </div>
         )}
