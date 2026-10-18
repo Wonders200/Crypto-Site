@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useAdminStore, useToast } from "@/app/providers";
+import { useAdminStore, useToast, useAdminAuth } from "@/app/providers";
 import { AdminEarnPosition } from "@/lib/adminStore";
 import { PageHeader, Btn, Panel, DataTable, Modal, Field, Input, Select, Badge, Kpi } from "@/components/admin/ui";
 import { formatCurrency } from "@/lib/format";
@@ -10,6 +10,8 @@ import { Trash2 } from "lucide-react";
 export default function AdminEarnPositionsPage() {
   const { store, update, log } = useAdminStore();
   const { push } = useToast();
+  const { admin } = useAdminAuth();
+  const isSuper = admin?.role === "superadmin";
   const [editing, setEditing] = useState<AdminEarnPosition | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -93,13 +95,13 @@ export default function AdminEarnPositionsPage() {
             { key: "status", label: "Status", align: "center", render: p => (
               <Badge kind={p.status === "active" ? "green" : p.status === "withdrawn" ? "gray" : "blue"}>{p.status}</Badge>
             )},
-            { key: "act", label: "", align: "right", render: p => (
+            { key: "act", label: "", align: "right", render: p => isSuper ? (
               <div className="flex justify-end gap-1.5">
                 {p.status === "active" && <Btn kind="ghost" size="sm" onClick={() => setStatus(p, "matured")}>Mature</Btn>}
                 <Btn kind="ghost" size="sm" onClick={() => setEditing({ ...p })}>Edit</Btn>
                 <Btn kind="danger" size="sm" onClick={() => remove(p)}><Trash2 size={11} /> Delete</Btn>
               </div>
-            )},
+            ) : null},
           ]}
         />
       </Panel>
