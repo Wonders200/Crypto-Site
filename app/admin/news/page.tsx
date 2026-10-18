@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useAdminStore, useToast } from "@/app/providers";
+import { useAdminStore, useToast, useAdminAuth } from "@/app/providers";
 import { AdminNews, uid } from "@/lib/adminStore";
 import { PageHeader, Btn, Panel, DataTable, Modal, Field, Input, Textarea, Toggle, Badge, Kpi } from "@/components/admin/ui";
 import LiveTimeAgo from "@/components/LiveTimeAgo";
@@ -15,6 +15,9 @@ const empty = (): AdminNews => ({
 export default function AdminNewsPage() {
   const { store, update, log, refreshNews } = useAdminStore();
   const { push } = useToast();
+  const { admin } = useAdminAuth();
+  const isSuper = admin?.role === "superadmin";
+  const canManage = isSuper || admin?.permissions?.includes("can_manage_news");
   const [editing, setEditing] = useState<AdminNews | null>(null);
   const [isNew, setIsNew] = useState(false);
 

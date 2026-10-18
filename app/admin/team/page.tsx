@@ -12,7 +12,6 @@ export default function AdminTeamPage() {
   const [form, setForm] = useState({ email: "", password: "", role: "support" as "support" | "superadmin" });
   const [busy, setBusy] = useState(false);
   
-  // Modal state
   const [editingAdmin, setEditingAdmin] = useState<AdminAccount | null>(null);
   const [perms, setPerms] = useState<string[]>([]);
   const [savingPerms, setSavingPerms] = useState(false);
@@ -93,14 +92,22 @@ export default function AdminTeamPage() {
     setPerms(prev => prev.includes(key) ? prev.filter(p => p !== key) : [...prev, key]);
   };
 
+  // 14 GRANULAR PERMISSIONS
   const PERMS = [
-    { key: "can_message", title: "Message Customers & KYC", desc: "Can send emails, update KYC status, and approve deposits." },
-    { key: "can_chat", title: "Live Chat Access", desc: "Can see and use the Chatway widget on the public site." },
-    { key: "can_edit_users", title: "Manage Users", desc: "Can add, edit, suspend, delete users, and reset 2FA." },
-    { key: "can_edit_transactions", title: "Manage Transactions", desc: "Can add, deduct, edit, or delete transactions." },
-    { key: "can_edit_balances", title: "Manage Balances", desc: "Can manually credit or debit customer balances." },
-    { key: "can_edit_deposit_addresses", title: "Manage Deposit Addresses", desc: "Can add, edit, or delete crypto deposit addresses." },
-    { key: "can_edit_earn_positions", title: "Manage Earn Positions", desc: "Can mature, edit, or delete customer earn positions." },
+    { key: "can_chat", title: "Live Chat Access", desc: "See and use the Chatway widget on the public site." },
+    { key: "can_email", title: "Send Customer Emails", desc: "Manually email customers (e.g. from KYC page)." },
+    { key: "can_approve_kyc", title: "Approve/Reject KYC", desc: "Click Auto-Accept or Reject on KYC submissions." },
+    { key: "can_force_kyc", title: "Force KYC Re-submission", desc: "Reset a user's KYC status to 'pending'." },
+    { key: "can_create_users", title: "Add New Customers", desc: "Create new user accounts from the admin panel." },
+    { key: "can_edit_users", title: "Edit Customer Details", desc: "Change name, email, tier, status, and reset 2FA." },
+    { key: "can_delete_users", title: "Delete Customers", desc: "Permanently remove a customer and their balance." },
+    { key: "can_suspend_users", title: "Suspend / Activate", desc: "Lock a user out of their account temporarily." },
+    { key: "can_add_transactions", title: "Add / Deduct Funds", desc: "Manually create or deduct transactions." },
+    { key: "can_edit_transactions", title: "Edit / Delete Transactions", desc: "Modify existing transaction records." },
+    { key: "can_edit_balances", title: "Manage Balances", desc: "Directly edit the USD balance of customers." },
+    { key: "can_edit_deposit_addresses", title: "Manage Deposit Addresses", desc: "Add, edit, or delete crypto deposit wallets." },
+    { key: "can_edit_earn_positions", title: "Manage Earn Positions", desc: "Mature, edit, or delete customer yield positions." },
+    { key: "can_manage_news", title: "Manage News & Articles", desc: "Publish, edit, or delete news posts." },
   ];
 
   return (
@@ -167,15 +174,15 @@ export default function AdminTeamPage() {
       <Modal open={!!editingAdmin} onClose={() => setEditingAdmin(null)} title="Manage Permissions"
         footer={<><Btn kind="ghost" onClick={() => setEditingAdmin(null)}>Cancel</Btn><Btn onClick={savePermissions} disabled={savingPerms}>{savingPerms ? "Saving..." : "Save Permissions"}</Btn></>}>
         {editingAdmin && (
-          <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
-            <p className="text-sm" style={{ color: "var(--muted)" }}>Customize what <strong>{editingAdmin.email}</strong> is allowed to do.</p>
+          <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+            <p className="text-sm mb-4" style={{ color: "var(--muted)" }}>Customize exactly what <strong>{editingAdmin.email}</strong> is allowed to do.</p>
             
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {PERMS.map(p => (
-                <div key={p.key} className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: "var(--border)" }}>
-                  <div>
-                    <div className="font-semibold text-sm">{p.title}</div>
-                    <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>{p.desc}</div>
+                <div key={p.key} className="flex items-center justify-between p-3 rounded-xl border" style={{ borderColor: "var(--border)" }}>
+                  <div className="pr-4">
+                    <div className="font-semibold text-xs">{p.title}</div>
+                    <div className="text-[10px] mt-1 leading-tight" style={{ color: "var(--muted)" }}>{p.desc}</div>
                   </div>
                   <Toggle checked={perms.includes(p.key)} onChange={() => togglePerm(p.key)} label="" />
                 </div>
