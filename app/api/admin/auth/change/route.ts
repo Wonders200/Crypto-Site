@@ -15,6 +15,7 @@ export async function POST(req: Request) {
   if (!token) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   const session = await verifyAdminSession(token);
   if (!session) return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+  if (session.role !== "superadmin") return NextResponse.json({ error: "Only Super Admins can change credentials" }, { status: 403 });
 
   let body: any;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Bad request" }, { status: 400 }); }
