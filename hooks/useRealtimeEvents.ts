@@ -67,8 +67,14 @@ export function useRealtimeEvents() {
 
         const headId = audit[0]?.id ?? null;
 
-        // First poll: seed the anchor, do not flood the feed
+        // First poll: seed the anchor with the last 15 events so the feed isn't empty
         if (!seededRef.current || !lastAuditIdRef.current) {
+          const initialEvents = audit.slice(0, 15).map(auditToEvent);
+          setFeed(prev => {
+            const existingIds = new Set(prev.map(e => e.payload?.id));
+            const toAdd = initialEvents.filter(e => !existingIds.has(e.payload?.id));
+            return [...toAdd, ...prev].slice(0, MAX_FEED);
+          });
           lastAuditIdRef.current = headId;
           seededRef.current = true;
           return;
