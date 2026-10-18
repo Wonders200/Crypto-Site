@@ -7,6 +7,11 @@ import { PageHeader, Btn, Panel, Field, Input, Textarea, Toggle, Select } from "
 import { Lock } from "lucide-react";
 
 export default function AdminSettingsPage() {
+  const { admin } = useAdminAuth();
+  if (admin?.role !== "superadmin") {
+    return <div className="p-8 text-center" style={{ color: "var(--red)" }}>Access Denied. Super Admin only.</div>;
+  }
+
   const { store, update, log, replace, resetStore } = useAdminStore();
   const { push } = useToast();
 

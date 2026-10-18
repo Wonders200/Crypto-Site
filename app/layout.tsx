@@ -26,9 +26,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </main>
           <Footer />
+          <ChatwayWidget />
         </Providers>
         </I18nProvider>
-        <ChatwayWidget />
+
       </body>
     </html>
   );

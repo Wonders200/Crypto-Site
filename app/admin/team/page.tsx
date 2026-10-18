@@ -6,6 +6,11 @@ import { AdminAccount } from "@/lib/adminStore";
 import { Trash2, Shield, ShieldAlert, Settings2 } from "lucide-react";
 
 export default function AdminTeamPage() {
+  const { admin } = useAdminAuth();
+  if (admin?.role !== "superadmin") {
+    return <div className="p-8 text-center" style={{ color: "var(--red)" }}>Access Denied. Super Admin only.</div>;
+  }
+
   const { store, log } = useAdminStore();
   const { push } = useToast();
   

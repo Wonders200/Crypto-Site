@@ -10,6 +10,8 @@ const fromDate = (s: string) => s ? new Date(s + "T12:00:00").getTime() : Date.n
 
 export default function KycPage() {
   const { store, update, log } = useAdminStore();
+  const { admin } = useAdminAuth();
+  const canMessage = admin?.role === "superadmin" || admin?.permissions?.includes("can_message");
   const [hasMessagePerm, setHasMessagePerm] = useState(true);
 
   useEffect(() => {
@@ -246,12 +248,12 @@ export default function KycPage() {
                     {u.files > 0 && (
                       <button onClick={() => setSelectedUser(u)} style={{ background: 'rgba(99,102,241,0.1)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)', padding: '0.4rem 0.8rem', borderRadius: '0.4rem', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>View Docs</button>
                     )}
-                    {u.status !== 'VERIFIED' && hasMessagePerm && (
+                    {u.status !== 'VERIFIED' && canMessage && (
                       <button onClick={() => handleAutoAccept(u.id)} style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)', padding: '0.4rem 0.8rem', borderRadius: '0.4rem', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>Auto-Accept</button>
                     )}
                     <button onClick={() => openBackdate(u.user)} style={{ background: 'rgba(99,102,241,0.1)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.3)', padding: '0.4rem 0.8rem', borderRadius: '0.4rem', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>Backdate</button>
                     <button onClick={() => handleForceRequest(u.id)} style={{ background: 'transparent', color: '#facc15', border: '1px solid #facc15', padding: '0.4rem 0.8rem', borderRadius: '0.4rem', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>Force KYC</button>
-                    {u.status !== 'REJECTED' && hasMessagePerm && (
+                    {u.status !== 'REJECTED' && canMessage && (
                       <button onClick={() => handleReject(u.id)} style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)', padding: '0.4rem 0.8rem', borderRadius: '0.4rem', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>Reject</button>
                     )}
                     <button onClick={() => handleDelete(u.id, u.name)} style={{ background: 'rgba(153,27,27,0.5)', color: '#fca5a5', border: '1px solid rgba(153,27,27,0.8)', padding: '0.4rem 0.8rem', borderRadius: '0.4rem', fontWeight: '700', cursor: 'pointer', whiteSpace: 'nowrap' }}>Delete</button>

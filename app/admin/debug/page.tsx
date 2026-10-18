@@ -1,10 +1,15 @@
 "use client";
 import { useState } from "react";
-import { useAdminStore } from "@/app/providers";
+import { useAdminStore, useAdminAuth } from "@/app/providers";
 import { PageHeader, Btn, Panel, Kpi, Badge } from "@/components/admin/ui";
 import { RefreshCw, Copy, Check, Trash2 } from "lucide-react";
 
 export default function AdminDebugPage() {
+  const { admin } = useAdminAuth();
+  if (admin?.role !== "superadmin") {
+    return <div className="p-8 text-center" style={{ color: "var(--red)" }}>Access Denied. Super Admin only.</div>;
+  }
+
   const { store, replace } = useAdminStore();
   const [copied, setCopied] = useState(false);
 

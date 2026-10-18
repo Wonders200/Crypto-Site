@@ -45,7 +45,7 @@ const AdminStoreContext = createContext<AdminStoreCtx | null>(null);
 export function useAdminStore() { const c = useContext(AdminStoreContext); if (!c) throw new Error("useAdminStore outside Providers"); return c; }
 
 /* -------- Admin auth -------- */
-type AdminAuthSession = { email: string; signedInAt: number } | null;
+type AdminAuthSession = { email: string; role: "superadmin" | "support"; permissions?: string[]; signedInAt: number } | null;
 const AdminAuthCtx = createContext<{
   admin: AdminAuthSession;
   loginAdmin: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
@@ -306,7 +306,7 @@ export function Providers({ children }: { children: ReactNode }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) return { ok: false, error: data?.error || "Invalid credentials" };
-      setAdmin({ email: data.email, signedInAt: Date.now() });
+      setAdmin({ email: data.email, role: data.role, permissions: data.permissions, signedInAt: Date.now() });
       return { ok: true };
     } catch {
       return { ok: false, error: "Network error. Try again." };
