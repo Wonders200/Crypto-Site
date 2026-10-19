@@ -73,7 +73,7 @@ export default function AdminBalancePage() {
     }
 
     const user = store.users.find(x => x.id === editing.userId);
-    const label = user?.email ?? editing.userId;
+    const label = maskEmail(maskEmail(user?.email ?? editing.userId));
 
     mergeUpdate("balances", store.balances.map(b => (b.userId === editing.userId ? { ...editing, updatedAt: Date.now() } : b)), "userId");
 
@@ -87,7 +87,7 @@ export default function AdminBalancePage() {
         amount: delta.dUsd,
         currency: "USD",
         status: "completed" as any,
-        description: "Admin " + (delta.dUsd > 0 ? "credit" : "debit") + " - " + (user?.email ?? editing.userId),
+        description: "Admin " + (delta.dUsd > 0 ? "credit" : "debit") + " - " + (maskEmail(user?.email ?? editing.userId)),
         createdAt: Date.now(),
         reference: "ADJ-" + Math.random().toString(36).slice(2, 8).toUpperCase(),
       };
@@ -159,7 +159,7 @@ export default function AdminBalancePage() {
                   </div>
                   <div className="min-w-0">
                     <div className="font-semibold text-sm">{u?.name ?? ""}</div>
-                    <div className="text-xs truncate" style={{ color: "var(--muted)" }}>{u?.email ?? b.userId}</div>
+                    <div className="text-xs truncate" style={{ color: "var(--muted)" }}>{maskEmail(u?.email ?? b.userId)}</div>
                   </div>
                 </div>
               );
@@ -198,7 +198,7 @@ export default function AdminBalancePage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold">{u?.name ?? ""}</div>
-                      <div className="text-xs truncate" style={{ color: "var(--muted)" }}>{u?.email ?? editing.userId}</div>
+                      <div className="text-xs truncate" style={{ color: "var(--muted)" }}>{maskEmail(u?.email ?? editing.userId)}</div>
                     </div>
                   </>
                 );
