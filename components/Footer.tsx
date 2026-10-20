@@ -64,9 +64,9 @@ export default function Footer() {
       </div>
 
       <div className="border-t" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-[1400px] mx-auto px-5 md:px-6 py-5 md:py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs" style={{ color: "var(--muted)" }}>
+        <div className="max-w-[1400px] mx-auto px-5 md:px-6 py-5 md:py-6 flex flex-col sm:flex-row items-start sm:items-center justify-center gap-3 text-xs" style={{ color: "var(--muted)" }}>
           <p>&copy; {new Date().getFullYear()} ApexVault Inc. {t("footer.rights")}</p>
-          <p className="max-w-3xl leading-relaxed">{t("footer.disclaimer")}</p>
+          
         </div>
       </div>
     </footer>
