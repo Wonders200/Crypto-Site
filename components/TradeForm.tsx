@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useToast, usePortfolio, useAdminStore } from "@/app/providers";
+import { useToast, usePortfolio, useAdminStore, useAuth } from "@/app/providers";
 import { formatCurrency } from "@/lib/format";
 import { uid, AdminTransaction } from "@/lib/adminStore";
 import type { Coin } from "@/lib/cryptoData";
@@ -11,7 +11,8 @@ type OrderType = "market" | "limit" | "stop";
 export default function TradeForm({ coin }: { coin: Coin }) {
   const { push } = useToast();
   const { addHolding } = usePortfolio();
-  const { store, update, log } = useAdminStore();
+  const { store, mergeUpdate, log } = useAdminStore();
+  const { user } = useAuth();
 
   const [side, setSide] = useState<"buy" | "sell">("buy");
   const [type, setType] = useState<OrderType>("market");
@@ -24,9 +25,21 @@ export default function TradeForm({ coin }: { coin: Coin }) {
   const total = amt * px;
   const fee = total * 0.001; // 0.10%
 
+  // Find the actual logged-in user and their balance
+  const matchedUser = store.users.find(u => u.email?.toLowerCase() === user?.email?.toLowerCase());
+  const balanceRec = store.balances.find(b => b.userId === matchedUser?.id);
+  const balance = balanceRec?.usd ?? 0;
+  const locked = balanceRec?.locked ?? 0;
+
+  const isInsufficient = side === "buy" && (total + fee) > balance;
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!matchedUser) {
+      push({ kind: "error", title: "Not logged in", message: "Please sign in to trade." });
+      return;
+    }
     if (amt <= 0) {
       push({ kind: "error", title: "Enter an amount", message: "How much do you want to trade?" });
       return;
@@ -35,25 +48,37 @@ export default function TradeForm({ coin }: { coin: Coin }) {
       push({ kind: "error", title: "Minimum $10", message: "Order value must be at least $10." });
       return;
     }
+    if (isInsufficient) {
+      push({ kind: "error", title: "Insufficient balance", message: `You need ${formatCurrency(total + fee)} but only have ${formatCurrency(balance)}.` });
+      return;
+    }
 
     setSubmitting(true);
-    await new Promise(r => setTimeout(r, 700));
+    await new Promise(r => setTimeout(r, 600));
 
     // 1. Update holdings (existing behavior)
     if (side === "buy") {
       addHolding({ coinId: coin.id, amount: amt, avgBuyPrice: px, acquiredAt: Date.now() });
     } else {
-      // for sells, we would subtract; keep simple for now
       addHolding({ coinId: coin.id, amount: -amt, avgBuyPrice: px, acquiredAt: Date.now() });
     }
 
-    // 2. Log trade to store.transactions so it shows up in history
+    // 2. Update Balance
+    const newBalance = side === "buy" ? balance - (total + fee) : balance + (total - fee);
+    mergeUpdate("balances", [{ 
+      userId: matchedUser.id, 
+      usd: newBalance, 
+      locked: balanceRec?.locked || 0, 
+      updatedAt: Date.now() 
+    }], "userId");
+
+    // 3. Log trade to store.transactions
     const ref = `${side === "buy" ? "BUY" : "SELL"}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
     const tradeRecord: AdminTransaction = {
       id: uid("t"),
-      userId: "demo-user", // will be matched by email in history view
+      userId: matchedUser.id,
       type: "trade",
-      amount: side === "buy" ? -total : total,
+      amount: side === "buy" ? -(total + fee) : (total - fee),
       currency: "USD",
       status: "completed",
       description: `${side === "buy" ? "Bought" : "Sold"} ${amt} ${coin.symbol} @ ${formatCurrency(px)}  ${type.toUpperCase()}`,
@@ -61,7 +86,7 @@ export default function TradeForm({ coin }: { coin: Coin }) {
       reference: ref,
       asset: coin.symbol,
       network: coin.category,
-      // @ts-ignore  extended fields
+      // @ts-ignore extended fields
       side,
       orderType: type,
       quantity: amt,
@@ -69,13 +94,13 @@ export default function TradeForm({ coin }: { coin: Coin }) {
       fee,
     };
 
-    update("transactions", [tradeRecord, ...store.transactions]);
+    mergeUpdate("transactions", [tradeRecord], "id");
     broadcast("CUSTOMER_ACTION", `${side === "buy" ? "Bought" : "Sold"} ${amt} ${coin.symbol} @ ${formatCurrency(px)}`, { payload: { type: "trade", side, amount: amt, symbol: coin.symbol } });
     log(side === "buy" ? "TRADE_BUY" : "TRADE_SELL", `${amt} ${coin.symbol} @ ${formatCurrency(px)}`, `$${total.toFixed(2)}  ${type}`);
 
     push({
       kind: "success",
-      title: side === "buy" ? "Order filled " : "Order filled",
+      title: "Order filled",
       message: `${side === "buy" ? "Bought" : "Sold"} ${amt} ${coin.symbol} at ${formatCurrency(px)}`,
     });
     setAmount("");
@@ -128,18 +153,22 @@ export default function TradeForm({ coin }: { coin: Coin }) {
       <label className="block">
         <div className="flex items-center justify-between text-xs mb-1.5" style={{ color: "var(--muted)" }}>
           <span>Amount</span>
-          <span className="mono">Avail: </span>
+          <span className="mono">Avail: {formatCurrency(balance)}</span>
         </div>
         <div className="relative">
           <input value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" inputMode="decimal"
             className="w-full px-3 py-2.5 pr-16 rounded-lg mono text-sm outline-none"
-            style={{ background: "var(--panel-2)", border: "1px solid var(--border)", color: "var(--text)" }} />
+            style={{ 
+              background: "var(--panel-2)", 
+              border: "1px solid " + (isInsufficient ? "var(--red)" : "var(--border)"), 
+              color: "var(--text)" 
+            }} />
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold" style={{ color: "var(--muted)" }}>{coin.symbol}</span>
         </div>
         <div className="flex gap-1.5 mt-2">
           {[25, 50, 75, 100].map(p => (
-            <button key={p} type="button" onClick={() => setAmount(((1000 * p / 100) / px).toFixed(6))}
-              className="flex-1 py-1 rounded text-xs"
+            <button key={p} type="button" onClick={() => setAmount(((balance * p / 100) / px).toFixed(6))}
+              className="flex-1 py-1 rounded text-xs transition hover:bg-white/[0.05]"
               style={{ background: "var(--panel-2)", color: "var(--muted)", border: "1px solid var(--border)" }}>
               {p}%
             </button>
@@ -152,8 +181,14 @@ export default function TradeForm({ coin }: { coin: Coin }) {
         <div className="flex justify-between"><span style={{ color: "var(--muted)" }}>Est. fee (0.10%)</span><span className="mono">{formatCurrency(fee)}</span></div>
       </div>
 
-      <button type="submit" disabled={submitting}
-        className="w-full py-3 rounded-lg font-semibold text-sm transition disabled:opacity-60"
+      {isInsufficient && (
+        <div className="text-xs text-center font-semibold py-1.5 rounded" style={{ background: "var(--red-dim)", color: "var(--red)" }}>
+          Insufficient balance
+        </div>
+      )}
+
+      <button type="submit" disabled={submitting || isInsufficient}
+        className="w-full py-3 rounded-lg font-semibold text-sm transition disabled:opacity-60 disabled:cursor-not-allowed"
         style={{ background: side === "buy" ? "var(--green)" : "var(--red)", color: "#0a0b0f" }}>
         {submitting ? "Placing order" : `${side === "buy" ? "Buy" : "Sell"} ${coin.symbol}`}
       </button>
