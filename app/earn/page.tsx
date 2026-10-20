@@ -82,7 +82,7 @@ export default function EarnPage() {
     if (!user) { push({ kind: "info", title: "Sign in first" }); return; }
     if (!kycOk) { push({ kind: "info", title: "Verify your identity first" }); return; }
     setSelected(p);
-    setAmount(String(MIN_DEPOSIT));
+    setAmount(String(p.min ?? 200));
     setError("");
   };
 
@@ -93,7 +93,8 @@ export default function EarnPage() {
     if (!selected || !matchedUser) return;
     setError("");
     const amt = parseFloat(amount) || 0;
-    if (amt < MIN_DEPOSIT) { setError("Minimum deposit is " + formatCurrency(MIN_DEPOSIT) + "."); return; }
+    const minRequired = selected?.min ?? 200;
+    if (amt < minRequired) { setError("Minimum deposit is " + formatCurrency(minRequired) + "."); return; }
     if (!balance || amt > balance.usd) { setError("Only " + formatCurrency(balance?.usd ?? 0) + " available."); return; }
 
     setSubmitting(true);
@@ -208,7 +209,7 @@ export default function EarnPage() {
               </div>
               <div className="mt-4 md:mt-5 pt-4 md:pt-5 border-t space-y-2 text-sm" style={{ borderColor: "var(--border)" }}>
                 <div className="flex justify-between"><span style={{ color: "var(--muted)" }}>{t("earn.lockup")}</span><span>{(p.lockup && p.lockup.toLowerCase() !== "none") ? p.lockup : "24 hours"}</span></div>
-                <div className="flex justify-between"><span style={{ color: "var(--muted)" }}>{t("earn.minimum")}</span><span className="mono">{formatCurrency(MIN_DEPOSIT)}</span></div>
+                <div className="flex justify-between"><span style={{ color: "var(--muted)" }}>{t("earn.minimum")}</span><span className="mono">{formatCurrency(p.min)}</span></div>
                 <div className="flex justify-between"><span style={{ color: "var(--muted)" }}>{t("earn.payout")}</span><span>{t("earn.daily")}</span></div>
               </div>
               <button onClick={() => openSubscribe(p)} disabled={!kycOk}
@@ -301,7 +302,7 @@ export default function EarnPage() {
                     style={{ paddingLeft: 30, paddingTop: 14, paddingBottom: 14 }} />
                 </div>
                 <div className="grid grid-cols-4 gap-2 mt-2">
-                  {[200, 500, 1000, 2500].map(v => (
+                  {[selected.min, selected.min * 2, selected.min * 5, selected.min * 10].map(v => (
                     <button key={v} type="button" onClick={() => { setAmount(String(v)); setError(""); }}
                       className="py-1.5 rounded-lg text-xs font-semibold"
                       style={{ background: "var(--panel-2)", border: "1px solid var(--border)", color: "var(--muted)" }}>
@@ -327,7 +328,7 @@ export default function EarnPage() {
               )}
             </div>
             <div className="px-6 py-4 border-t flex gap-2" style={{ borderColor: "var(--border)" }}>
-              <button onClick={subscribe} disabled={submitting || previewAmt < MIN_DEPOSIT} className="flex-1 btn btn-primary disabled:opacity-50">
+              <button onClick={subscribe} disabled={submitting || previewAmt < (selected?.min ?? 200)} className="flex-1 btn btn-primary disabled:opacity-50">
                 {submitting ? t("earn.modal.starting") : t("earn.modal.btnStart") + " " + selected.apy.toFixed(2) + "%"}
               </button>
               <button onClick={closeModal} disabled={submitting} className="btn btn-ghost">{t("earn.cancel")}</button>
