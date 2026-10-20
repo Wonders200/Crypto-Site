@@ -2,67 +2,92 @@
 import { useMemo, useState, useEffect } from "react";
 import { generateCandles } from "@/lib/cryptoData";
 
-const RANGE_CONFIG: Record<"1H" | "4H" | "1D" | "1W", { count: number; interval: string; binanceInterval: string }> = {
-  "1H": { count: 96, interval: "60 * 60 * 1000", binanceInterval: "1h" },
-  "4H": { count: 90, interval: "4 * 60 * 60 * 1000", binanceInterval: "4h" },
-  "1D": { count: 90, interval: "24 * 60 * 60 * 1000", binanceInterval: "1d" },
-  "1W": { count: 52, interval: "7 * 24 * 60 * 60 * 1000", binanceInterval: "1w" },
+const RANGE_CONFIG: Record<"1H" | "4H" | "1D" | "1W", { count: number; interval: string; binance: string; okx: string; coinbase: string }> = {
+  "1H": { count: 96, interval: "60 * 60 * 1000", binance: "1h", okx: "1H", coinbase: "60" },
+  "4H": { count: 90, interval: "4 * 60 * 60 * 1000", binance: "4h", okx: "4H", coinbase: "240" },
+  "1D": { count: 90, interval: "24 * 60 * 60 * 1000", binance: "1d", okx: "1D", coinbase: "1440" },
+  "1W": { count: 52, interval: "7 * 24 * 60 * 60 * 1000", binance: "1w", okx: "1W", coinbase: "10080" },
 };
 
-function getBinanceSymbol(symbol: string): string {
+function getSymbols(symbol: string) {
   const s = symbol.toUpperCase();
-  if (s === "USDT" || s === "USDC" || s === "DAI") return "USDCUSDT"; // fallback for stablecoins
-  return s + "USDT";
+  const isStable = s === "USDT" || s === "USDC" || s === "DAI";
+  return {
+    binance: isStable ? "USDCUSDT" : s + "USDT",
+    okx: isStable ? "USDC-USDT" : s + "-USDT",
+    coinbase: isStable ? "USDC-USD" : s + "-USD",
+  };
+}
+
+async function fetchWithTimeout(url: string, timeoutMs = 3000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(id);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    clearTimeout(id);
+    return null;
+  }
 }
 
 export default function CandlestickChart({ symbol, price, height = 380 }: { symbol: string; price: number; height?: number }) {
   const [range, setRange] = useState<"1H" | "4H" | "1D" | "1W">("4H");
   const [candles, setCandles] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    const config = RANGE_CONFIG[range];
+    const symbols = getSymbols(symbol);
+
+    // 1. INSTANT LOAD: Synthetic data
+    const ms = config.interval === "60 * 60 * 1000" ? 60 * 60 * 1000
+             : config.interval === "4 * 60 * 60 * 1000" ? 4 * 60 * 60 * 1000
+             : config.interval === "24 * 60 * 60 * 1000" ? 24 * 60 * 60 * 1000
+             : 7 * 24 * 60 * 60 * 1000;
+    setCandles(generateCandles(symbol, price, config.count, ms));
 
     async function fetchData() {
+      // Try Binance
       try {
-        const config = RANGE_CONFIG[range];
-        const binanceSym = getBinanceSymbol(symbol);
-        const url = `https://api.binance.com/api/v3/klines?symbol=${binanceSym}&interval=${config.binanceInterval}&limit=${config.count}`;
-        
-        const res = await fetch(url);
-        if (!res.ok) throw new Error("API failed");
-        
-        const data = await res.json();
-        if (cancelled) return;
+        const url = `https://api.binance.com/api/v3/klines?symbol=${symbols.binance}&interval=${config.binance}&limit=${config.count}`;
+        const data = await fetchWithTimeout(url);
+        if (data && !cancelled) {
+          setCandles(data.map((d: any) => ({ t: d[0], o: parseFloat(d[1]), h: parseFloat(d[2]), l: parseFloat(d[3]), c: parseFloat(d[4]), v: parseFloat(d[5]) })));
+          return;
+        }
+      } catch {}
 
-        // Binance format: [Open time, Open, High, Low, Close, Volume, ...]
-        const formatted = data.map((d: any) => ({
-          t: d[0],       // timestamp
-          o: parseFloat(d[1]), // open
-          h: parseFloat(d[2]), // high
-          l: parseFloat(d[3]), // low
-          c: parseFloat(d[4]), // close
-          v: parseFloat(d[5]), // volume
-        }));
-        
-        setCandles(formatted);
-      } catch (err) {
-        if (cancelled) return;
-        // Fallback to synthetic data if Binance fails/blocked
-        const config = RANGE_CONFIG[range];
-        const ms = eval(config.interval);
-        setCandles(generateCandles(symbol, price, config.count, ms));
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+      // Fallback: OKX
+      try {
+        const url = `https://www.okx.com/api/v5/market/history-candles?instId=${symbols.okx}&bar=${config.okx}&limit=${config.count}`;
+        const res = await fetchWithTimeout(url);
+        if (res?.data && !cancelled) {
+          // OKX returns newest first, so we reverse it
+          const formatted = res.data.reverse().map((d: any) => ({ t: parseInt(d[0]), o: parseFloat(d[1]), h: parseFloat(d[2]), l: parseFloat(d[3]), c: parseFloat(d[4]), v: parseFloat(d[5]) }));
+          setCandles(formatted);
+          return;
+        }
+      } catch {}
+
+      // Fallback: Coinbase
+      try {
+        const url = `https://api.exchange.coinbase.com/products/${symbols.coinbase}/candles?granularity=${config.coinbase}`;
+        const data = await fetchWithTimeout(url);
+        if (data && Array.isArray(data) && !cancelled) {
+          // Coinbase returns [time, low, high, open, close, volume], newest first
+          const formatted = data.reverse().map((d: any) => ({ t: d[0] * 1000, o: parseFloat(d[3]), h: parseFloat(d[2]), l: parseFloat(d[1]), c: parseFloat(d[4]), v: parseFloat(d[5]) }));
+          setCandles(formatted);
+          return;
+        }
+      } catch {}
     }
 
     fetchData();
     return () => { cancelled = true; };
-    // Only refetch when symbol or timeframe changes, not on every price tick
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [symbol, range]);
+  }, [symbol, price, range]);
 
   const W = 900, H = height, padL = 8, padR = 64, padT = 12, padB = 24;
   const cW = W - padL - padR, cH = H - padT - padB;
@@ -84,12 +109,6 @@ export default function CandlestickChart({ symbol, price, height = 380 }: { symb
 
   return (
     <div className="panel p-4 relative">
-      {loading && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--bg)]/50 backdrop-blur-sm">
-          <div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
-        </div>
-      )}
-      
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-1">
           {(["1H", "4H", "1D", "1W"] as const).map(r => (
