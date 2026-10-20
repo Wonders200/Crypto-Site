@@ -7,6 +7,7 @@ import { AdminEarnProduct, AdminEarnPosition, uid } from "@/lib/adminStore";
 import { kycStatusFromStore } from "@/lib/kyc";
 import { formatCurrency } from "@/lib/format";
 import { computeAccrued, dailyRate } from "@/lib/earn";
+import { broadcast } from "@/lib/realtime";
 import KycBanner from "@/components/KycBanner";
 import LiveTimeAgo from "@/components/LiveTimeAgo";
 import { X, AlertTriangle, Calculator, Wallet, TrendingUp, Clock, Calendar } from "lucide-react";
@@ -107,18 +108,19 @@ export default function EarnPage() {
       startedAt: now, maturesAt, status: "active" as const, accrued: 0, lastAccrualAt: now,
     };
 
-    update("balances", store.balances.map(b => b.userId === matchedUser.id
+    mergeUpdate("balances", store.balances.map(b => b.userId === matchedUser.id
       ? { ...b, usd: Math.max(0, b.usd - amt), updatedAt: now }
-      : b));
+      : b), "userId");
 
-    update("earnPositions", [position, ...(store.earnPositions ?? [])]);
+    mergeUpdate("earnPositions", [position], "id");
+    broadcast("CUSTOMER_ACTION", "Subscribed to " + selected.asset + " earn", { payload: { type: "earn", amount: amt } });
 
-    update("transactions", [{
+    mergeUpdate("transactions", [{
       id: uid("t"), userId: matchedUser.id, type: "fee" as any, amount: -amt,
       currency: "USD", status: "completed" as any,
       description: "Subscribed to " + selected.asset + " " + selected.tier + " earn @ " + selected.apy + "% APY",
       createdAt: now, reference: "EARN-" + Math.random().toString(36).slice(2, 8).toUpperCase(),
-    } as any, ...store.transactions]);
+    } as any], "id");
 
     log("EARN_SUBSCRIBE", "$" + amt.toLocaleString() + " into " + selected.asset, matchedUser.email);
     push({ kind: "success", title: "Earning started!", message: "$" + amt.toLocaleString() + " is now earning " + selected.apy + "% APY." });
@@ -127,7 +129,8 @@ export default function EarnPage() {
 
   const withdraw = (position: AdminEarnPosition) => {
     if (!matchedUser) return;
-    if (position.maturesAt && position.maturesAt > Date.now()) {
+    const unlockTime = position.maturesAt || (position.startedAt + 24 * 60 * 60 * 1000);
+    if (unlockTime > Date.now()) {
       push({ kind: "error", title: "Still locked" }); return;
     }
     const liveAccrued = computeAccrued(position);
@@ -223,7 +226,8 @@ export default function EarnPage() {
           <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-5">{t("earn.myPositions")}</h2>
           <div className="space-y-3">
             {positions.map(pos => {
-              const locked = !!pos.maturesAt && pos.maturesAt > Date.now();
+              const unlockTime = pos.maturesAt || (pos.startedAt + 24 * 60 * 60 * 1000);
+              const locked = unlockTime > Date.now();
               const accrued = computeAccrued(pos);
               const rate = dailyRate(pos);
               return (
