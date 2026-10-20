@@ -4,7 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TickerTape from "@/components/TickerTape";
 import { Providers } from "./providers";
-import ChatwayWidget from "@/components/ChatwayWidget";
+import LiveChatWidget from "@/components/LiveChatWidget";
 import { I18nProvider } from "@/lib/i18n";
 import DemoBanner from "@/components/DemoBanner";
 
@@ -26,7 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </main>
           <Footer />
-          <ChatwayWidget />
+          <LiveChatWidget />
         </Providers>
         </I18nProvider>
 

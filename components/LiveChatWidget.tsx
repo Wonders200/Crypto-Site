@@ -3,10 +3,9 @@ import Script from "next/script";
 import { usePathname } from "next/navigation";
 import { useAdminAuth } from "@/app/providers";
 
-const CHATWAY_ID = "KJwei64uf0IZ";
-const CHATWAY_SRC = "https://cdn.chatway.app/widget.js?id=" + CHATWAY_ID;
+const SDK_SRC = "https://trtc.io/knocket-sdk/sdk.js?identifier=e81e89ef40560094d7&v=1792455763567";
 
-export default function ChatwayWidget() {
+export default function LiveChatWidget() {
   const pathname = usePathname() ?? "";
   const { admin } = useAdminAuth();
   
@@ -23,21 +22,10 @@ export default function ChatwayWidget() {
   if (!hasChatAccess) return null;
 
   return (
-    <>
-      <Script
-        id="chatway"
-        src={CHATWAY_SRC}
-        strategy="afterInteractive"
-      />
-      <style>{`
-        #chatway-widget button,
-        #chatway-container button,
-        [class*="chatway-launcher" i],
-        [class*="chatway-button" i] {
-          background-color: #22c55e !important;
-          border-color: #22c55e !important;
-        }
-      `}</style>
-    </>
+    <Script
+      id="knocket-chat"
+      src={SDK_SRC}
+      strategy="afterInteractive"
+    />
   );
 }
