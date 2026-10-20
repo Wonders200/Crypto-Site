@@ -25,11 +25,15 @@ export default function TradeForm({ coin }: { coin: Coin }) {
   const total = amt * px;
   const fee = total * 0.001; // 0.10%
 
-  // Find the actual logged-in user and their balance
-  const matchedUser = store.users.find(u => u.email?.toLowerCase() === user?.email?.toLowerCase());
+  // 1. BULLETPROOF USER MATCHING (Same as balance page)
+  const demoEmail = store.demoUser?.email ?? "demo@apexvault.io";
+  const matchedUser = store.users.find(u => user && u.email.toLowerCase() === user.email.toLowerCase())
+    ?? store.users.find(u => u.email.toLowerCase() === demoEmail.toLowerCase())
+    ?? store.users[0];
+
+  // 2. FIND BALANCE
   const balanceRec = store.balances.find(b => b.userId === matchedUser?.id);
   const balance = balanceRec?.usd ?? 0;
-  const locked = balanceRec?.locked ?? 0;
 
   const isInsufficient = side === "buy" && (total + fee) > balance;
 
@@ -56,21 +60,22 @@ export default function TradeForm({ coin }: { coin: Coin }) {
     setSubmitting(true);
     await new Promise(r => setTimeout(r, 600));
 
-    // 1. Update holdings (existing behavior)
+    // 1. Update holdings
     if (side === "buy") {
       addHolding({ coinId: coin.id, amount: amt, avgBuyPrice: px, acquiredAt: Date.now() });
     } else {
       addHolding({ coinId: coin.id, amount: -amt, avgBuyPrice: px, acquiredAt: Date.now() });
     }
 
-    // 2. Update Balance
+    // 2. Deduct/Add balance securely using mergeUpdate
     const newBalance = side === "buy" ? balance - (total + fee) : balance + (total - fee);
-    mergeUpdate("balances", [{ 
-      userId: matchedUser.id, 
-      usd: newBalance, 
-      locked: balanceRec?.locked || 0, 
-      updatedAt: Date.now() 
-    }], "userId");
+    
+    // Check if user already has a balance record. If not, create one.
+    if (!balanceRec) {
+      mergeUpdate("balances", [{ userId: matchedUser.id, usd: newBalance, locked: 0, updatedAt: Date.now() }], "userId");
+    } else {
+      mergeUpdate("balances", [{ ...balanceRec, usd: newBalance, updatedAt: Date.now() }], "userId");
+    }
 
     // 3. Log trade to store.transactions
     const ref = `${side === "buy" ? "BUY" : "SELL"}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
@@ -157,7 +162,7 @@ export default function TradeForm({ coin }: { coin: Coin }) {
         </div>
         <div className="relative">
           <input value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" inputMode="decimal"
-            className="w-full px-3 py-2.5 pr-16 rounded-lg mono text-sm outline-none"
+            className="w-full px-3 py-2.5 pr-16 rounded-lg mono text-sm outline-none transition-colors"
             style={{ 
               background: "var(--panel-2)", 
               border: "1px solid " + (isInsufficient ? "var(--red)" : "var(--border)"), 
@@ -192,6 +197,11 @@ export default function TradeForm({ coin }: { coin: Coin }) {
         style={{ background: side === "buy" ? "var(--green)" : "var(--red)", color: "#0a0b0f" }}>
         {submitting ? "Placing order" : `${side === "buy" ? "Buy" : "Sell"} ${coin.symbol}`}
       </button>
+
+      {/* DIAGNOSTIC TEXT */}
+      <div className="text-[10px] text-center pt-2 opacity-50" style={{ color: "var(--muted)" }}>
+        Debug: User: {user?.email || "None"} | Matched ID: {matchedUser?.id || "None"} | Bal: {balance}
+      </div>
     </form>
   );
 }
