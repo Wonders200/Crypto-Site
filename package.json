@@ -12,6 +12,7 @@
     "dev:prod": "next dev -p 3001"
   },
   "dependencies": {
+    "@marsidev/react-turnstile": "^1.6.3",
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^13.0.3",
     "clsx": "2.1.1",

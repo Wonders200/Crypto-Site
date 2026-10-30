@@ -2,9 +2,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Turnstile } from "@marsidev/react-turnstile";
 import { useAuth, useToast } from "@/app/providers";
-import { useI18n } from "@/lib/i18n";
 import { setTokens } from "@/lib/apiClient";
+import { useI18n } from "@/lib/i18n";
 
 export default function SignupPage() {
   const [refCode, setRefCode] = useState("");
@@ -14,11 +15,14 @@ export default function SignupPage() {
     const r = params.get("ref");
     if (r) setRefCode(r);
   }, []);
+  
   const router = useRouter();
   const { login, user } = useAuth();
   const { push } = useToast();
   const { t } = useI18n();
+  
   const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => { if (user) router.replace("/dashboard"); }, [user, router]);
@@ -29,6 +33,11 @@ export default function SignupPage() {
       push({ kind: "error", title: t("signup.passwordTooShort"), message: t("signup.passwordMin") });
       return;
     }
+    if (!turnstileToken) {
+      push({ kind: "error", title: "Security check", message: "Please complete the captcha." });
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch("/api/auth/register", {
@@ -38,14 +47,18 @@ export default function SignupPage() {
           name: form.name.trim(),
           email: form.email.trim().toLowerCase(),
           password: form.password,
-        referralCode: refCode })
+          referralCode: refCode,
+          turnstileToken
+        })
       });
+      
       const data = await res.json();
       if (!res.ok) {
         push({ kind: "error", title: t("signup.failed"), message: data?.error ?? t("signup.unknownError") });
         setLoading(false);
         return;
       }
+      
       setTokens(data.accessToken, data.refreshToken);
       login({ email: data.user.email, name: data.user.name, tier: data.user.tier });
       push({ kind: "success", title: t("signup.success"), message: t("signup.welcomeMessage") });
@@ -82,7 +95,17 @@ export default function SignupPage() {
               className="w-full px-3 py-2.5 rounded-lg text-sm outline-none mono"
               style={{ background: "var(--panel-2)", border: "1px solid var(--border)", color: "var(--text)" }} />
           </label>
-          <button type="submit" disabled={loading}
+
+          <div className="flex justify-center py-2">
+            <Turnstile 
+              siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "0x4AAAAAAAFtFYfDSO4GWv08J"}
+              onSuccess={(token) => setTurnstileToken(token)}
+              onError={() => setTurnstileToken(null)}
+              onExpire={() => setTurnstileToken(null)}
+            />
+          </div>
+
+          <button type="submit" disabled={loading || !turnstileToken}
             className="w-full py-3 rounded-lg font-semibold text-sm text-black disabled:opacity-60 transition"
             style={{ background: "var(--green)" }}>
             {loading ? t("signup.creating") : t("signup.submit")}
