@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { readStore, writeStore } from "@/lib/serverStore";
-import { sanitizeStore } from "@/lib/sanitizeStore";
 import { hashPassword, signAccess, signRefresh } from "@/lib/auth";
-import { sendEmail, Templates } from "@/lib/email";
-import { uid } from "@/lib/adminStore";
+import { RegisterSchema, parseBody } from "@/lib/validate";
+import { sendEmail, Templates, hasEmail } from "@/lib/email";
+import { uid, AdminUser, AdminBalance } from "@/lib/adminStore";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// In-memory rate limiter: 3 signups per IP per hour
+// 1. Rate Limiting (3 signups per IP per hour)
 const signupAttempts = new Map<string, { count: number; until: number }>();
 const MAX_ATTEMPTS = 3;
 const LOCKOUT_MS = 60 * 60 * 1000;
@@ -19,7 +19,7 @@ function getClientIp(req: Request): string {
   return req.headers.get("x-real-ip") || "unknown";
 }
 
-// Top disposable email domains to block
+// 2. Disposable Email Blocker
 const DISPOSABLE_DOMAINS = [
   "mail.tm", "tempmail.com", "guerrillamail.com", "10minutemail.com", "yopmail.com",
   "throwawaymail.com", "sharklasers.com", "getnada.com", "dispostable.com", "mailinator.com",
@@ -31,10 +31,15 @@ const DISPOSABLE_DOMAINS = [
 ];
 
 export async function POST(req: Request) {
+  // READ-ONLY DEMO CHECK
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === "true" || process.env.CRYPTO_DATA_DIR === "data-demo") {
+    return NextResponse.json({ error: "Signups disabled in demo. Use the demo account to log in." }, { status: 403 });
+  }
+
   const ip = getClientIp(req);
   const now = Date.now();
   
-  // 1. Rate Limiting Check
+  // RATE LIMIT CHECK
   const entry = signupAttempts.get(ip);
   if (entry && entry.count >= MAX_ATTEMPTS && now < entry.until) {
     const secs = Math.ceil((entry.until - now) / 1000);
@@ -43,95 +48,93 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { name, email, password, turnstileToken } = body;
-
-    if (!name || !email || !password) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-    }
-
-    const lowerEmail = email.trim().toLowerCase();
-    const domain = lowerEmail.split("@")[1];
-
-    // 2. Disposable Email Check
-    if (DISPOSABLE_DOMAINS.includes(domain)) {
-      return NextResponse.json({ error: "Disposable email addresses are not allowed. Please use a permanent email." }, { status: 400 });
-    }
-
-    // 3. Cloudflare Turnstile Verification
+    
+    // CLOUDFLARE TURNSTILE CHECK
+    const turnstileToken = body?.turnstileToken;
     const secretKey = process.env.TURNSTILE_SECRET_KEY || "0x4AAAAAAAFtFYafE6MMITfe1HMhuJ3tRUB8";
     if (!turnstileToken) {
       return NextResponse.json({ error: "Please complete the security check." }, { status: 400 });
     }
-
     const turnstileRes = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        secret: secretKey,
-        response: turnstileToken,
-        remoteip: ip,
-      }),
+      body: new URLSearchParams({ secret: secretKey, response: turnstileToken, remoteip: ip }),
     });
-
     const turnstileData = await turnstileRes.json();
     if (!turnstileData.success) {
       return NextResponse.json({ error: "Security check failed. Please try again." }, { status: 400 });
     }
 
-    // 4. Process Signup
-    const { store } = await readStore();
-    const existingUser = store.users.find((u: any) => u.email.toLowerCase() === lowerEmail);
+    // ZOD VALIDATION (Your original logic)
+    const parsed = parseBody(RegisterSchema, body);
+    if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
+    const { name, email, password } = parsed.data;
+    const referralCode = (body as any)?.referralCode || "";
 
-    if (existingUser) {
-      return NextResponse.json({ error: "An account with this email already exists." }, { status: 409 });
+    // DISPOSABLE EMAIL CHECK
+    const domain = email.toLowerCase().split("@")[1];
+    if (DISPOSABLE_DOMAINS.includes(domain)) {
+      return NextResponse.json({ error: "Disposable email addresses are not allowed. Please use a permanent email." }, { status: 400 });
     }
 
+    // EXISTING USER CHECK
+    const { store } = await readStore();
+    const exists = store.users.find(u => u.email.toLowerCase() === email);
+    if (exists) return NextResponse.json({ error: "Email already registered" }, { status: 409 });
+
     const userId = uid("u");
-    const passwordHash = await hashPassword(password);
+    const pwHash = await hashPassword(password);
+
+    // REFERRAL LOGIC (Your original logic)
+    const { makeReferralCode, findByReferralCode } = require("@/lib/referrals");
+    const referrer = referralCode ? findByReferralCode(store, referralCode) : null;
     
-    const newUser = {
+    const user: AdminUser = {
       id: userId,
-      name: name.trim(),
-      email: lowerEmail,
+      name,
+      email,
       tier: "Standard",
       status: "active",
       kycVerified: false,
       kycStatus: "unverified",
       createdAt: now,
-      passwordHash,
+      referralCode: makeReferralCode(name),
+      referredBy: referrer?.id ?? undefined,
+      referralBonusUsd: 0,
+      password: pwHash,
     };
 
-    const nextStore = sanitizeStore({
-      ...store,
-      users: [newUser, ...(store.users || [])],
-      balances: [{ userId, usd: 0, locked: 0, updatedAt: now }, ...(store.balances || [])]
-    });
+    const balance: AdminBalance = { userId, usd: 0, locked: 0, updatedAt: now };
 
-    await writeStore(nextStore);
-    
-    // Update rate limiter
+    const next = {
+      ...store,
+      users: [user, ...store.users],
+      balances: [balance, ...store.balances],
+    };
+    await writeStore(next);
+
+    // UPDATE RATE LIMITER
     const cur = signupAttempts.get(ip) ?? { count: 0, until: 0 };
     cur.count += 1;
     cur.until = now + LOCKOUT_MS;
     signupAttempts.set(ip, cur);
 
-    // Generate Tokens
-    const payload = { sub: userId, email: lowerEmail, role: "customer" };
+    const payload = { sub: userId, email, role: "customer" as const };
     const accessToken = signAccess(payload);
     const refreshToken = signRefresh(payload);
 
-    // Send Welcome Email
-    const template = Templates.welcome(name.trim());
-    sendEmail({ to: lowerEmail, subject: template.subject, html: template.html }).catch(() => {});
+    if (hasEmail()) {
+      const t = Templates.welcome(name);
+      sendEmail({ to: email, subject: t.subject, html: t.html }).catch(() => {});
+    }
 
     return NextResponse.json({
       ok: true,
+      user: { id: userId, name, email, tier: "Standard" },
       accessToken,
       refreshToken,
-      user: { id: userId, name: newUser.name, email: newUser.email, tier: newUser.tier }
     });
-
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 });
+    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
   }
 }
