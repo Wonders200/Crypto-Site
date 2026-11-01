@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { PageHeader, Panel } from "@/components/admin/ui";
 import { MessageSquare, Send, Image as ImageIcon, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
+import { useToast } from "@/app/providers";
 
 type ChatMessage = {
   id: string;
@@ -20,6 +21,7 @@ type ChatSession = {
 };
 
 export default function AdminLiveChatPage() {
+  const { push } = useToast();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -113,8 +115,9 @@ export default function AdminLiveChatPage() {
         setAttachment(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
       }
-    } catch {
-      // silent
+    } catch (err: any) {
+      if (typeof push !== "undefined") push({ kind: "error", title: "Message failed", message: err.message || "Network error" });
+      console.error("Chat send error:", err);
     } finally {
       setSending(false);
     }

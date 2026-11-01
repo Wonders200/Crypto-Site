@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { useAuth } from "@/app/providers";
+import { useAuth, useToast } from "@/app/providers";
 import { usePathname } from "next/navigation";
 import { MessageSquare, X, Send, Image as ImageIcon, Loader2 } from "lucide-react";
 
@@ -15,6 +15,7 @@ type ChatMessage = {
 
 export default function CustomerChatWidget() {
   const { user } = useAuth();
+  const { push } = useToast();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -28,7 +29,7 @@ export default function CustomerChatWidget() {
 
   // Hide on admin pages or if not logged in
   const isAdmin = pathname?.startsWith("/admin");
-  const matchedUser = user ? { id: user.email } : null; // Using email as fallback ID for the demo
+  const matchedUser = user ? { id: user.email.toLowerCase() } : null; // Using email as fallback ID for the demo
 
   // Fetch initial history
   useEffect(() => {
@@ -62,9 +63,9 @@ export default function CustomerChatWidget() {
       }
     });
 
-    eventSource.onerror = () => {
+    eventSource.onerror = (e) => {
       setConnected(false);
-      eventSource.close();
+      console.error("SSE Error", e);
     };
 
     return () => {
