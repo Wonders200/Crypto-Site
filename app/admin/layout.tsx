@@ -27,6 +27,7 @@ const NAV = [
   { href: "/admin/pricing",         label: "Pricing Tiers",   icon: Tag,             key: null },
   { href: "/admin/team",            label: "Team",            icon: Users,           key: null },
   { href: "/admin/settings",        label: "Site Settings",   icon: Settings,        key: null },
+  { href: "/admin/chat",            label: "Live Chat",       icon: MessageSquare,   key: null },
   { href: "/admin/activity",        label: "Live Activity",   icon: Activity,        key: null },
   { href: "/admin/audit",           label: "Audit Log",       icon: ScrollText,      key: null },
   { href: "/admin/debug",           label: "Debug / Inspector", icon: Wrench,        key: null },
