@@ -29,23 +29,23 @@ export default function CustomerChatWidget() {
 
   // Hide on admin pages or if not logged in
   const isAdmin = pathname?.startsWith("/admin");
-  const matchedUser = user ? { id: user.email.toLowerCase() } : null; // Using email as fallback ID for the demo
+  const customerId = user ? user.email.toLowerCase() : null; // Using email as fallback ID for the demo
 
   // Fetch initial history
   useEffect(() => {
-    if (!isOpen || !matchedUser) return;
+    if (!isOpen || !customerId) return;
 
-    fetch(`/api/chat?action=history&customerId=${matchedUser.id}`)
+    fetch(`/api/chat?action=history&customerId=${customerId}`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) setMessages(data);
       })
       .catch(console.error);
-  }, [isOpen, matchedUser]);
+  }, [isOpen, customerId]);
 
   // Setup SSE connection
   useEffect(() => {
-    if (!isOpen || !matchedUser) return;
+    if (!isOpen || !customerId) return;
 
     const eventSource = new EventSource("/api/chat?action=stream");
 
@@ -54,7 +54,7 @@ export default function CustomerChatWidget() {
     eventSource.addEventListener("new_message", (e) => {
       const newMsg = JSON.parse(e.data);
       // Only add if it's for this customer
-      if (newMsg.customer_id === matchedUser.id) {
+      if (newMsg.customer_id === customerId) {
         setMessages(prev => {
           // Prevent duplicates
           if (prev.some(m => m.id === newMsg.id)) return prev;
@@ -71,7 +71,7 @@ export default function CustomerChatWidget() {
     return () => {
       eventSource.close();
     };
-  }, [isOpen, matchedUser]);
+  }, [isOpen, customerId]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -88,7 +88,7 @@ export default function CustomerChatWidget() {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!input.trim() && !attachment) || !matchedUser) return;
+    if ((!input.trim() && !attachment) || !customerId) return;
 
     setSending(true);
     try {
@@ -96,7 +96,7 @@ export default function CustomerChatWidget() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customerId: matchedUser.id,
+          customerId: customerId,
           senderType: "customer",
           message: input.trim(),
           attachment: attachment

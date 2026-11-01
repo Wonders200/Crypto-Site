@@ -24,11 +24,13 @@ export default function AdminLiveChatPage() {
   const { push } = useToast();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const activeIdRef = useRef<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [attachment, setAttachment] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   
+  useEffect(() => { activeIdRef.current = activeId; }, [activeId]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -66,7 +68,7 @@ export default function AdminLiveChatPage() {
       const newMsg = JSON.parse(e.data);
       
       // If it's for the currently open chat, append it
-      if (newMsg.customer_id === activeId) {
+      if (newMsg.customer_id === activeIdRef.current) {
         setMessages(prev => {
           if (prev.some(m => m.id === newMsg.id)) return prev;
           return [...prev, newMsg];
@@ -78,7 +80,7 @@ export default function AdminLiveChatPage() {
     });
 
     return () => eventSource.close();
-  }, [activeId]);
+  }, []);
 
   // 4. Auto-scroll
   useEffect(() => {
