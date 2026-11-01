@@ -9,7 +9,9 @@ export const dynamic = "force-dynamic";
 
 // --- 1. DATABASE SETUP ---
 const DB_FILE = path.join(process.cwd(), "data", "store.db");
-const db = new Database(DB_FILE);
+declare global { var __chatDb: Database.Database | undefined; }
+if (!globalThis.__chatDb) { globalThis.__chatDb = new Database(DB_FILE); }
+const db = globalThis.__chatDb;
 
 // Create the chat table if it doesn't exist
 db.exec(`
@@ -95,6 +97,9 @@ export async function GET(req: Request) {
           clients.delete(controller);
         });
       },
+      cancel(controller) {
+        clients.delete(controller);
+      }
     });
 
     return new Response(stream, {
