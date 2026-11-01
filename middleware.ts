@@ -21,6 +21,7 @@ const PUBLIC_WRITE_PATHS = [
   "/api/upload",
   "/api/whoami",
   "/api/backup",
+  "/api/chat",
   "/api/store",
   "/api/admin/auth/login",
   "/api/admin/auth/logout",
