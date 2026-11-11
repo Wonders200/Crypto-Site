@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { PageHeader, Panel } from "@/components/admin/ui";
+import { PageHeader } from "@/components/admin/ui";
 import { MessageSquare, Send, Image as ImageIcon, Loader2 } from "lucide-react";
 import { useToast } from "@/app/providers";
 
@@ -127,18 +127,18 @@ export default function AdminLiveChatPage() {
   };
 
   return (
-    <div style={{ height: "calc(100vh - 80px)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-      <PageHeader title="Live Chat" subtitle="Real-time customer support" />
+    <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden">
+      <div className="shrink-0">
+        <PageHeader title="Live Chat" subtitle="Real-time customer support" />
+      </div>
 
-      {/* The main chat area is constrained to fill remaining height and hidden overflow */}
-      <div style={{ flex: 1, display: "flex", gap: "16px", overflow: "hidden", paddingBottom: "16px" }}>
-        
+      <div className="flex-1 flex overflow-hidden border-t border-[var(--border)]">
         {/* Sidebar */}
-        <Panel padded={false} style={{ width: "320px", display: "flex", flexDirection: "column", flexShrink: 0, overflow: "hidden" }}>
-          <div className="p-4 border-b font-semibold text-sm" style={{ borderColor: "var(--border)" }}>
+        <div className="w-80 flex flex-col flex-shrink-0 border-r border-[var(--border)]">
+          <div className="p-4 border-b border-[var(--border)] font-semibold text-sm shrink-0">
             Active Conversations
           </div>
-          <div style={{ flex: 1, overflowY: "auto" }} className="scrollbar-thin">
+          <div className="flex-1 overflow-y-auto scrollbar-thin">
             {sessions.length === 0 ? (
               <div className="p-6 text-center text-xs" style={{ color: "var(--muted)" }}>No active chats.</div>
             ) : (
@@ -164,24 +164,23 @@ export default function AdminLiveChatPage() {
               ))
             )}
           </div>
-        </Panel>
+        </div>
 
         {/* Main Chat Pane */}
-        <Panel padded={false} style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div className="flex-1 flex flex-col overflow-hidden bg-[var(--bg)]">
           {!activeId ? (
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "32px" }}>
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
               <MessageSquare size={40} style={{ color: "var(--muted)", marginBottom: 16 }} />
               <div className="font-semibold">Select a conversation</div>
               <div className="text-sm mt-1" style={{ color: "var(--muted)" }}>Choose a customer from the sidebar to start replying.</div>
             </div>
           ) : (
             <>
-              <div className="p-4 border-b flex items-center justify-between" style={{ borderColor: "var(--border)", background: "var(--panel-2)" }}>
+              <div className="p-4 border-b flex items-center justify-between shrink-0" style={{ borderColor: "var(--border)", background: "var(--panel-2)" }}>
                 <div className="font-semibold">{activeId}</div>
               </div>
 
-              {/* Messages area scrolls independently */}
-              <div style={{ flex: 1, overflowY: "auto", padding: "16px" }} className="space-y-4 scrollbar-thin">
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
                 {messages.map((msg) => (
                   <div key={msg.id} className={`flex ${msg.sender_type === "admin" ? "justify-end" : "justify-start"}`}>
                     <div
@@ -204,8 +203,7 @@ export default function AdminLiveChatPage() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Input Area stays fixed at the bottom */}
-              <form onSubmit={sendMessage} className="p-3 border-t flex flex-col gap-2" style={{ borderColor: "var(--border)" }}>
+              <form onSubmit={sendMessage} className="p-3 border-t flex flex-col gap-2 shrink-0" style={{ borderColor: "var(--border)" }}>
                 {attachment && (
                   <div className="relative w-16 h-16 rounded border overflow-hidden" style={{ borderColor: "var(--border)" }}>
                     <img src={attachment} alt="preview" className="w-full h-full object-cover" />
@@ -237,7 +235,7 @@ export default function AdminLiveChatPage() {
               </form>
             </>
           )}
-        </Panel>
+        </div>
       </div>
     </div>
   );
