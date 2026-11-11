@@ -36,7 +36,7 @@ export default function AdminLiveChatPage() {
 
   // 1. Fetch active chat list
   const loadSessions = () => {
-    fetch("/api/chat?action=admin_list")
+    fetch("/api/chat?action=admin_list", { cache: "no-store" })
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) setSessions(data);
@@ -46,12 +46,14 @@ export default function AdminLiveChatPage() {
 
   useEffect(() => {
     loadSessions();
+    const interval = setInterval(loadSessions, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   // 2. Fetch history when clicking a chat
   useEffect(() => {
     if (!activeId) return;
-    fetch(`/api/chat?action=history&customerId=${activeId}&isAdmin=true`)
+    fetch(`/api/chat?action=history&customerId=${activeId}&isAdmin=true`, { cache: "no-store" })
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) setMessages(data);

@@ -3,50 +3,16 @@ import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
 import { cookies } from "next/headers";
+import { chatBus } from "@/lib/chat-bus";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // --- 1. DATABASE SETUP ---
 const DB_FILE = path.join(process.cwd(), "data", "store.db");
-declare global { var __chatDb: Database.Database | undefined; }
-if (!globalThis.__chatDb) { globalThis.__chatDb = new Database(DB_FILE); }
-const db = globalThis.__chatDb;
 
-// Create the chat table if it doesn't exist
-db.exec(`
-  CREATE TABLE IF NOT EXISTS chat_messages (
-    id TEXT PRIMARY KEY,
-    customer_id TEXT NOT NULL,
-    sender_type TEXT NOT NULL,
-    message TEXT,
-    is_read INTEGER DEFAULT 0,
-    attachment_type TEXT,
-    attachment_url TEXT,
-    created_at INTEGER NOT NULL
-  );
-`);
 
-// --- 2. SSE BROADCASTING ---
-// We use a global map to keep track of connected clients (survives HMR in dev)
-declare global {
-  var __chatClients: Set<ReadableStreamDefaultController> | undefined;
-}
-if (!globalThis.__chatClients) {
-  globalThis.__chatClients = new Set();
-}
-const clients = globalThis.__chatClients;
 
-function broadcast(event: string, data: any) {
-  const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-  clients.forEach((controller) => {
-    try {
-      controller.enqueue(new TextEncoder().encode(payload));
-    } catch (e) {
-      clients.delete(controller);
-    }
-  });
-}
 
 // --- 3. HELPER: SAVE BASE64 IMAGE ---
 async function saveImage(base64Str: string, prefix: string): Promise<string | null> {
@@ -82,7 +48,7 @@ export async function GET(req: Request) {
   if (action === "stream") {
     const stream = new ReadableStream({
       start(controller) {
-        clients.add(controller);
+        chatBus.addClient(controller);
         // Keep-alive heartbeat every 15s to prevent Nginx from closing the connection
         const interval = setInterval(() => {
           try {
@@ -94,7 +60,7 @@ export async function GET(req: Request) {
 
         req.signal.addEventListener("abort", () => {
           clearInterval(interval);
-          clients.delete(controller);
+          chatBus.removeClient(controller);
         });
       },
       cancel(controller) {
@@ -174,7 +140,7 @@ export async function POST(req: Request) {
     };
 
     // Broadcast to everyone connected via SSE
-    broadcast("new_message", newMsg);
+    chatBus.broadcast("new_message", newMsg);
 
     return NextResponse.json({ ok: true, message: newMsg });
   } catch (e) {
