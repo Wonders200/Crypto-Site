@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth, useToast } from "@/app/providers";
 import { usePathname } from "next/navigation";
-import { MessageSquare, X, Send, Image as ImageIcon, Loader2 } from "lucide-react";
+import { MessageSquare, X, Send, Image as ImageIcon, Loader2, Check, CheckCheck } from "lucide-react";
 
 export default function CustomerChatWidget() {
   const { user } = useAuth();
@@ -14,28 +14,55 @@ export default function CustomerChatWidget() {
   const [attachment, setAttachment] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [connected, setConnected] = useState(false);
+  const [adminLastSeen, setAdminLastSeen] = useState<number | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isAdmin = pathname?.startsWith("/admin");
-  const customerId = user ? user.email.toLowerCase() : null; // Primitive string prevents infinite loops
+  const customerId = user ? user.email.toLowerCase() : null;
 
+  // 1. Fetch History
   useEffect(() => {
     if (!isOpen || !customerId) return;
     fetch(`/api/chat?action=history&customerId=${customerId}`).then(r => r.json()).then(d => { if (Array.isArray(d)) setMessages(d); });
   }, [isOpen, customerId]);
 
+  // 2. Setup SSE & Presence Ping
   useEffect(() => {
     if (!isOpen || !customerId) return;
-    const es = new EventSource("/api/chat?action=stream");
+    
+    const es = new EventSource(`/api/chat?action=stream&customerId=${customerId}`);
     es.onopen = () => setConnected(true);
+    
     es.addEventListener("new_message", (e) => {
       const msg = JSON.parse(e.data);
       if (msg.customer_id === customerId) setMessages(prev => prev.some(m => m.id === msg.id) ? prev : [...prev, msg]);
     });
+
+    es.addEventListener("messages_read", (e) => {
+      const data = JSON.parse(e.data);
+      if (data.customerId === customerId) {
+        setMessages(prev => prev.map(m => ({ ...m, is_read: 1 })));
+      }
+    });
+
+    es.addEventListener("presence_update", (e) => {
+      const data = JSON.parse(e.data);
+      if (data.customerId === customerId && data.type === "admin") setAdminLastSeen(data.time);
+    });
+
     es.onerror = () => setConnected(false);
-    return () => es.close();
+
+    // Ping every 30 seconds to keep customer online
+    const pingInterval = setInterval(() => {
+      fetch("/api/chat?action=ping", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerId, type: "customer" })
+      }).catch(() => {});
+    }, 30000);
+
+    return () => { es.close(); clearInterval(pingInterval); };
   }, [isOpen, customerId]);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
@@ -55,9 +82,16 @@ export default function CustomerChatWidget() {
         body: JSON.stringify({ customerId, senderType: "customer", message: input.trim(), attachment }),
       });
       if (res.ok) { setInput(""); setAttachment(null); if (fileInputRef.current) fileInputRef.current.value = ""; }
-      else throw new Error(await res.text());
-    } catch (err: any) { push({ kind: "error", title: "Message failed", message: err.message }); } 
+    } catch (err: any) { push({ kind: "error", title: "Failed", message: err.message }); } 
     finally { setSending(false); }
+  };
+
+  const getAdminStatus = () => {
+    if (!adminLastSeen) return "Offline";
+    const diff = Date.now() - adminLastSeen;
+    if (diff < 60000) return "Online";
+    if (diff < 3600000) return `Last seen ${Math.floor(diff / 60000)}m ago`;
+    return `Last seen ${Math.floor(diff / 3600000)}h ago`;
   };
 
   if (isAdmin || !user) return null;
@@ -76,7 +110,7 @@ export default function CustomerChatWidget() {
               <div className="font-semibold text-sm">Live Support</div>
               <div className="text-[10px] flex items-center gap-1.5" style={{ color: connected ? "var(--green)" : "var(--muted)" }}>
                 <span className="w-1.5 h-1.5 rounded-full" style={{ background: connected ? "var(--green)" : "var(--muted)" }} />
-                {connected ? "Online" : "Connecting..."}
+                {getAdminStatus()}
               </div>
             </div>
           </div>
@@ -88,7 +122,12 @@ export default function CustomerChatWidget() {
                 <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${msg.sender_type === "customer" ? "rounded-tr-sm bg-[var(--accent)] text-white" : "rounded-tl-sm bg-[var(--panel-2)] text-[var(--text)]"}`}>
                   {msg.attachment_url && <img src={msg.attachment_url} className="max-w-full rounded-lg mb-2" />}
                   {msg.message && <div>{msg.message}</div>}
-                  <div className="text-[9px] mt-1 opacity-50 text-right">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                  <div className="text-[9px] mt-1 opacity-50 flex items-center justify-end gap-1">
+                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {msg.sender_type === "customer" && (
+                      msg.is_read ? <CheckCheck size={12} className="text-blue-400" /> : <Check size={12} />
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

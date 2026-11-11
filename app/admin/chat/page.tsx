@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { PageHeader } from "@/components/admin/ui";
-import { MessageSquare, Send, Image as ImageIcon, Loader2 } from "lucide-react";
+import { MessageSquare, Send, Image as ImageIcon, Loader2, Check, CheckCheck } from "lucide-react";
 import { useToast } from "@/app/providers";
 
 export default function AdminLiveChatPage() {
@@ -12,6 +12,7 @@ export default function AdminLiveChatPage() {
   const [input, setInput] = useState("");
   const [attachment, setAttachment] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [presenceTick, setPresenceTick] = useState(0); // Forces UI refresh for "Last seen" times
 
   const activeIdRef = useRef<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -25,8 +26,9 @@ export default function AdminLiveChatPage() {
 
   useEffect(() => {
     loadSessions();
-    const interval = setInterval(loadSessions, 3000); // Polling fallback
-    return () => clearInterval(interval);
+    const interval = setInterval(loadSessions, 3000); 
+    const tick = setInterval(() => setPresenceTick(t => t + 1), 60000); // Update "last seen" text every minute
+    return () => { clearInterval(interval); clearInterval(tick); };
   }, []);
 
   useEffect(() => {
@@ -39,6 +41,7 @@ export default function AdminLiveChatPage() {
 
   useEffect(() => {
     const es = new EventSource("/api/chat?action=stream");
+    
     es.addEventListener("new_message", (e) => {
       const msg = JSON.parse(e.data);
       if (msg.customer_id === activeIdRef.current) {
@@ -46,7 +49,26 @@ export default function AdminLiveChatPage() {
       }
       loadSessions();
     });
-    return () => es.close();
+
+    es.addEventListener("presence_update", (e) => {
+      setSessions(prev => prev.map(s => {
+        const data = JSON.parse(e.data);
+        if (s.customer_id === data.customerId) return { ...s, customer_last_seen: data.time };
+        return s;
+      }));
+    });
+
+    // Admin presence ping
+    const pingInterval = setInterval(() => {
+      if (activeIdRef.current) {
+        fetch("/api/chat?action=ping", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ customerId: activeIdRef.current, type: "admin" })
+        }).catch(() => {});
+      }
+    }, 30000);
+
+    return () => { es.close(); clearInterval(pingInterval); };
   }, []);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
@@ -71,12 +93,20 @@ export default function AdminLiveChatPage() {
     finally { setSending(false); }
   };
 
+  const getStatus = (lastSeen: number) => {
+    if (!lastSeen) return "Offline";
+    const diff = Date.now() - lastSeen;
+    if (diff < 60000) return "Online";
+    if (diff < 3600000) return `Last seen ${Math.floor(diff / 60000)}m ago`;
+    return `Last seen ${Math.floor(diff / 3600000)}h ago`;
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-[var(--bg)]">
       <div className="shrink-0 px-6 pt-4"><PageHeader title="Live Chat" subtitle="Real-time customer support" /></div>
       <div className="flex-1 flex overflow-hidden border-t border-[var(--border)] mt-4">
         
-        {/* Sidebar - Scrolls Independently */}
+        {/* Sidebar */}
         <div className="w-80 flex flex-col flex-shrink-0 border-r border-[var(--border)] bg-[var(--panel)]">
           <div className="p-4 border-b border-[var(--border)] font-semibold text-sm shrink-0">Active Conversations</div>
           <div className="flex-1 overflow-y-auto scrollbar-thin">
@@ -87,14 +117,17 @@ export default function AdminLiveChatPage() {
                     <span className="font-semibold text-sm truncate pr-2">{s.customer_id}</span>
                     {s.unread > 0 && <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{s.unread}</span>}
                   </div>
-                  <div className="text-xs text-[var(--muted)]">{new Date(s.last_msg).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-[var(--muted)]">{new Date(s.last_msg).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span className="text-green-500 font-medium">{getStatus(s.customer_last_seen)}</span>
+                  </div>
                 </button>
               ))
             }
           </div>
         </div>
 
-        {/* Main Chat Area - Scrolls Independently */}
+        {/* Main Chat Area */}
         <div className="flex-1 flex flex-col overflow-hidden bg-[var(--bg)]">
           {!activeId ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
@@ -104,19 +137,31 @@ export default function AdminLiveChatPage() {
             </div>
           ) : (
             <>
-              <div className="p-4 border-b border-[var(--border)] bg-[var(--panel-2)] shrink-0 font-semibold">{activeId}</div>
+              <div className="p-4 border-b border-[var(--border)] bg-[var(--panel-2)] shrink-0 font-semibold flex justify-between items-center">
+                <div>{activeId}</div>
+                <div className="text-xs text-green-500">
+                  {getStatus(sessions.find(s => s.customer_id === activeId)?.customer_last_seen)}
+                </div>
+              </div>
+              
               <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
                 {messages.map(msg => (
                   <div key={msg.id} className={`flex ${msg.sender_type === "admin" ? "justify-end" : "justify-start"}`}>
                     <div className={`max-w-[70%] rounded-2xl px-4 py-2 text-sm ${msg.sender_type === "admin" ? "rounded-tr-sm bg-[var(--accent)] text-white" : "rounded-tl-sm bg-[var(--panel-2)] text-[var(--text)]"}`}>
                       {msg.attachment_url && <img src={msg.attachment_url} alt="attachment" className="max-w-full rounded-lg mb-2" />}
                       {msg.message && <div>{msg.message}</div>}
-                      <div className="text-[9px] mt-1 opacity-50 text-right">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                      <div className="text-[9px] mt-1 opacity-50 flex items-center justify-end gap-1">
+                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {msg.sender_type === "admin" && (
+                          msg.is_read ? <CheckCheck size={12} className="text-blue-400" /> : <Check size={12} />
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
                 <div ref={messagesEndRef} />
               </div>
+              
               <form onSubmit={sendMessage} className="p-3 border-t border-[var(--border)] flex flex-col gap-2 shrink-0">
                 {attachment && <div className="relative w-16 h-16 rounded border border-[var(--border)] overflow-hidden"><img src={attachment} className="w-full h-full object-cover" /><button onClick={() => setAttachment(null)} className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-0.5 text-xs">×</button></div>}
                 <div className="flex items-center gap-2">
