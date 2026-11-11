@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
-    "start": "next start -p 3001",
+    "start": "next start -p 3003",
     "lint": "next lint",
     "warmup": "powershell -ExecutionPolicy Bypass -File scripts/warmup.ps1",
     "dev:demo": "dotenv -e .env.demo -- next dev -p 3002",
