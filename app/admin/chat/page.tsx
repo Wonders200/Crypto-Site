@@ -2,7 +2,6 @@
 import { useState, useEffect, useRef } from "react";
 import { PageHeader, Panel } from "@/components/admin/ui";
 import { MessageSquare, Send, Image as ImageIcon, Loader2 } from "lucide-react";
-import { formatCurrency } from "@/lib/format";
 import { useToast } from "@/app/providers";
 
 type ChatMessage = {
@@ -24,17 +23,20 @@ export default function AdminLiveChatPage() {
   const { push } = useToast();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const activeIdRef = useRef<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [attachment, setAttachment] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
-  
-  useEffect(() => { activeIdRef.current = activeId; }, [activeId]);
+
+  const activeIdRef = useRef<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 1. Fetch active chat list
+  // Keep activeIdRef in sync without triggering re-renders
+  useEffect(() => {
+    activeIdRef.current = activeId;
+  }, [activeId]);
+
   const loadSessions = () => {
     fetch("/api/chat?action=admin_list", { cache: "no-store" })
       .then(res => res.json())
@@ -50,41 +52,36 @@ export default function AdminLiveChatPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // 2. Fetch history when clicking a chat
   useEffect(() => {
     if (!activeId) return;
     fetch(`/api/chat?action=history&customerId=${activeId}&isAdmin=true`, { cache: "no-store" })
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) setMessages(data);
-        loadSessions(); // refresh unread count
+        loadSessions();
       })
       .catch(console.error);
   }, [activeId]);
 
-  // 3. Setup SSE for real-time incoming messages
   useEffect(() => {
     const eventSource = new EventSource("/api/chat?action=stream");
-    
+
     eventSource.addEventListener("new_message", (e) => {
       const newMsg = JSON.parse(e.data);
-      
-      // If it's for the currently open chat, append it
+
       if (newMsg.customer_id === activeIdRef.current) {
         setMessages(prev => {
           if (prev.some(m => m.id === newMsg.id)) return prev;
           return [...prev, newMsg];
         });
       }
-      
-      // Refresh the sidebar to update unread badges
+
       loadSessions();
     });
 
     return () => eventSource.close();
   }, []);
 
-  // 4. Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -118,6 +115,9 @@ export default function AdminLiveChatPage() {
         setInput("");
         setAttachment(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
+      } else {
+        const err = await res.text();
+        throw new Error(err);
       }
     } catch (err: any) {
       if (typeof push !== "undefined") push({ kind: "error", title: "Message failed", message: err.message || "Network error" });
@@ -132,7 +132,6 @@ export default function AdminLiveChatPage() {
       <PageHeader title="Live Chat" subtitle="Real-time customer support" />
 
       <div className="flex-1 flex gap-4 overflow-hidden min-h-[500px]">
-        {/* Sidebar: Chat List */}
         <Panel padded={false} className="w-80 flex flex-col shrink-0 overflow-hidden">
           <div className="p-4 border-b font-semibold text-sm" style={{ borderColor: "var(--border)" }}>
             Active Conversations
@@ -165,7 +164,6 @@ export default function AdminLiveChatPage() {
           </div>
         </Panel>
 
-        {/* Main Chat Pane */}
         <Panel padded={false} className="flex-1 flex flex-col overflow-hidden">
           {!activeId ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
@@ -175,12 +173,10 @@ export default function AdminLiveChatPage() {
             </div>
           ) : (
             <>
-              {/* Header */}
               <div className="p-4 border-b flex items-center justify-between" style={{ borderColor: "var(--border)", background: "var(--panel-2)" }}>
                 <div className="font-semibold">{activeId}</div>
               </div>
 
-              {/* Messages */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
                 {messages.map((msg) => (
                   <div key={msg.id} className={`flex ${msg.sender_type === "admin" ? "justify-end" : "justify-start"}`}>
@@ -204,7 +200,6 @@ export default function AdminLiveChatPage() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Input */}
               <form onSubmit={sendMessage} className="p-3 border-t flex flex-col gap-2" style={{ borderColor: "var(--border)" }}>
                 {attachment && (
                   <div className="relative w-16 h-16 rounded border overflow-hidden" style={{ borderColor: "var(--border)" }}>
