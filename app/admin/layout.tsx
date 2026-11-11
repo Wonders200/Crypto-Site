@@ -149,9 +149,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div className="min-h-screen flex" style={{ background: "var(--bg)" }}>
+    <div className="h-screen overflow-hidden flex" style={{ background: "var(--bg)" }}>
       {/* Desktop sidebar */}
-      <aside className="w-64 shrink-0 border-r hidden md:flex flex-col" style={{ borderColor: "var(--border)", background: "var(--panel)" }}>
+      <aside className="w-64 shrink-0 border-r hidden md:flex flex-col h-full overflow-y-auto" style={{ borderColor: "var(--border)", background: "var(--panel)" }}>
         {sidebarContent}
       </aside>
 
@@ -205,7 +205,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 p-3 md:p-8 overflow-x-auto">{children}</main>
+        <main className="flex-1 p-3 md:p-8 overflow-x-auto h-full overflow-y-auto">{children}</main>
       </div>
     </div>
   );
