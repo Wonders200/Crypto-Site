@@ -107,9 +107,13 @@ export default function CustomerChatWidget() {
         setInput("");
         setAttachment(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
+      } else {
+        const errorText = await res.text();
+        throw new Error(`Server returned ${res.status}: ${errorText}`);
       }
-    } catch {
-      // silent fail
+    } catch (err: any) {
+      console.error("Chat send error:", err);
+      alert("Failed to send message: " + err.message);
     } finally {
       setSending(false);
     }
