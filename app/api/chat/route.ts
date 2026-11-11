@@ -7,7 +7,6 @@ import { chatBus } from "@/lib/chat-bus";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// --- 1. DATABASE SETUP (Singleton) ---
 const DB_FILE = path.join(process.cwd(), "data", "store.db");
 
 declare global {
@@ -31,29 +30,22 @@ db.exec(`
   );
 `);
 
-// --- 2. HELPER: SAVE BASE64 IMAGE ---
 async function saveImage(base64Str: string, prefix: string): Promise<string | null> {
   try {
     const matches = base64Str.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
     if (!matches || matches.length !== 3) return null;
-
     const ext = matches[1].split('/')[1] || 'jpg';
     const data = Buffer.from(matches[2], 'base64');
     const filename = `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const dir = path.join(process.cwd(), "public", "uploads", "chat");
-
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
     const fullPath = path.join(dir, filename);
     await fs.promises.writeFile(fullPath, data);
-
     return `/uploads/chat/${filename}`;
   } catch {
     return null;
   }
 }
-
-// --- 3. API ACTIONS ---
 
 export async function GET(req: Request) {
   const url = new URL(req.url);

@@ -32,7 +32,6 @@ export default function AdminLiveChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Keep activeIdRef in sync without triggering re-renders
   useEffect(() => {
     activeIdRef.current = activeId;
   }, [activeId]);
