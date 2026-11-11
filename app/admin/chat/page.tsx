@@ -127,10 +127,12 @@ export default function AdminLiveChatPage() {
   };
 
   return (
-    <div style={{ height: "calc(100vh - 80px)", display: "flex", flexDirection: "column" }}>
+    <div style={{ height: "calc(100vh - 80px)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
       <PageHeader title="Live Chat" subtitle="Real-time customer support" />
 
-      <div style={{ flex: 1, display: "flex", gap: "16px", overflow: "hidden", minHeight: "500px" }}>
+      {/* The main chat area is constrained to fill remaining height and hidden overflow */}
+      <div style={{ flex: 1, display: "flex", gap: "16px", overflow: "hidden", paddingBottom: "16px" }}>
+        
         {/* Sidebar */}
         <Panel padded={false} style={{ width: "320px", display: "flex", flexDirection: "column", flexShrink: 0, overflow: "hidden" }}>
           <div className="p-4 border-b font-semibold text-sm" style={{ borderColor: "var(--border)" }}>
@@ -178,6 +180,7 @@ export default function AdminLiveChatPage() {
                 <div className="font-semibold">{activeId}</div>
               </div>
 
+              {/* Messages area scrolls independently */}
               <div style={{ flex: 1, overflowY: "auto", padding: "16px" }} className="space-y-4 scrollbar-thin">
                 {messages.map((msg) => (
                   <div key={msg.id} className={`flex ${msg.sender_type === "admin" ? "justify-end" : "justify-start"}`}>
@@ -201,6 +204,7 @@ export default function AdminLiveChatPage() {
                 <div ref={messagesEndRef} />
               </div>
 
+              {/* Input Area stays fixed at the bottom */}
               <form onSubmit={sendMessage} className="p-3 border-t flex flex-col gap-2" style={{ borderColor: "var(--border)" }}>
                 {attachment && (
                   <div className="relative w-16 h-16 rounded border overflow-hidden" style={{ borderColor: "var(--border)" }}>
